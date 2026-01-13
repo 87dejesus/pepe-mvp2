@@ -47,7 +47,7 @@ function formatLastChecked(dateISO: string | null): string {
   if (parts.length !== 3) return dateISO;
   const [y, m, d] = parts;
   if (!y || !m || !d) return dateISO;
-  return `${m}/${d}/${y}`;
+  return `${m}/${d}/${y}`; // MM/DD/YYYY
 }
 
 function textScore(s: string | null): number {
@@ -224,6 +224,7 @@ export default function DecisionPage() {
             "last_checked_date",
           ].join(",")
         )
+        .returns<Listing[]>() // ✅ ONLY CHANGE #1
         .eq("status", "Active")
         .order("listing_id", { ascending: true })
         .range(offset, offset);
@@ -234,7 +235,7 @@ export default function DecisionPage() {
         setError(error.message);
         setListing(null);
       } else {
-        setListing((data?.[0] as Listing) ?? null);
+        setListing(data?.[0] ?? null); // ✅ ONLY CHANGE #2
       }
 
       setLoading(false);
@@ -273,7 +274,6 @@ export default function DecisionPage() {
       return;
     }
 
-    // MVP: always route to /exit; /exit controls “open link”
     window.location.href = "/exit";
   }
 
