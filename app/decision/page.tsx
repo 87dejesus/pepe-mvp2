@@ -224,7 +224,7 @@ export default function DecisionPage() {
             "last_checked_date",
           ].join(",")
         )
-        .returns<Listing[]>() // ✅ ONLY CHANGE #1
+        
         .eq("status", "Active")
         .order("listing_id", { ascending: true })
         .range(offset, offset);
@@ -235,7 +235,8 @@ export default function DecisionPage() {
         setError(error.message);
         setListing(null);
       } else {
-        setListing(data?.[0] ?? null); // ✅ ONLY CHANGE #2
+       setListing(((data?.[0] ?? null) as unknown) as Listing | null);
+
       }
 
       setLoading(false);
