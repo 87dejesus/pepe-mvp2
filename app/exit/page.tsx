@@ -148,7 +148,8 @@ export default function Page() {
         return;
       }
 
-      setListing((listings?.[0] as Listing) ?? null);
+      setListing(((listings?.[0] ?? null) as unknown) as Listing | null);
+
       setLoading(false);
     }
 
