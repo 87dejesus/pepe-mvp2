@@ -107,7 +107,8 @@ function computePressure(listing: Listing) {
   const reasons: string[] = [];
   let score = 0;
 
-  const signal = textScore(listing.pressure_signals) + textScore(listing.deal_incentive) + textScore(listing.commute_note);
+  const signal =
+    textScore(listing.pressure_signals) + textScore(listing.deal_incentive) + textScore(listing.commute_note);
   score += signal;
 
   if (listing.pressure_signals) reasons.push("Market signals present");
@@ -170,7 +171,6 @@ export default function DecisionPage() {
   const [error, setError] = useState<string | null>(null);
   const [clicking, setClicking] = useState<null | "apply" | "wait">(null);
 
-  // simple randomization: refresh or button shows another listing
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
   useEffect(() => {
@@ -180,7 +180,6 @@ export default function DecisionPage() {
       setLoading(true);
       setError(null);
 
-      // count active
       const { count, error: countError } = await supabase
         .from("pepe_listings")
         .select("listing_id", { count: "exact", head: true })
@@ -240,7 +239,6 @@ export default function DecisionPage() {
         setError(error.message);
         setListing(null);
       } else {
-        // Vercel build-safe cast
         setListing(((data?.[0] ?? null) as unknown) as Listing | null);
       }
 
@@ -255,7 +253,7 @@ export default function DecisionPage() {
 
   const pressure = useMemo(() => (listing ? computePressure(listing) : null), [listing]);
   const tradeoffs = useMemo(
-    () => (listing && pressure ? buildTradeoffs(listing, pressure.level as any) : null),
+    () => (listing && pressure ? buildTradeoffs(listing, pressure.level) : null),
     [listing, pressure]
   );
 
@@ -282,7 +280,8 @@ export default function DecisionPage() {
       return;
     }
 
-    window.location.href = "/exit";
+    // ✅ this restores the old flow: explanation next, then action button there
+    window.location.href = `/exit?choice=${outcome}`;
   }
 
   if (loading) return <div style={{ padding: 24 }}>Loading listing…</div>;
