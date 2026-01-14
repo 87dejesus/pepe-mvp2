@@ -209,28 +209,28 @@ export default function DecisionPage() {
       const { data, error } = await supabase
         .from("pepe_listings")
         id.select(
-          [
-            "id",
-            "listing_id",
-            "city",
-            "borough",
-            "neighborhood",
-            "building_name",
-            "street_or_area",
-            "bedrooms",
-            "bathrooms",
-            "monthly_rent_usd",
-            "deal_incentive",
-            "broker_fee",
-            "building_type",
-            "constraints",
-            "commute_note",
-            "pressure_signals",
-            "primary_image_url",
-            "apply_url",
-            "curation_note",
-            "status",
-            "last_checked_date",
+          type Listing = {
+  id: string;
+  listing_id: string;
+  city: string;
+  borough: string;
+  neighborhood: string;
+  bedrooms: number;
+  bathrooms: number;
+  monthly_rent_usd: number;
+  apply_url: string;
+  deal_incentive: string | null;
+  broker_fee: string | null;
+  building_type: string | null;
+  constraints: string | null;
+  commute_note: string;
+  pressure_signals: string | null;
+  primary_image_url: string | null;
+  curation_note: string;
+  status: string | null;
+  last_checked_date: string | null;
+};
+
           ].join(",")
         )
         .eq("status", "Active")
