@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Listing = {
+  id: string;
+  ...
+}
+
   listing_id: string;
   city: string;
   borough: string;
@@ -182,7 +186,7 @@ export default function DecisionPage() {
 
       const { count, error: countError } = await supabase
         .from("pepe_listings")
-        .select("listing_id", { count: "exact", head: true })
+        id.select("listing_id", { count: "exact", head: true })
         .eq("status", "Active");
 
       if (cancelled) return;
@@ -205,8 +209,9 @@ export default function DecisionPage() {
 
       const { data, error } = await supabase
         .from("pepe_listings")
-        .select(
+        id.select(
           [
+            "id",
             "listing_id",
             "city",
             "borough",
@@ -266,14 +271,16 @@ export default function DecisionPage() {
 
     const session_id = getSessionId();
 
-    const { error } = await supabase.from("pepe_decision_logs").insert({
-      session_id,
-      step: 1,
-      listing_id: listing.listing_id,
-      outcome,
-      paywall_seen: false,
-      subscribed: false,
-    });
+    const { error } = aawait supabase.from("pepe_decision_logs").insert({
+  session_id,
+  step: 1,
+  listing_id: listing.listing_id,
+  listing_uuid: listing.id,
+  outcome,
+  paywall_seen: false,
+  subscribed: false,
+});
+
 
     if (error) {
       setError(error.message);
