@@ -5,7 +5,6 @@ import { supabase } from "../../lib/supabase";
 
 type Listing = {
   id: string;
-  ...
 }
 
   listing_id: string;
