@@ -12,7 +12,9 @@ type DecisionRow = {
 };
 
 type Listing = {
+  id: string;
   listing_id: string;
+
   neighborhood: string;
   borough: string;
   bedrooms: number;
@@ -93,30 +95,41 @@ export default function ExitClient() {
 
       // Step 2: find listing by listing_id text (NYC-0001)
       const listingKey = last?.listing_id ?? null;
-      if (!listingKey) {
-        setLoading(false);
-        return;
-      }
+if (!listingKey) {
+  setLoading(false);
+  return;
+}
 
-      const { data: l, error: lErr } = await supabase
-        .from("pepe_listings")
-        .select(
-          [
-            "listing_id",
-            "neighborhood",
-            "borough",
-            "bedrooms",
-            "bathrooms",
-            "monthly_rent_usd",
-            "apply_url",
-            "curation_note",
-            "pressure_signals",
-            "deal_incentive",
-            "broker_fee",
-          ].join(",")
-        )
-        .eq("listing_id", listingKey)
-        .limit(1);
+// Detect if it's a UUID (FK to pepe_listings.id) or a human listing_id (NYC-0001)
+const isUuid =
+  typeof listingKey === "string" &&
+  listingKey.length === 36 &&
+  listingKey.split("-").length === 5;
+
+const listingQuery = supabase
+  .from("pepe_listings")
+  .select(
+    [
+      "id",
+      "listing_id",
+      "neighborhood",
+      "borough",
+      "bedrooms",
+      "bathrooms",
+      "monthly_rent_usd",
+      "apply_url",
+      "curation_note",
+      "pressure_signals",
+      "deal_incentive",
+      "broker_fee",
+    ].join(",")
+  );
+
+const { data: l, error: lErr } = await (isUuid
+  ? listingQuery.eq("id", listingKey)
+  : listingQuery.eq("listing_id", listingKey)
+).limit(1);
+
 
       if (cancelled) return;
 
