@@ -7,7 +7,7 @@ import { supabase } from "../../lib/supabase";
 type DecisionRow = {
   session_id: string;
   outcome: "apply" | "wait";
-  listing_id: string | null;
+  listing_id: string | null; // this is listing_id text (NYC-0001), not uuid
   created_at: string;
 };
 
@@ -29,10 +29,12 @@ function getSessionId(): string {
   const key = "pepe_session_id";
   const existing = window.localStorage.getItem(key);
   if (existing) return existing;
+
   const id =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `sess_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+
   window.localStorage.setItem(key, id);
   return id;
 }
@@ -48,6 +50,7 @@ function money(n: number) {
 export default function ExitClient() {
   const params = useSearchParams();
   const choiceParam = params.get("choice"); // apply | wait
+
   const choice = useMemo(
     () => (choiceParam === "apply" || choiceParam === "wait" ? choiceParam : null),
     [choiceParam]
@@ -64,9 +67,12 @@ export default function ExitClient() {
     async function load() {
       setLoading(true);
       setError(null);
+      setDecision(null);
+      setListing(null);
 
       const session_id = getSessionId();
 
+      // Step 1: get last decision for this session
       const { data: d, error: dErr } = await supabase
         .from("pepe_decision_logs")
         .select("session_id,outcome,listing_id,created_at")
@@ -85,7 +91,9 @@ export default function ExitClient() {
       const last = ((d?.[0] ?? null) as unknown) as DecisionRow | null;
       setDecision(last);
 
-      if (!last?.listing_id) {
+      // Step 2: find listing by listing_id text (NYC-0001)
+      const listingKey = last?.listing_id ?? null;
+      if (!listingKey) {
         setLoading(false);
         return;
       }
@@ -107,7 +115,7 @@ export default function ExitClient() {
             "broker_fee",
           ].join(",")
         )
-        .eq("listing_id", last.listing_id)
+        .eq("listing_id", listingKey)
         .limit(1);
 
       if (cancelled) return;
@@ -118,7 +126,8 @@ export default function ExitClient() {
         return;
       }
 
-      setListing(((l?.[0] ?? null) as unknown) as Listing | null);
+      const row = ((l?.[0] ?? null) as unknown) as Listing | null;
+      setListing(row);
       setLoading(false);
     }
 
@@ -131,71 +140,195 @@ export default function ExitClient() {
   const effectiveChoice: "apply" | "wait" | null =
     choice ?? (decision?.outcome === "apply" || decision?.outcome === "wait" ? decision.outcome : null);
 
-  if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
+  const title = listing ? `${listing.neighborhood}, ${listing.borough}` : "Your decision";
 
-  if (error) {
-    return (
-      <div style={{ padding: 24, maxWidth: 760, margin: "0 auto" }}>
-        <strong>Error</strong>
-        <pre style={{ whiteSpace: "pre-wrap" }}>{error}</pre>
-        <button onClick={() => (window.location.href = "/decision")}>Back to decision</button>
-      </div>
-    );
+  function openApply() {
+    const url = listing?.apply_url?.trim();
+    if (!url) {
+      setError("Missing apply_url for this listing.");
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
   }
+
+  if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
 
   if (!effectiveChoice) {
     return (
-      <div style={{ padding: 24, maxWidth: 760, margin: "0 auto" }}>
-        <h2>No decision found</h2>
-        <button onClick={() => (window.location.href = "/decision")}>Back to decision</button>
+      <div style={{ padding: 24, maxWidth: 860, margin: "0 auto" }}>
+        <h1 style={{ marginTop: 0 }}>No decision found</h1>
+        <button
+          onClick={() => (window.location.href = "/decision")}
+          style={{
+            marginTop: 12,
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: "1px solid rgba(0,0,0,0.15)",
+            background: "white",
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          Back to decision
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 760, margin: "0 auto" }}>
-      <h1>
-        {listing ? `${listing.neighborhood}, ${listing.borough}` : "Your decision"}
-      </h1>
+    <div style={{ padding: 24, maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 10, opacity: 0.75 }}>
+        <div style={{ fontSize: 12 }}>{listing?.listing_id ? `Listing: ${listing.listing_id}` : "Listing: —"}</div>
+        <div style={{ fontSize: 12 }}>{decision?.session_id ? `Session: ${decision.session_id}` : ""}</div>
+      </div>
 
-      {listing && (
-        <p>
-          {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} bed`} •{" "}
-          {listing.bathrooms} bath • ${money(listing.monthly_rent_usd)}/mo
-        </p>
+      <h1 style={{ marginTop: 0 }}>{title}</h1>
+
+      {listing ? (
+        <div style={{ marginBottom: 12, opacity: 0.9 }}>
+          {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} bed`} • {listing.bathrooms} bath • $
+          {money(listing.monthly_rent_usd)}/mo
+        </div>
+      ) : (
+        <div style={{ marginBottom: 12, opacity: 0.75 }}>
+          Couldn’t load the listing details. (We can still continue.)
+        </div>
       )}
+
+      {error ? (
+        <div style={{ border: "1px solid rgba(220, 38, 38, 0.35)", borderRadius: 12, padding: 12, marginBottom: 12 }}>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>Error</div>
+          <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
+        </div>
+      ) : null}
 
       {effectiveChoice === "apply" ? (
         <>
-          <p>
-            You chose to apply knowing the pressure and tradeoffs. Acting now
-            protects you from losing the opportunity.
-          </p>
+          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16 }}>
+            <div style={{ fontWeight: 900, marginBottom: 8 }}>Why this makes sense</div>
+            <div style={{ lineHeight: 1.55 }}>
+              You chose speed over optionality — that is often correct in NYC when something fits.
+              <br />
+              Market signals increase the cost of delay.
+              <br />
+              Incentives tend to disappear; acting now preserves the option.
+              <br />
+              If it meets your non-negotiables, early action is a rational bet.
+            </div>
+
+            {listing?.deal_incentive ? (
+              <div style={{ marginTop: 10, opacity: 0.9 }}>
+                Incentive: <b>{listing.deal_incentive}</b>
+              </div>
+            ) : null}
+            {listing?.broker_fee ? (
+              <div style={{ marginTop: 6, opacity: 0.9 }}>
+                Broker fee: <b>{listing.broker_fee}</b>
+              </div>
+            ) : null}
+          </div>
+
           <button
-            disabled={!listing?.apply_url}
-            onClick={() => listing?.apply_url && window.open(listing.apply_url, "_blank")}
+            onClick={openApply}
+            style={{
+              width: "100%",
+              marginTop: 14,
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.15)",
+              background: "white",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 16,
+            }}
           >
             Open application link
           </button>
-          <div style={{ marginTop: 8 }}>
-            <button onClick={() => (window.location.href = "/decision")}>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <button
+              onClick={() => (window.location.href = "/decision")}
+              style={{
+                flex: 1,
+                padding: "12px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 800,
+              }}
+            >
               Back to decision
+            </button>
+            <button
+              onClick={() => (window.location.href = "/flow")}
+              style={{
+                flex: 1,
+                padding: "12px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 800,
+              }}
+            >
+              Restart flow
             </button>
           </div>
         </>
       ) : (
         <>
-          <p>
-            You chose to wait consciously. Waiting helps only if something
-            specific can change.
-          </p>
-          <button onClick={() => (window.location.href = "/decision")}>
-            Back to decision
-          </button>
+          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16 }}>
+            <div style={{ fontWeight: 900, marginBottom: 8 }}>Why this makes sense</div>
+            <div style={{ lineHeight: 1.55 }}>
+              Waiting preserves optionality — but only if you’re testing something specific.
+              <br />
+              Define what would change your decision, then compare fast.
+              <br />
+              If nothing changes, waiting becomes risk, not caution.
+            </div>
+
+            {listing?.pressure_signals ? (
+              <div style={{ marginTop: 10, opacity: 0.9 }}>
+                Pressure signals to watch: <b>{listing.pressure_signals}</b>
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button
+              onClick={() => (window.location.href = "/decision")}
+              style={{
+                flex: 1,
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Back to decision
+            </button>
+            <button
+              onClick={() => (window.location.href = "/flow")}
+              style={{
+                flex: 1,
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Restart flow
+            </button>
+          </div>
         </>
       )}
     </div>
   );
 }
-
-
