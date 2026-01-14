@@ -253,7 +253,8 @@ export default function DecisionPage() {
 
   const pressure = useMemo(() => (listing ? computePressure(listing) : null), [listing]);
   const tradeoffs = useMemo(
-    () => (listing && pressure ? buildTradeoffs(listing, pressure.level) : null),
+    () => (listing && pressure ? buildTradeoffs(listing, pressure.level as "Low" | "Medium" | "High") : null),
+
     [listing, pressure]
   );
 
