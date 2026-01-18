@@ -110,18 +110,48 @@ export default function DecisionPage() {
   const [loading, setLoading] = useState(true);
   const [listing, setListing] = useState<Listing | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [offset, setOffset] = useState<number>(() => Math.floor(Math.random() * 50));
+  const [activeCount, setActiveCount] = useState<number | null>(null);
 
   useEffect(() => {
     setSessionId(getSessionId());
   }, []);
 
-  async function loadListing(nextOffset?: number) {
+  async function loadListing(requestedOffset?: number) {
     setLoading(true);
     setError(null);
 
-    const useOffset = typeof nextOffset === "number" ? nextOffset : offset;
+    // Step 1: Get count of Active listings if not cached
+    let count = activeCount;
+    if (count === null) {
+      const { count: activeCountResult, error: countErr } = await supabase
+        .from("pepe_listings")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "Active");
 
+      if (countErr) {
+        setListing(null);
+        setError(countErr.message);
+        setLoading(false);
+        return;
+      }
+
+      count = activeCountResult ?? 0;
+      setActiveCount(count);
+
+      if (count === 0) {
+        setListing(null);
+        setError("No Active listings available.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Step 2: Determine safe offset (random if not specified, within valid range)
+    const safeOffset = typeof requestedOffset === "number" 
+      ? Math.max(0, Math.min(requestedOffset, count - 1))
+      : Math.floor(Math.random() * count);
+
+    // Step 3: Query listing at safe offset
     const { data, error: qErr } = await supabase
       .from("pepe_listings")
       .select(
@@ -149,7 +179,7 @@ export default function DecisionPage() {
       )
       .eq("status", "Active")
       .order("listing_id", { ascending: true })
-      .range(useOffset, useOffset);
+      .range(safeOffset, safeOffset);
 
     if (qErr) {
       setListing(null);
@@ -158,13 +188,39 @@ export default function DecisionPage() {
       return;
     }
 
-    const row = (data && data[0] ? (data[0] as unknown as Listing) : null);
+    // Fail-safe: if count > 0 but query returns empty, invalidate stale cache
+    if (!qErr && (!data || data.length === 0)) {
+      setListing(null);
+      setError("No Active listing found.");
+      setActiveCount(null); // Invalidate cache for next manual attempt
+      setLoading(false);
+      return;
+    }
+
+    // TEMP DEBUG - Query response inspection (only when data exists)
+    if (!qErr && data?.[0]) {
+      console.warn("[TEMP DEBUG] loadListing - Query response keys:", Object.keys(data[0]));
+      console.warn("[TEMP DEBUG] loadListing - data[0]?.id:", data[0]?.id);
+      console.warn("[TEMP DEBUG] loadListing - data[0]?.listing_id:", data[0]?.listing_id);
+    }
+
+    // Validate data structure at runtime - ensure id exists before casting
+    const rawRow = data && data[0] ? data[0] : null;
+    if (!rawRow || typeof rawRow !== "object" || !("id" in rawRow) || typeof rawRow.id !== "string" || rawRow.id.trim() === "") {
+      setListing(null);
+      setError("Invalid listing data: missing required ID field.");
+      setLoading(false);
+      return;
+    }
+
+    // Safe cast: we've validated id exists, TypeScript can trust the structure
+    const row = rawRow as Listing;
     setListing(row);
     setLoading(false);
   }
 
   useEffect(() => {
-    loadListing(offset);
+    loadListing();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -179,15 +235,37 @@ export default function DecisionPage() {
 
     setError(null);
 
-    const { error: insErr } = await supabase.from("pepe_decision_logs").insert({
-      session_id: sessionId || getSessionId(),
+    // TEMP DEBUG - Pre-insert state inspection
+    const effectiveSessionId = sessionId || getSessionId();
+    console.warn("[TEMP DEBUG] logDecision - sessionId:", effectiveSessionId);
+    console.warn("[TEMP DEBUG] logDecision - listing?.id:", listing?.id);
+    console.warn("[TEMP DEBUG] logDecision - listing?.listing_id:", listing?.listing_id);
+    console.warn("[TEMP DEBUG] logDecision - typeof listing?.id:", typeof listing?.id);
+    console.warn("[TEMP DEBUG] logDecision - listing?.id === null:", listing?.id === null);
+    console.warn("[TEMP DEBUG] logDecision - listing?.id === undefined:", listing?.id === undefined);
+
+    // TEMP DEBUG - Insert payload inspection
+    const payload = {
+      session_id: effectiveSessionId,
       step: 1,
       listing_id: listing.listing_id, // NYC-000X (human)
-      listing_uuid: listing.id, // UUID (FK)
+      listing_uuid: listing.id, // UUID (FK) - guaranteed non-null by runtime validation in loadListing
       outcome,
       paywall_seen: false,
       subscribed: false,
+    };
+    console.warn("[TEMP DEBUG] logDecision - payload.listing_uuid:", payload.listing_uuid);
+    console.warn("[TEMP DEBUG] logDecision - payload.listing_id:", payload.listing_id);
+    console.warn("[TEMP DEBUG] logDecision - payload.session_id:", payload.session_id);
+    console.warn("[TEMP DEBUG] logDecision - redacted payload:", {
+      session_id: payload.session_id,
+      listing_id: payload.listing_id,
+      listing_uuid: payload.listing_uuid,
+      step: payload.step,
+      outcome: payload.outcome,
     });
+
+    const { error: insErr } = await supabase.from("pepe_decision_logs").insert(payload);
 
     if (insErr) {
       setError(insErr.message);
@@ -198,9 +276,7 @@ export default function DecisionPage() {
   }
 
   function nextListing() {
-    const next = Math.floor(Math.random() * 50);
-    setOffset(next);
-    loadListing(next);
+    loadListing(); // Will pick random offset within valid range
   }
 
   return (
