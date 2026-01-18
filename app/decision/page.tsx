@@ -197,11 +197,13 @@ export default function DecisionPage() {
       return;
     }
 
-    // TEMP DEBUG - Query response inspection (only when data exists)
-    if (!qErr && data?.[0]) {
-      console.warn("[TEMP DEBUG] loadListing - Query response keys:", Object.keys(data[0]));
-      console.warn("[TEMP DEBUG] loadListing - data[0]?.id:", data[0]?.id);
-      console.warn("[TEMP DEBUG] loadListing - data[0]?.listing_id:", data[0]?.listing_id);
+    // TEMP DEBUG - Query response inspection (only when data exists and is a plain object)
+    const debugRow = data?.[0];
+    if (!qErr && debugRow && typeof debugRow === "object" && !Array.isArray(debugRow)) {
+      const r = debugRow as Record<string, unknown>;
+      console.warn("[TEMP DEBUG] loadListing - Query response keys:", Object.keys(r));
+      console.warn("[TEMP DEBUG] loadListing - data[0]?.id:", r["id"]);
+      console.warn("[TEMP DEBUG] loadListing - data[0]?.listing_id:", r["listing_id"]);
     }
 
     // Validate data structure at runtime - ensure id exists before casting
