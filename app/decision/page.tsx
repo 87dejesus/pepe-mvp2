@@ -207,8 +207,17 @@ export default function DecisionPage() {
     }
 
     // Validate data structure at runtime - ensure id exists before casting
-    const rawRow = data && data[0] ? data[0] : null;
-    if (!rawRow || typeof rawRow !== "object" || !("id" in rawRow) || typeof rawRow.id !== "string" || rawRow.id.trim() === "") {
+    const rawRow = data?.[0];
+    if (!rawRow || typeof rawRow !== "object" || Array.isArray(rawRow)) {
+      setListing(null);
+      setError("Invalid listing data: missing required ID field.");
+      setLoading(false);
+      return;
+    }
+
+    const r = rawRow as Record<string, unknown>;
+    const id = r["id"];
+    if (typeof id !== "string" || id.trim() === "") {
       setListing(null);
       setError("Invalid listing data: missing required ID field.");
       setLoading(false);
