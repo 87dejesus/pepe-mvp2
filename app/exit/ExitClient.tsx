@@ -158,11 +158,12 @@ const { data: l, error: lErr } = await (isUuid
   function openApply() {
     const url = listing?.apply_url?.trim();
     if (!url) {
-      setError("Missing apply_url for this listing.");
-      return;
+      return; // Button is disabled, this shouldn't be called
     }
     window.open(url, "_blank", "noopener,noreferrer");
   }
+
+  const hasApplyUrl = listing?.apply_url?.trim() ?? false;
 
   if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
 
@@ -241,22 +242,40 @@ const { data: l, error: lErr } = await (isUuid
             ) : null}
           </div>
 
-          <button
-            onClick={openApply}
-            style={{
-              width: "100%",
-              marginTop: 14,
-              padding: "14px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "white",
-              cursor: "pointer",
-              fontWeight: 900,
-              fontSize: 16,
-            }}
-          >
-            Open application link
-          </button>
+          {hasApplyUrl ? (
+            <button
+              onClick={openApply}
+              style={{
+                width: "100%",
+                marginTop: 14,
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Open application link
+            </button>
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                marginTop: 14,
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "#f7f7f7",
+                textAlign: "center",
+                opacity: 0.8,
+                fontSize: 14,
+              }}
+            >
+              Application link not available for this listing.
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             <button

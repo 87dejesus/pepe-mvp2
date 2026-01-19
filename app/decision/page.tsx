@@ -197,15 +197,6 @@ export default function DecisionPage() {
       return;
     }
 
-    // TEMP DEBUG - Query response inspection (only when data exists and is a plain object)
-    const debugRow = data?.[0];
-    if (!qErr && debugRow && typeof debugRow === "object" && !Array.isArray(debugRow)) {
-      const r = debugRow as Record<string, unknown>;
-      console.warn("[TEMP DEBUG] loadListing - Query response keys:", Object.keys(r));
-      console.warn("[TEMP DEBUG] loadListing - data[0]?.id:", r["id"]);
-      console.warn("[TEMP DEBUG] loadListing - data[0]?.listing_id:", r["listing_id"]);
-    }
-
     // Validate data structure at runtime - ensure id exists before casting
     const rawRow = data?.[0];
     if (!rawRow || typeof rawRow !== "object" || Array.isArray(rawRow)) {
@@ -246,37 +237,15 @@ export default function DecisionPage() {
 
     setError(null);
 
-    // TEMP DEBUG - Pre-insert state inspection
-    const effectiveSessionId = sessionId || getSessionId();
-    console.warn("[TEMP DEBUG] logDecision - sessionId:", effectiveSessionId);
-    console.warn("[TEMP DEBUG] logDecision - listing?.id:", listing?.id);
-    console.warn("[TEMP DEBUG] logDecision - listing?.listing_id:", listing?.listing_id);
-    console.warn("[TEMP DEBUG] logDecision - typeof listing?.id:", typeof listing?.id);
-    console.warn("[TEMP DEBUG] logDecision - listing?.id === null:", listing?.id === null);
-    console.warn("[TEMP DEBUG] logDecision - listing?.id === undefined:", listing?.id === undefined);
-
-    // TEMP DEBUG - Insert payload inspection
-    const payload = {
-      session_id: effectiveSessionId,
+    const { error: insErr } = await supabase.from("pepe_decision_logs").insert({
+      session_id: sessionId || getSessionId(),
       step: 1,
       listing_id: listing.listing_id, // NYC-000X (human)
       listing_uuid: listing.id, // UUID (FK) - guaranteed non-null by runtime validation in loadListing
       outcome,
       paywall_seen: false,
       subscribed: false,
-    };
-    console.warn("[TEMP DEBUG] logDecision - payload.listing_uuid:", payload.listing_uuid);
-    console.warn("[TEMP DEBUG] logDecision - payload.listing_id:", payload.listing_id);
-    console.warn("[TEMP DEBUG] logDecision - payload.session_id:", payload.session_id);
-    console.warn("[TEMP DEBUG] logDecision - redacted payload:", {
-      session_id: payload.session_id,
-      listing_id: payload.listing_id,
-      listing_uuid: payload.listing_uuid,
-      step: payload.step,
-      outcome: payload.outcome,
     });
-
-    const { error: insErr } = await supabase.from("pepe_decision_logs").insert(payload);
 
     if (insErr) {
       setError(insErr.message);
