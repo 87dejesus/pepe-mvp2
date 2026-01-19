@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 type PressureLevel = "High" | "Medium" | "Low";
@@ -106,6 +107,7 @@ function buildTradeoffs(listing: Listing, level: PressureLevel) {
 }
 
 export default function DecisionPage() {
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [listing, setListing] = useState<Listing | null>(null);
@@ -233,7 +235,12 @@ export default function DecisionPage() {
   );
 
   async function logDecision(outcome: "apply" | "wait") {
-    if (!listing) return;
+    console.warn("logDecision fired", outcome);
+
+    if (!listing) {
+      setError("Listing not available. Please wait for the listing to load.");
+      return;
+    }
 
     setError(null);
 
@@ -252,7 +259,7 @@ export default function DecisionPage() {
       return;
     }
 
-    window.location.href = `/exit?choice=${outcome}`;
+    router.push(`/exit?choice=${outcome}`);
   }
 
   function nextListing() {
@@ -379,16 +386,18 @@ export default function DecisionPage() {
 
               <button
                 onClick={() => logDecision("apply")}
+                disabled={!listing}
                 style={{
                   width: "100%",
                   marginTop: 10,
                   padding: "14px 16px",
                   borderRadius: 12,
                   border: "1px solid rgba(0,0,0,0.15)",
-                  background: "white",
-                  cursor: "pointer",
+                  background: listing ? "white" : "#f7f7f7",
+                  cursor: listing ? "pointer" : "not-allowed",
                   fontWeight: 900,
                   fontSize: 16,
+                  opacity: listing ? 1 : 0.6,
                 }}
               >
                 Apply now
@@ -412,16 +421,18 @@ export default function DecisionPage() {
 
               <button
                 onClick={() => logDecision("wait")}
+                disabled={!listing}
                 style={{
                   width: "100%",
                   marginTop: 10,
                   padding: "14px 16px",
                   borderRadius: 12,
                   border: "1px solid rgba(0,0,0,0.15)",
-                  background: "white",
-                  cursor: "pointer",
+                  background: listing ? "white" : "#f7f7f7",
+                  cursor: listing ? "pointer" : "not-allowed",
                   fontWeight: 900,
                   fontSize: 16,
+                  opacity: listing ? 1 : 0.6,
                 }}
               >
                 Wait consciously
