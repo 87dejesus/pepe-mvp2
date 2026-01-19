@@ -242,24 +242,51 @@ export default function DecisionPage() {
       return;
     }
 
+    const currentSessionId = sessionId || getSessionId();
+    console.warn("logDecision before insert", {
+      sessionId: currentSessionId,
+      listing_uuid: listing.id,
+      listing_id: listing.listing_id,
+    });
+
     setError(null);
 
-    const { error: insErr } = await supabase.from("pepe_decision_logs").insert({
-      session_id: sessionId || getSessionId(),
-      step: 1,
-      listing_id: listing.listing_id, // NYC-000X (human)
-      listing_uuid: listing.id, // UUID (FK) - guaranteed non-null by runtime validation in loadListing
-      outcome,
-      paywall_seen: false,
-      subscribed: false,
-    });
+    let insErr = null;
+    try {
+      const { error } = await supabase.from("pepe_decision_logs").insert({
+        session_id: currentSessionId,
+        step: 1,
+        listing_id: listing.listing_id, // NYC-000X (human)
+        listing_uuid: listing.id, // UUID (FK) - guaranteed non-null by runtime validation in loadListing
+        outcome,
+        paywall_seen: false,
+        subscribed: false,
+      });
+      insErr = error;
+    } catch (exception) {
+      console.warn("logDecision insert exception", exception);
+      setError(exception instanceof Error ? exception.message : "Failed to log decision");
+      return;
+    }
+
+    console.warn("logDecision insert result", { insErr: insErr?.message ?? null });
 
     if (insErr) {
       setError(insErr.message);
       return;
     }
 
+    // Navigate after successful insert
     router.push(`/exit?choice=${outcome}`);
+
+    // Fallback navigation in case router.push doesn't work
+    setTimeout(() => {
+      const currentPath = window.location.pathname;
+      if (currentPath === "/decision") {
+        console.warn("logDecision fallback navigation triggered");
+        router.push(`/exit?choice=${outcome}`);
+      }
+    }, 150);
   }
 
   function nextListing() {
