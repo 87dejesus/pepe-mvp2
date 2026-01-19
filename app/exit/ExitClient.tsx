@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 type DecisionRow = {
   session_id: string;
   outcome: "apply" | "wait";
   listing_id: string | null; // this is listing_id text (NYC-0001), not uuid
+  listing_uuid: string | null; // UUID (FK to pepe_listings.id)
   created_at: string;
 };
 
@@ -51,6 +52,7 @@ function money(n: number) {
 
 export default function ExitClient() {
   const params = useSearchParams();
+  const router = useRouter();
   const choiceParam = params.get("choice"); // apply | wait
 
   const choice = useMemo(
@@ -61,6 +63,8 @@ export default function ExitClient() {
   const [loading, setLoading] = useState(true);
   const [decision, setDecision] = useState<DecisionRow | null>(null);
   const [listing, setListing] = useState<Listing | null>(null);
+  const [applyUrl, setApplyUrl] = useState<string | null>(null);
+  const [applyUrlLoaded, setApplyUrlLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,13 +75,15 @@ export default function ExitClient() {
       setError(null);
       setDecision(null);
       setListing(null);
+      setApplyUrl(null);
+      setApplyUrlLoaded(false);
 
       const session_id = getSessionId();
 
       // Step 1: get last decision for this session
       const { data: d, error: dErr } = await supabase
         .from("pepe_decision_logs")
-        .select("session_id,outcome,listing_id,created_at")
+        .select("session_id,outcome,listing_id,listing_uuid,created_at")
         .eq("session_id", session_id)
         .order("created_at", { ascending: false })
         .limit(1);
@@ -117,7 +123,6 @@ const listingQuery = supabase
       "bedrooms",
       "bathrooms",
       "monthly_rent_usd",
-      "apply_url",
       "curation_note",
       "pressure_signals",
       "deal_incentive",
@@ -141,6 +146,32 @@ const { data: l, error: lErr } = await (isUuid
 
       const row = ((l?.[0] ?? null) as unknown) as Listing | null;
       setListing(row);
+
+      // Step 3: fetch apply_url from pepe_listings using listing_uuid
+      const listingUuid = last?.listing_uuid ?? null;
+      if (listingUuid) {
+        const { data: applyData, error: applyErr } = await supabase
+          .from("pepe_listings")
+          .select("apply_url")
+          .eq("id", listingUuid)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (applyErr) {
+          setError(applyErr.message);
+          setApplyUrlLoaded(true);
+          setLoading(false);
+          return;
+        }
+
+        const fetchedApplyUrl = applyData?.apply_url ?? null;
+        setApplyUrl(fetchedApplyUrl);
+        setApplyUrlLoaded(true);
+      } else {
+        setApplyUrlLoaded(true);
+      }
+
       setLoading(false);
     }
 
@@ -153,19 +184,39 @@ const { data: l, error: lErr } = await (isUuid
   const effectiveChoice: "apply" | "wait" | null =
     choice ?? (decision?.outcome === "apply" || decision?.outcome === "wait" ? decision.outcome : null);
 
+  // Redirect to /decision if listing is invalid after loading completes
+  useEffect(() => {
+    if (!loading && !listing) {
+      router.push("/decision");
+    }
+  }, [loading, listing, router]);
+
+  // Redirect to /decision if apply_url is missing when choice is "apply"
+  useEffect(() => {
+    if (!loading && applyUrlLoaded && effectiveChoice === "apply" && !applyUrl) {
+      router.push("/decision");
+    }
+  }, [loading, applyUrlLoaded, effectiveChoice, applyUrl, router]);
+
   const title = listing ? `${listing.neighborhood}, ${listing.borough}` : "Your decision";
 
   function openApply() {
-    const url = listing?.apply_url?.trim();
+    const url = applyUrl?.trim();
     if (!url) {
       return; // Button is disabled, this shouldn't be called
     }
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  const hasApplyUrl = listing?.apply_url?.trim() ?? false;
+  const hasApplyUrl = !!applyUrl?.trim();
 
   if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
+
+  // Do not render if listing is invalid - redirect useEffect will handle navigation
+  if (!listing) return null;
+
+  // Do not render if apply_url is missing when choice is "apply" - redirect useEffect will handle navigation
+  if (applyUrlLoaded && effectiveChoice === "apply" && !applyUrl) return null;
 
   if (!effectiveChoice) {
     return (
@@ -242,7 +293,7 @@ const { data: l, error: lErr } = await (isUuid
             ) : null}
           </div>
 
-          {hasApplyUrl ? (
+          {hasApplyUrl && (
             <button
               onClick={openApply}
               style={{
@@ -259,22 +310,6 @@ const { data: l, error: lErr } = await (isUuid
             >
               Open application link
             </button>
-          ) : (
-            <div
-              style={{
-                width: "100%",
-                marginTop: 14,
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.12)",
-                background: "#f7f7f7",
-                textAlign: "center",
-                opacity: 0.8,
-                fontSize: 14,
-              }}
-            >
-              Application link not available for this listing.
-            </div>
           )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
