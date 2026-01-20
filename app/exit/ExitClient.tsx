@@ -185,18 +185,28 @@ const { data: l, error: lErr } = await (isUuid
     choice ?? (decision?.outcome === "apply" || decision?.outcome === "wait" ? decision.outcome : null);
 
   // Redirect to /decision if listing is invalid after loading completes
+  // BUT: Do NOT redirect if choice param is present (allows safe mode rendering)
   useEffect(() => {
+    // If choice param exists, stay on page even without listing (safe mode)
+    if (choice) return;
+    
+    // Only redirect if no choice param AND listing is missing after load completes
     if (!loading && !listing) {
       router.push("/decision");
     }
-  }, [loading, listing, router]);
+  }, [loading, listing, router, choice]);
 
   // Redirect to /decision if apply_url is missing when choice is "apply"
+  // BUT: Do NOT redirect if choice param is present (allows safe mode rendering)
   useEffect(() => {
+    // If choice param exists, stay on page even without applyUrl (safe mode)
+    if (choice) return;
+    
+    // Only redirect if: no choice param AND loading done AND applyUrl loaded AND choice is "apply" AND no applyUrl
     if (!loading && applyUrlLoaded && effectiveChoice === "apply" && !applyUrl) {
       router.push("/decision");
     }
-  }, [loading, applyUrlLoaded, effectiveChoice, applyUrl, router]);
+  }, [loading, applyUrlLoaded, effectiveChoice, applyUrl, router, choice]);
 
   const title = listing ? `${listing.neighborhood}, ${listing.borough}` : "Your decision";
 
@@ -212,11 +222,13 @@ const { data: l, error: lErr } = await (isUuid
 
   if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
 
-  // Do not render if listing is invalid - redirect useEffect will handle navigation
-  if (!listing) return null;
+  // Safe mode: If choice param exists, allow rendering even without listing
+  // Do not render if listing is invalid AND no choice param - redirect useEffect will handle navigation
+  if (!listing && !choice) return null;
 
-  // Do not render if apply_url is missing when choice is "apply" - redirect useEffect will handle navigation
-  if (applyUrlLoaded && effectiveChoice === "apply" && !applyUrl) return null;
+  // Safe mode: If choice param exists, allow rendering even without applyUrl
+  // Do not render if apply_url is missing AND no choice param - redirect useEffect will handle navigation
+  if (applyUrlLoaded && effectiveChoice === "apply" && !applyUrl && !choice) return null;
 
   if (!effectiveChoice) {
     return (

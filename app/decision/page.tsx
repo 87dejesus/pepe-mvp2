@@ -113,6 +113,7 @@ export default function DecisionPage() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeCount, setActiveCount] = useState<number | null>(null);
+  const [debugStatus, setDebugStatus] = useState<string | null>(null);
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -234,59 +235,29 @@ export default function DecisionPage() {
     [listing, pressure]
   );
 
-  async function logDecision(outcome: "apply" | "wait") {
-    console.warn("logDecision fired", outcome);
-
+  function logDecision(outcome: "apply" | "wait") {
     if (!listing) {
-      setError("Listing not available. Please wait for the listing to load.");
+      console.warn("[TRACE] logDecision called but no listing available");
       return;
     }
 
     const currentSessionId = sessionId || getSessionId();
-    console.warn("logDecision before insert", {
-      sessionId: currentSessionId,
-      listing_uuid: listing.id,
+    const payload = {
+      session_id: currentSessionId,
+      step: 1,
       listing_id: listing.listing_id,
-    });
+      listing_uuid: listing.id,
+      outcome,
+      paywall_seen: false,
+      subscribed: false,
+    };
 
-    setError(null);
+    // Fire-and-forget insert - don't await to avoid blocking navigation
+    void supabase.from("pepe_decision_logs").insert(payload);
 
-    let insErr = null;
-    try {
-      const { error } = await supabase.from("pepe_decision_logs").insert({
-        session_id: currentSessionId,
-        step: 1,
-        listing_id: listing.listing_id, // NYC-000X (human)
-        listing_uuid: listing.id, // UUID (FK) - guaranteed non-null by runtime validation in loadListing
-        outcome,
-        paywall_seen: false,
-        subscribed: false,
-      });
-      insErr = error;
-    } catch (exception) {
-      console.warn("logDecision insert exception", exception);
-      setError(exception instanceof Error ? exception.message : "Failed to log decision");
-      return;
-    }
-
-    console.warn("logDecision insert result", { insErr: insErr?.message ?? null });
-
-    if (insErr) {
-      setError(insErr.message);
-      return;
-    }
-
-    // Navigate after successful insert
-    router.push(`/exit?choice=${outcome}`);
-
-    // Fallback navigation in case router.push doesn't work
-    setTimeout(() => {
-      const currentPath = window.location.pathname;
-      if (currentPath === "/decision") {
-        console.warn("logDecision fallback navigation triggered");
-        router.push(`/exit?choice=${outcome}`);
-      }
-    }, 150);
+    // Navigate immediately - cannot be blocked
+    const targetUrl = `/exit?choice=${outcome}`;
+    window.location.assign(targetUrl);
   }
 
   function nextListing() {
@@ -300,6 +271,22 @@ export default function DecisionPage() {
       </div>
 
       {loading ? <div>Loading…</div> : null}
+
+      {debugStatus ? (
+        <div
+          style={{
+            border: "2px solid rgba(59, 130, 246, 0.5)",
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 12,
+            background: "rgba(59, 130, 246, 0.1)",
+            fontWeight: 600,
+          }}
+        >
+          <div style={{ marginBottom: 4 }}>Debug Status:</div>
+          <div>{debugStatus}</div>
+        </div>
+      ) : null}
 
       {!loading && error ? (
         <div
@@ -412,7 +399,12 @@ export default function DecisionPage() {
               </ul>
 
               <button
-                onClick={() => logDecision("apply")}
+                type="button"
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  logDecision("apply");
+                }}
                 disabled={!listing}
                 style={{
                   width: "100%",
@@ -447,7 +439,12 @@ export default function DecisionPage() {
               </ul>
 
               <button
-                onClick={() => logDecision("wait")}
+                type="button"
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  logDecision("wait");
+                }}
                 disabled={!listing}
                 style={{
                   width: "100%",
