@@ -55,9 +55,6 @@ export default function ExitClient() {
   const router = useRouter();
   const choiceParam = params.get("choice"); // apply | wait
   const listingUuidParam = params.get("listing_uuid"); // UUID from URL (primary source of truth)
-  
-  console.log('DEBUG: ExitClient rendered with choice:', choiceParam);
-  console.log('DEBUG: listing_uuid from URL:', listingUuidParam);
 
   const choice = useMemo(
     () => (choiceParam === "apply" || choiceParam === "wait" ? choiceParam : null),
@@ -111,7 +108,6 @@ export default function ExitClient() {
         if (cancelled) return;
 
         if (lErr) {
-          console.error('DEBUG: Error fetching listing by URL param:', lErr);
           setError(lErr.message);
           setLoading(false);
           setApplyUrlLoaded(true);
@@ -119,15 +115,11 @@ export default function ExitClient() {
         }
 
         const row = ((l ?? null) as unknown) as Listing | null;
-        console.log('DEBUG: Listing fetched from URL param:', row);
-        console.log('DEBUG: Listing apply_url:', row?.apply_url);
         setListing(row);
 
         if (row?.apply_url) {
-          console.log('DEBUG: Setting apply_url from listing:', row.apply_url);
           setApplyUrl(row.apply_url);
         } else {
-          console.log('DEBUG: No apply_url found in listing');
           setApplyUrl(null);
         }
         setApplyUrlLoaded(true);
@@ -157,16 +149,10 @@ export default function ExitClient() {
 
       const last = ((d?.[0] ?? null) as unknown) as DecisionRow | null;
       setDecision(last);
-      
-      console.log('DEBUG: Decision log found:', last);
-      console.log('DEBUG: listing_uuid from DB:', last?.listing_uuid);
-      console.log('DEBUG: listing_id from DB:', last?.listing_id);
 
       // Step 2: Find listing using decision log data
       const listingUuid = last?.listing_uuid ?? null;
       const listingIdText = last?.listing_id ?? null;
-      
-      console.log('DEBUG: Using listing_uuid from DB:', listingUuid);
       
       let listingQuery = supabase
         .from("pepe_listings")
@@ -189,13 +175,10 @@ export default function ExitClient() {
 
       // Prioritize UUID lookup (more reliable)
       if (listingUuid) {
-        console.log('DEBUG: Fetching listing by UUID:', listingUuid);
         listingQuery = listingQuery.eq("id", listingUuid);
       } else if (listingIdText) {
-        console.log('DEBUG: Fetching listing by listing_id text:', listingIdText);
         listingQuery = listingQuery.eq("listing_id", listingIdText);
       } else {
-        console.log('DEBUG: No listing identifier found');
         setLoading(false);
         setApplyUrlLoaded(true);
         return;
@@ -206,7 +189,6 @@ export default function ExitClient() {
       if (cancelled) return;
 
       if (lErr) {
-        console.error('DEBUG: Error fetching listing:', lErr);
         setError(lErr.message);
         setLoading(false);
         setApplyUrlLoaded(true);
@@ -214,16 +196,12 @@ export default function ExitClient() {
       }
 
       const row = ((l ?? null) as unknown) as Listing | null;
-      console.log('DEBUG: Listing fetched:', row);
-      console.log('DEBUG: Listing apply_url:', row?.apply_url);
       setListing(row);
 
       // Extract apply_url directly from the listing (already fetched above)
       if (row?.apply_url) {
-        console.log('DEBUG: Setting apply_url from listing:', row.apply_url);
         setApplyUrl(row.apply_url);
       } else {
-        console.log('DEBUG: No apply_url found in listing');
         setApplyUrl(null);
       }
       setApplyUrlLoaded(true);
@@ -275,23 +253,12 @@ export default function ExitClient() {
   }
 
   const hasApplyUrl = !!applyUrl?.trim();
-  
-  // Debug logging for button visibility
-  useEffect(() => {
-    console.log('DEBUG: Listing state:', listing);
-    console.log('DEBUG: applyUrl state:', applyUrl);
-    console.log('DEBUG: applyUrlLoaded:', applyUrlLoaded);
-    console.log('DEBUG: hasApplyUrl:', hasApplyUrl);
-    console.log('DEBUG: effectiveChoice:', effectiveChoice);
-  }, [listing, applyUrl, applyUrlLoaded, hasApplyUrl, effectiveChoice]);
 
   // Retry mechanism: if listing is null but listing_uuid exists, retry after 2 seconds
   useEffect(() => {
     if (choice && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
       const uuidToRetry = listingUuidParam || decision?.listing_uuid;
-      console.log('DEBUG: Listing not found, scheduling retry in 2 seconds...');
       const retryTimer = setTimeout(async () => {
-        console.log('DEBUG: Retrying listing fetch for UUID:', uuidToRetry);
         const { data: l, error: lErr } = await supabase
           .from("pepe_listings")
           .select(
@@ -314,16 +281,13 @@ export default function ExitClient() {
           .maybeSingle();
 
         if (lErr) {
-          console.error('DEBUG: Retry error:', lErr);
           return;
         }
 
         const row = ((l ?? null) as unknown) as Listing | null;
-        console.log('DEBUG: Retry result - Listing:', row);
         if (row) {
           setListing(row);
           if (row.apply_url) {
-            console.log('DEBUG: Retry - Setting apply_url:', row.apply_url);
             setApplyUrl(row.apply_url);
           }
           setApplyUrlLoaded(true);
@@ -337,10 +301,8 @@ export default function ExitClient() {
   // Fallback button: Show after 5 seconds if listing is still null and choice is "apply"
   useEffect(() => {
     if (choice === "apply" && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
-      console.log('DEBUG: Scheduling fallback button to show after 5 seconds...');
       const fallbackTimer = setTimeout(() => {
         if (!listing) {
-          console.log('DEBUG: Showing fallback button - listing still not found after 5 seconds');
           setShowFallbackButton(true);
         }
       }, 5000);

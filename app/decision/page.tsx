@@ -106,6 +106,30 @@ function buildTradeoffs(listing: Listing, level: PressureLevel) {
   return { applyNow, waitConsciously };
 }
 
+function getSeenListingIds(): Set<string> {
+  const key = "pepe_seen_listings";
+  const stored = window.localStorage.getItem(key);
+  if (!stored) return new Set();
+  try {
+    const ids = JSON.parse(stored) as string[];
+    return new Set(ids);
+  } catch {
+    return new Set();
+  }
+}
+
+function addSeenListingId(id: string): void {
+  const key = "pepe_seen_listings";
+  const seen = getSeenListingIds();
+  seen.add(id);
+  window.localStorage.setItem(key, JSON.stringify(Array.from(seen)));
+}
+
+function clearSeenListings(): void {
+  const key = "pepe_seen_listings";
+  window.localStorage.removeItem(key);
+}
+
 export default function DecisionPage() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string>("");
@@ -114,6 +138,8 @@ export default function DecisionPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeCount, setActiveCount] = useState<number | null>(null);
   const [debugStatus, setDebugStatus] = useState<string | null>(null);
+  const [showFeedbackScreen, setShowFeedbackScreen] = useState(false);
+  const [fadeIn, setFadeIn] = useState(true);
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -122,6 +148,7 @@ export default function DecisionPage() {
   async function loadListing(requestedOffset?: number) {
     setLoading(true);
     setError(null);
+    setFadeIn(false); // Fade out when starting to load new listing
 
     // Step 1: Get count of Active listings if not cached
     let count = activeCount;
@@ -147,6 +174,15 @@ export default function DecisionPage() {
         setLoading(false);
         return;
       }
+    }
+
+    // Check if we've seen all listings
+    const seenIds = getSeenListingIds();
+    if (seenIds.size >= count) {
+      setShowFeedbackScreen(true);
+      setListing(null);
+      setLoading(false);
+      return;
     }
 
     // Step 2: Determine safe offset (random if not specified, within valid range)
@@ -220,8 +256,18 @@ export default function DecisionPage() {
 
     // Safe cast: we've validated id exists, TypeScript can trust the structure
     const row = rawRow as Listing;
+    
+    // Check if we've already seen this specific listing
+    const seenIds = getSeenListingIds();
+    if (!seenIds.has(row.id)) {
+    // Mark this listing as seen if we haven't seen it before
+    addSeenListingId(row.id);
+    }
+    
     setListing(row);
     setLoading(false);
+    // Trigger fade-in animation after a brief delay to ensure smooth transition
+    setTimeout(() => setFadeIn(true), 50);
   }
 
   useEffect(() => {
@@ -237,7 +283,6 @@ export default function DecisionPage() {
 
   function logDecision(outcome: "apply" | "wait") {
     if (!listing) {
-      console.warn("[TRACE] logDecision called but no listing available");
       return;
     }
 
@@ -262,7 +307,42 @@ export default function DecisionPage() {
   }
 
   function nextListing() {
+    // Check if we've seen all listings before loading next one
+    const seenIds = getSeenListingIds();
+    if (activeCount !== null && seenIds.size >= activeCount) {
+      setShowFeedbackScreen(true);
+      setListing(null);
+      return;
+    }
     loadListing(); // Will pick random offset within valid range
+  }
+
+  async function logFeedback(feedback: "price_too_high" | "wrong_location" | "style_not_for_me") {
+    const currentSessionId = sessionId || getSessionId();
+    const payload = {
+      session_id: currentSessionId,
+      step: 1,
+      listing_id: null,
+      listing_uuid: null,
+      outcome: feedback as string,
+      paywall_seen: false,
+      subscribed: false,
+    };
+
+    // Fire-and-forget insert
+    void supabase.from("pepe_decision_logs").insert(payload);
+  }
+
+  function handleFeedbackClick(feedback: "price_too_high" | "wrong_location" | "style_not_for_me") {
+    logFeedback(feedback);
+    // After logging, could navigate or show thank you message
+    // For now, just log it
+  }
+
+  function restartSearch() {
+    clearSeenListings();
+    // Redirect to beginning of flow (questionnaire)
+    window.location.href = "/flow";
   }
 
   return (
@@ -303,7 +383,80 @@ export default function DecisionPage() {
         </div>
       ) : null}
 
-      {!loading && !listing ? (
+      {showFeedbackScreen ? (
+        <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+          <h1 style={{ marginTop: 0, marginBottom: 16 }}>We haven't found your match yet.</h1>
+          <p style={{ fontSize: 18, marginBottom: 32, opacity: 0.8 }}>
+            Help us refine your search.
+          </p>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+            <button
+              onClick={() => handleFeedbackClick("price_too_high")}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Price too high
+            </button>
+            
+            <button
+              onClick={() => handleFeedbackClick("wrong_location")}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Wrong location
+            </button>
+            
+            <button
+              onClick={() => handleFeedbackClick("style_not_for_me")}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Style not for me
+            </button>
+          </div>
+
+          <button
+            onClick={restartSearch}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.15)",
+              background: "white",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 16,
+            }}
+          >
+            Restart Search
+          </button>
+        </div>
+      ) : !loading && !listing ? (
         <div style={{ marginTop: 10 }}>
           <div style={{ fontWeight: 900 }}>No Active listing found</div>
           <button
@@ -324,7 +477,12 @@ export default function DecisionPage() {
       ) : null}
 
       {!loading && listing ? (
-        <>
+        <div
+          style={{
+            opacity: fadeIn ? 1 : 0,
+            transition: "opacity 0.3s ease-in-out",
+          }}
+        >
           <div style={{ textAlign: "center", marginBottom: 10, opacity: 0.8, fontSize: 12 }}>
             Listing: {listing.listing_id}
             {listing.last_checked_date ? (
@@ -348,6 +506,7 @@ export default function DecisionPage() {
               <img
                 src={listing.primary_image_url}
                 alt="Listing"
+                loading="lazy"
                 style={{
                   width: "100%",
                   maxWidth: 900,
@@ -480,7 +639,7 @@ export default function DecisionPage() {
               Next listing
             </button>
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   );
