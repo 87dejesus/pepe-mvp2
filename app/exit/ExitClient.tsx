@@ -100,79 +100,74 @@ export default function ExitClient() {
 
       const last = ((d?.[0] ?? null) as unknown) as DecisionRow | null;
       setDecision(last);
+      
+      console.log('DEBUG: Decision log found:', last);
+      console.log('DEBUG: listing_uuid:', last?.listing_uuid);
+      console.log('DEBUG: listing_id:', last?.listing_id);
 
-      // Step 2: find listing by listing_id text (NYC-0001)
-      const listingKey = last?.listing_id ?? null;
-if (!listingKey) {
-  setLoading(false);
-  return;
-}
+      // Step 2: Find listing - prioritize listing_uuid (primary key) over listing_id (text)
+      const listingUuid = last?.listing_uuid ?? null;
+      const listingIdText = last?.listing_id ?? null;
+      
+      let listingQuery = supabase
+        .from("pepe_listings")
+        .select(
+          [
+            "id",
+            "listing_id",
+            "neighborhood",
+            "borough",
+            "bedrooms",
+            "bathrooms",
+            "monthly_rent_usd",
+            "apply_url",
+            "curation_note",
+            "pressure_signals",
+            "deal_incentive",
+            "broker_fee",
+          ].join(",")
+        );
 
-// Detect if it's a UUID (FK to pepe_listings.id) or a human listing_id (NYC-0001)
-const isUuid =
-  typeof listingKey === "string" &&
-  listingKey.length === 36 &&
-  listingKey.split("-").length === 5;
+      // Prioritize UUID lookup (more reliable)
+      if (listingUuid) {
+        console.log('DEBUG: Fetching listing by UUID:', listingUuid);
+        listingQuery = listingQuery.eq("id", listingUuid);
+      } else if (listingIdText) {
+        console.log('DEBUG: Fetching listing by listing_id text:', listingIdText);
+        listingQuery = listingQuery.eq("listing_id", listingIdText);
+      } else {
+        console.log('DEBUG: No listing identifier found');
+        setLoading(false);
+        setApplyUrlLoaded(true);
+        return;
+      }
 
-const listingQuery = supabase
-  .from("pepe_listings")
-  .select(
-    [
-      "id",
-      "listing_id",
-      "neighborhood",
-      "borough",
-      "bedrooms",
-      "bathrooms",
-      "monthly_rent_usd",
-      "curation_note",
-      "pressure_signals",
-      "deal_incentive",
-      "broker_fee",
-    ].join(",")
-  );
-
-const { data: l, error: lErr } = await (isUuid
-  ? listingQuery.eq("id", listingKey)
-  : listingQuery.eq("listing_id", listingKey)
-).limit(1);
-
+      const { data: l, error: lErr } = await listingQuery.maybeSingle();
 
       if (cancelled) return;
 
       if (lErr) {
+        console.error('DEBUG: Error fetching listing:', lErr);
         setError(lErr.message);
         setLoading(false);
+        setApplyUrlLoaded(true);
         return;
       }
 
-      const row = ((l?.[0] ?? null) as unknown) as Listing | null;
+      const row = ((l ?? null) as unknown) as Listing | null;
+      console.log('DEBUG: Listing fetched:', row);
+      console.log('DEBUG: Listing apply_url:', row?.apply_url);
       setListing(row);
 
-      // Step 3: fetch apply_url from pepe_listings using listing_uuid
-      const listingUuid = last?.listing_uuid ?? null;
-      if (listingUuid) {
-        const { data: applyData, error: applyErr } = await supabase
-          .from("pepe_listings")
-          .select("apply_url")
-          .eq("id", listingUuid)
-          .maybeSingle();
-
-        if (cancelled) return;
-
-        if (applyErr) {
-          setError(applyErr.message);
-          setApplyUrlLoaded(true);
-          setLoading(false);
-          return;
-        }
-
-        const fetchedApplyUrl = applyData?.apply_url ?? null;
-        setApplyUrl(fetchedApplyUrl);
-        setApplyUrlLoaded(true);
+      // Extract apply_url directly from the listing (already fetched above)
+      if (row?.apply_url) {
+        console.log('DEBUG: Setting apply_url from listing:', row.apply_url);
+        setApplyUrl(row.apply_url);
       } else {
-        setApplyUrlLoaded(true);
+        console.log('DEBUG: No apply_url found in listing');
+        setApplyUrl(null);
       }
+      setApplyUrlLoaded(true);
 
       setLoading(false);
     }
@@ -221,6 +216,63 @@ const { data: l, error: lErr } = await (isUuid
   }
 
   const hasApplyUrl = !!applyUrl?.trim();
+  
+  // Debug logging for button visibility
+  useEffect(() => {
+    console.log('DEBUG: Listing state:', listing);
+    console.log('DEBUG: applyUrl state:', applyUrl);
+    console.log('DEBUG: applyUrlLoaded:', applyUrlLoaded);
+    console.log('DEBUG: hasApplyUrl:', hasApplyUrl);
+    console.log('DEBUG: effectiveChoice:', effectiveChoice);
+  }, [listing, applyUrl, applyUrlLoaded, hasApplyUrl, effectiveChoice]);
+
+  // Retry mechanism: if listing is null but listing_uuid exists, retry after 2 seconds
+  useEffect(() => {
+    if (choice && !loading && !listing && decision?.listing_uuid) {
+      console.log('DEBUG: Listing not found, scheduling retry in 2 seconds...');
+      const retryTimer = setTimeout(async () => {
+        console.log('DEBUG: Retrying listing fetch for UUID:', decision.listing_uuid);
+        const { data: l, error: lErr } = await supabase
+          .from("pepe_listings")
+          .select(
+            [
+              "id",
+              "listing_id",
+              "neighborhood",
+              "borough",
+              "bedrooms",
+              "bathrooms",
+              "monthly_rent_usd",
+              "apply_url",
+              "curation_note",
+              "pressure_signals",
+              "deal_incentive",
+              "broker_fee",
+            ].join(",")
+          )
+          .eq("id", decision.listing_uuid)
+          .maybeSingle();
+
+        if (lErr) {
+          console.error('DEBUG: Retry error:', lErr);
+          return;
+        }
+
+        const row = ((l ?? null) as unknown) as Listing | null;
+        console.log('DEBUG: Retry result - Listing:', row);
+        if (row) {
+          setListing(row);
+          if (row.apply_url) {
+            console.log('DEBUG: Retry - Setting apply_url:', row.apply_url);
+            setApplyUrl(row.apply_url);
+          }
+          setApplyUrlLoaded(true);
+        }
+      }, 2000);
+
+      return () => clearTimeout(retryTimer);
+    }
+  }, [choice, loading, listing, decision?.listing_uuid]);
 
   if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
 
