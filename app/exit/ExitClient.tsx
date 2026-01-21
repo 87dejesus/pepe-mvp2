@@ -54,6 +54,8 @@ export default function ExitClient() {
   const params = useSearchParams();
   const router = useRouter();
   const choiceParam = params.get("choice"); // apply | wait
+  
+  console.log('DEBUG: ExitClient rendered with choice:', choiceParam);
 
   const choice = useMemo(
     () => (choiceParam === "apply" || choiceParam === "wait" ? choiceParam : null),
@@ -265,6 +267,10 @@ const { data: l, error: lErr } = await (isUuid
         <div style={{ marginBottom: 12, opacity: 0.9 }}>
           {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} bed`} • {listing.bathrooms} bath • $
           {money(listing.monthly_rent_usd)}/mo
+        </div>
+      ) : choice ? (
+        <div style={{ marginBottom: 12, opacity: 0.75 }}>
+          Loading listing details...
         </div>
       ) : (
         <div style={{ marginBottom: 12, opacity: 0.75 }}>
