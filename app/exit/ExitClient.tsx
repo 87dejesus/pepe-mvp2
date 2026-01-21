@@ -54,8 +54,10 @@ export default function ExitClient() {
   const params = useSearchParams();
   const router = useRouter();
   const choiceParam = params.get("choice"); // apply | wait
+  const listingUuidParam = params.get("listing_uuid"); // UUID from URL (primary source of truth)
   
   console.log('DEBUG: ExitClient rendered with choice:', choiceParam);
+  console.log('DEBUG: listing_uuid from URL:', listingUuidParam);
 
   const choice = useMemo(
     () => (choiceParam === "apply" || choiceParam === "wait" ? choiceParam : null),
@@ -68,6 +70,7 @@ export default function ExitClient() {
   const [applyUrl, setApplyUrl] = useState<string | null>(null);
   const [applyUrlLoaded, setApplyUrlLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFallbackButton, setShowFallbackButton] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +83,59 @@ export default function ExitClient() {
       setApplyUrl(null);
       setApplyUrlLoaded(false);
 
+      // If listing_uuid is in URL, use it directly as source of truth (skip decision log lookup)
+      if (listingUuidParam) {
+        console.log('DEBUG: Using listing_uuid from URL (primary source):', listingUuidParam);
+        
+        const { data: l, error: lErr } = await supabase
+          .from("pepe_listings")
+          .select(
+            [
+              "id",
+              "listing_id",
+              "neighborhood",
+              "borough",
+              "bedrooms",
+              "bathrooms",
+              "monthly_rent_usd",
+              "apply_url",
+              "curation_note",
+              "pressure_signals",
+              "deal_incentive",
+              "broker_fee",
+            ].join(",")
+          )
+          .eq("id", listingUuidParam)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (lErr) {
+          console.error('DEBUG: Error fetching listing by URL param:', lErr);
+          setError(lErr.message);
+          setLoading(false);
+          setApplyUrlLoaded(true);
+          return;
+        }
+
+        const row = ((l ?? null) as unknown) as Listing | null;
+        console.log('DEBUG: Listing fetched from URL param:', row);
+        console.log('DEBUG: Listing apply_url:', row?.apply_url);
+        setListing(row);
+
+        if (row?.apply_url) {
+          console.log('DEBUG: Setting apply_url from listing:', row.apply_url);
+          setApplyUrl(row.apply_url);
+        } else {
+          console.log('DEBUG: No apply_url found in listing');
+          setApplyUrl(null);
+        }
+        setApplyUrlLoaded(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: If no URL param, try to get from decision log
       const session_id = getSessionId();
 
       // Step 1: get last decision for this session
@@ -95,6 +151,7 @@ export default function ExitClient() {
       if (dErr) {
         setError(dErr.message);
         setLoading(false);
+        setApplyUrlLoaded(true);
         return;
       }
 
@@ -102,12 +159,14 @@ export default function ExitClient() {
       setDecision(last);
       
       console.log('DEBUG: Decision log found:', last);
-      console.log('DEBUG: listing_uuid:', last?.listing_uuid);
-      console.log('DEBUG: listing_id:', last?.listing_id);
+      console.log('DEBUG: listing_uuid from DB:', last?.listing_uuid);
+      console.log('DEBUG: listing_id from DB:', last?.listing_id);
 
-      // Step 2: Find listing - prioritize listing_uuid (primary key) over listing_id (text)
+      // Step 2: Find listing using decision log data
       const listingUuid = last?.listing_uuid ?? null;
       const listingIdText = last?.listing_id ?? null;
+      
+      console.log('DEBUG: Using listing_uuid from DB:', listingUuid);
       
       let listingQuery = supabase
         .from("pepe_listings")
@@ -176,7 +235,7 @@ export default function ExitClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listingUuidParam]);
 
   const effectiveChoice: "apply" | "wait" | null =
     choice ?? (decision?.outcome === "apply" || decision?.outcome === "wait" ? decision.outcome : null);
@@ -228,10 +287,11 @@ export default function ExitClient() {
 
   // Retry mechanism: if listing is null but listing_uuid exists, retry after 2 seconds
   useEffect(() => {
-    if (choice && !loading && !listing && decision?.listing_uuid) {
+    if (choice && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
+      const uuidToRetry = listingUuidParam || decision?.listing_uuid;
       console.log('DEBUG: Listing not found, scheduling retry in 2 seconds...');
       const retryTimer = setTimeout(async () => {
-        console.log('DEBUG: Retrying listing fetch for UUID:', decision.listing_uuid);
+        console.log('DEBUG: Retrying listing fetch for UUID:', uuidToRetry);
         const { data: l, error: lErr } = await supabase
           .from("pepe_listings")
           .select(
@@ -250,7 +310,7 @@ export default function ExitClient() {
               "broker_fee",
             ].join(",")
           )
-          .eq("id", decision.listing_uuid)
+          .eq("id", uuidToRetry)
           .maybeSingle();
 
         if (lErr) {
@@ -272,7 +332,24 @@ export default function ExitClient() {
 
       return () => clearTimeout(retryTimer);
     }
-  }, [choice, loading, listing, decision?.listing_uuid]);
+  }, [choice, loading, listing, listingUuidParam, decision?.listing_uuid]);
+
+  // Fallback button: Show after 5 seconds if listing is still null and choice is "apply"
+  useEffect(() => {
+    if (choice === "apply" && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
+      console.log('DEBUG: Scheduling fallback button to show after 5 seconds...');
+      const fallbackTimer = setTimeout(() => {
+        if (!listing) {
+          console.log('DEBUG: Showing fallback button - listing still not found after 5 seconds');
+          setShowFallbackButton(true);
+        }
+      }, 5000);
+
+      return () => clearTimeout(fallbackTimer);
+    } else {
+      setShowFallbackButton(false);
+    }
+  }, [choice, loading, listing, listingUuidParam, decision?.listing_uuid]);
 
   if (loading) return <div style={{ padding: 24 }}>Loading…</div>;
 
@@ -379,6 +456,25 @@ export default function ExitClient() {
               }}
             >
               Open application link
+            </button>
+          )}
+
+          {!hasApplyUrl && showFallbackButton && (
+            <button
+              onClick={() => (window.location.href = "/decision")}
+              style={{
+                width: "100%",
+                marginTop: 14,
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Check Listing
             </button>
           )}
 

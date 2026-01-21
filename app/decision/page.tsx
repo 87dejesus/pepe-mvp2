@@ -256,7 +256,8 @@ export default function DecisionPage() {
     void supabase.from("pepe_decision_logs").insert(payload);
 
     // Navigate immediately - cannot be blocked
-    const targetUrl = `/exit?choice=${outcome}`;
+    // Append listing_uuid to URL as source of truth
+    const targetUrl = `/exit?choice=${outcome}&listing_uuid=${listing.id}`;
     window.location.assign(targetUrl);
   }
 
