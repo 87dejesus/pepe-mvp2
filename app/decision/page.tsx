@@ -258,7 +258,6 @@ export default function DecisionPage() {
     const row = rawRow as Listing;
     
     // Check if we've already seen this specific listing
-    const seenIds = getSeenListingIds();
     if (!seenIds.has(row.id)) {
     // Mark this listing as seen if we haven't seen it before
     addSeenListingId(row.id);
