@@ -84,41 +84,46 @@ export default function ExitClient() {
       if (listingUuidParam) {
         console.log('DEBUG: Using listing_uuid from URL (primary source):', listingUuidParam);
         
-        const { data: l, error: lErr } = await supabase
-          .from("pepe_listings")
-          .select(
-            [
-              "id",
-              "listing_id",
-              "neighborhood",
-              "borough",
-              "bedrooms",
-              "bathrooms",
-              "monthly_rent_usd",
-              "apply_url",
-              "curation_note",
-              "pressure_signals",
-              "deal_incentive",
-              "broker_fee",
-            ].join(",")
-          )
-          .eq("id", listingUuidParam)
-          .maybeSingle();
+        // Try common ID column name variations
+        const idColumns = ["id", "ID", "listing_uuid", "uuid", "Id", "listingId"];
+        let l: any = null;
+        let lErr: any = null;
+        
+        for (const idColumn of idColumns) {
+          const { data, error } = await supabase
+            .from("pepe_listings")
+            .select("*")
+            .eq(idColumn, listingUuidParam)
+            .maybeSingle();
+          
+          if (!error && data) {
+            l = data;
+            break;
+          }
+          if (error && !error.message.includes("does not exist")) {
+            lErr = error;
+            break;
+          }
+        }
 
         if (cancelled) return;
 
-        if (lErr) {
-          setError(lErr.message);
+        if (lErr || !l) {
+          setError(lErr?.message || "Listing not found");
           setLoading(false);
           setApplyUrlLoaded(true);
           return;
         }
 
-        const row = ((l ?? null) as unknown) as Listing | null;
-        setListing(row);
+        // Normalize the row to always have "id" field
+        const r = l as Record<string, unknown>;
+        const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
+        const normalizedRow = { ...r, id } as Listing;
+        
+        setListing(normalizedRow);
 
-        if (row?.apply_url) {
-          setApplyUrl(row.apply_url);
+        if (normalizedRow?.apply_url) {
+          setApplyUrl(normalizedRow.apply_url);
         } else {
           setApplyUrl(null);
         }
@@ -154,37 +159,42 @@ export default function ExitClient() {
       const listingUuid = last?.listing_uuid ?? null;
       const listingIdText = last?.listing_id ?? null;
       
-      let listingQuery = supabase
-        .from("pepe_listings")
-        .select(
-          [
-            "id",
-            "listing_id",
-            "neighborhood",
-            "borough",
-            "bedrooms",
-            "bathrooms",
-            "monthly_rent_usd",
-            "apply_url",
-            "curation_note",
-            "pressure_signals",
-            "deal_incentive",
-            "broker_fee",
-          ].join(",")
-        );
+      // Try common ID column name variations
+      const idColumns = ["id", "ID", "listing_uuid", "uuid", "Id", "listingId"];
+      let l: any = null;
+      let lErr: any = null;
 
-      // Prioritize UUID lookup (more reliable)
       if (listingUuid) {
-        listingQuery = listingQuery.eq("id", listingUuid);
+        // Try different ID column names
+        for (const idColumn of idColumns) {
+          const { data, error } = await supabase
+            .from("pepe_listings")
+            .select("*")
+            .eq(idColumn, listingUuid)
+            .maybeSingle();
+          
+          if (!error && data) {
+            l = data;
+            break;
+          }
+          if (error && !error.message.includes("does not exist")) {
+            lErr = error;
+            break;
+          }
+        }
       } else if (listingIdText) {
-        listingQuery = listingQuery.eq("listing_id", listingIdText);
+        const { data, error } = await supabase
+          .from("pepe_listings")
+          .select("*")
+          .eq("listing_id", listingIdText)
+          .maybeSingle();
+        l = data;
+        lErr = error;
       } else {
         setLoading(false);
         setApplyUrlLoaded(true);
         return;
       }
-
-      const { data: l, error: lErr } = await listingQuery.maybeSingle();
 
       if (cancelled) return;
 
@@ -195,12 +205,20 @@ export default function ExitClient() {
         return;
       }
 
-      const row = ((l ?? null) as unknown) as Listing | null;
-      setListing(row);
+      // Normalize the row to always have "id" field
+      let normalizedRow: Listing | null = null;
+      if (l) {
+        const r = l as Record<string, unknown>;
+        const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
+        normalizedRow = { ...r, id } as Listing;
+        setListing(normalizedRow);
+      } else {
+        setListing(null);
+      }
 
       // Extract apply_url directly from the listing (already fetched above)
-      if (row?.apply_url) {
-        setApplyUrl(row.apply_url);
+      if (normalizedRow?.apply_url) {
+        setApplyUrl(normalizedRow.apply_url);
       } else {
         setApplyUrl(null);
       }
@@ -259,36 +277,40 @@ export default function ExitClient() {
     if (choice && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
       const uuidToRetry = listingUuidParam || decision?.listing_uuid;
       const retryTimer = setTimeout(async () => {
-        const { data: l, error: lErr } = await supabase
-          .from("pepe_listings")
-          .select(
-            [
-              "id",
-              "listing_id",
-              "neighborhood",
-              "borough",
-              "bedrooms",
-              "bathrooms",
-              "monthly_rent_usd",
-              "apply_url",
-              "curation_note",
-              "pressure_signals",
-              "deal_incentive",
-              "broker_fee",
-            ].join(",")
-          )
-          .eq("id", uuidToRetry)
-          .maybeSingle();
+        // Try common ID column name variations
+        const idColumns = ["id", "ID", "listing_uuid", "uuid", "Id", "listingId"];
+        let l: any = null;
+        let lErr: any = null;
+        
+        for (const idColumn of idColumns) {
+          const { data, error } = await supabase
+            .from("pepe_listings")
+            .select("*")
+            .eq(idColumn, uuidToRetry)
+            .maybeSingle();
+          
+          if (!error && data) {
+            l = data;
+            break;
+          }
+          if (error && !error.message.includes("does not exist")) {
+            lErr = error;
+            break;
+          }
+        }
 
         if (lErr) {
           return;
         }
 
-        const row = ((l ?? null) as unknown) as Listing | null;
-        if (row) {
-          setListing(row);
-          if (row.apply_url) {
-            setApplyUrl(row.apply_url);
+        // Normalize the row to always have "id" field
+        if (l) {
+          const r = l as Record<string, unknown>;
+          const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
+          const normalizedRow = { ...r, id } as Listing;
+          setListing(normalizedRow);
+          if (normalizedRow.apply_url) {
+            setApplyUrl(normalizedRow.apply_url);
           }
           setApplyUrlLoaded(true);
         }

@@ -191,31 +191,10 @@ export default function DecisionPage() {
       : Math.floor(Math.random() * count);
 
     // Step 3: Query listing at safe offset
+    // Try common ID column name variations: "ID", "id", "listing_uuid", "uuid"
     const { data, error: qErr } = await supabase
       .from("pepe_listings")
-      .select(
-        [
-          "id",
-          "listing_id",
-          "city",
-          "borough",
-          "neighborhood",
-          "bedrooms",
-          "bathrooms",
-          "monthly_rent_usd",
-          "deal_incentive",
-          "broker_fee",
-          "building_type",
-          "constraints",
-          "commute_note",
-          "pressure_signals",
-          "primary_image_url",
-          "apply_url",
-          "curation_note",
-          "status",
-          "last_checked_date",
-        ].join(",")
-      )
+      .select("*")
       .eq("status", "Active")
       .order("listing_id", { ascending: true })
       .range(safeOffset, safeOffset);
@@ -246,24 +225,25 @@ export default function DecisionPage() {
     }
 
     const r = rawRow as Record<string, unknown>;
-    const id = r["id"];
-    if (typeof id !== "string" || id.trim() === "") {
+    // Try common ID column name variations
+    const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string | undefined;
+    if (!id || typeof id !== "string" || id.trim() === "") {
       setListing(null);
-      setError("Invalid listing data: missing required ID field.");
+      setError("Invalid listing data: missing required ID field. Available columns: " + Object.keys(r).join(", "));
       setLoading(false);
       return;
     }
 
-    // Safe cast: we've validated id exists, TypeScript can trust the structure
-    const row = rawRow as Listing;
+    // Normalize the row to always have "id" field for consistency
+    const normalizedRow = { ...r, id } as Listing;
     
     // Check if we've already seen this specific listing
-    if (!seenIds.has(row.id)) {
+    if (!seenIds.has(normalizedRow.id)) {
     // Mark this listing as seen if we haven't seen it before
-    addSeenListingId(row.id);
+    addSeenListingId(normalizedRow.id);
     }
     
-    setListing(row);
+    setListing(normalizedRow);
     setLoading(false);
     // Trigger fade-in animation after a brief delay to ensure smooth transition
     setTimeout(() => setFadeIn(true), 50);
