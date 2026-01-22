@@ -225,17 +225,17 @@ export default function DecisionPage() {
     }
 
     const r = rawRow as Record<string, unknown>;
-    // Try common ID column name variations
-    const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string | undefined;
-    if (!id || typeof id !== "string" || id.trim() === "") {
+    // Use listing_id as the primary identifier and map it to id
+    const listingId = r["listing_id"] as string | undefined;
+    if (!listingId || typeof listingId !== "string" || listingId.trim() === "") {
       setListing(null);
-      setError("Invalid listing data: missing required ID field. Available columns: " + Object.keys(r).join(", "));
+      setError("Invalid listing data: missing required listing_id field. Available columns: " + Object.keys(r).join(", "));
       setLoading(false);
       return;
     }
 
-    // Normalize the row to always have "id" field for consistency
-    const normalizedRow = { ...r, id } as Listing;
+    // Normalize the row to always have "id" field mapped from listing_id for consistency
+    const normalizedRow = { ...r, id: listingId } as Listing;
     
     // Check if we've already seen this specific listing
     if (!seenIds.has(normalizedRow.id)) {

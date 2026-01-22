@@ -84,27 +84,12 @@ export default function ExitClient() {
       if (listingUuidParam) {
         console.log('DEBUG: Using listing_uuid from URL (primary source):', listingUuidParam);
         
-        // Try common ID column name variations
-        const idColumns = ["id", "ID", "listing_uuid", "uuid", "Id", "listingId"];
-        let l: any = null;
-        let lErr: any = null;
-        
-        for (const idColumn of idColumns) {
-          const { data, error } = await supabase
-            .from("pepe_listings")
-            .select("*")
-            .eq(idColumn, listingUuidParam)
-            .maybeSingle();
-          
-          if (!error && data) {
-            l = data;
-            break;
-          }
-          if (error && !error.message.includes("does not exist")) {
-            lErr = error;
-            break;
-          }
-        }
+        // Use listing_id as the primary identifier
+        const { data: l, error: lErr } = await supabase
+          .from("pepe_listings")
+          .select("*")
+          .eq("listing_id", listingUuidParam)
+          .maybeSingle();
 
         if (cancelled) return;
 
@@ -115,10 +100,16 @@ export default function ExitClient() {
           return;
         }
 
-        // Normalize the row to always have "id" field
+        // Normalize the row: map listing_id to id field
         const r = l as Record<string, unknown>;
-        const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
-        const normalizedRow = { ...r, id } as Listing;
+        const listingId = r["listing_id"] as string;
+        if (!listingId || typeof listingId !== "string") {
+          setError("Invalid listing data: missing listing_id");
+          setLoading(false);
+          setApplyUrlLoaded(true);
+          return;
+        }
+        const normalizedRow = { ...r, id: listingId } as Listing;
         
         setListing(normalizedRow);
 
@@ -205,12 +196,18 @@ export default function ExitClient() {
         return;
       }
 
-      // Normalize the row to always have "id" field
+      // Normalize the row: map listing_id to id field
       let normalizedRow: Listing | null = null;
       if (l) {
         const r = l as Record<string, unknown>;
-        const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
-        normalizedRow = { ...r, id } as Listing;
+        const listingId = r["listing_id"] as string;
+        if (!listingId || typeof listingId !== "string") {
+          setError("Invalid listing data: missing listing_id");
+          setLoading(false);
+          setApplyUrlLoaded(true);
+          return;
+        }
+        normalizedRow = { ...r, id: listingId } as Listing;
         setListing(normalizedRow);
       } else {
         setListing(null);
@@ -277,37 +274,25 @@ export default function ExitClient() {
     if (choice && !loading && !listing && (listingUuidParam || decision?.listing_uuid)) {
       const uuidToRetry = listingUuidParam || decision?.listing_uuid;
       const retryTimer = setTimeout(async () => {
-        // Try common ID column name variations
-        const idColumns = ["id", "ID", "listing_uuid", "uuid", "Id", "listingId"];
-        let l: any = null;
-        let lErr: any = null;
-        
-        for (const idColumn of idColumns) {
-          const { data, error } = await supabase
-            .from("pepe_listings")
-            .select("*")
-            .eq(idColumn, uuidToRetry)
-            .maybeSingle();
-          
-          if (!error && data) {
-            l = data;
-            break;
-          }
-          if (error && !error.message.includes("does not exist")) {
-            lErr = error;
-            break;
-          }
-        }
+        // Use listing_id as the primary identifier
+        const { data: l, error: lErr } = await supabase
+          .from("pepe_listings")
+          .select("*")
+          .eq("listing_id", uuidToRetry)
+          .maybeSingle();
 
         if (lErr) {
           return;
         }
 
-        // Normalize the row to always have "id" field
+        // Normalize the row: map listing_id to id field
         if (l) {
           const r = l as Record<string, unknown>;
-          const id = (r["id"] || r["ID"] || r["listing_uuid"] || r["uuid"] || r["Id"] || r["listingId"]) as string;
-          const normalizedRow = { ...r, id } as Listing;
+          const listingId = r["listing_id"] as string;
+          if (!listingId || typeof listingId !== "string") {
+            return;
+          }
+          const normalizedRow = { ...r, id: listingId } as Listing;
           setListing(normalizedRow);
           if (normalizedRow.apply_url) {
             setApplyUrl(normalizedRow.apply_url);
