@@ -150,13 +150,60 @@ export default function DecisionPage() {
     setError(null);
     setFadeIn(false); // Fade out when starting to load new listing
 
+    // Load survey answers from localStorage
+    const LS_KEY = "pepe_answers_v1";
+    let surveyAnswers: { budgetMax?: number; beds?: "0" | "1" | "2" | "3+" } | null = null;
+    try {
+      const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
+      if (stored) {
+        surveyAnswers = JSON.parse(stored);
+      }
+    } catch (e) {
+      // If parsing fails, continue without filters
+      console.warn("Failed to parse survey answers:", e);
+    }
+
+    // Extract filter values
+    const maxPrice = surveyAnswers?.budgetMax;
+    const bedsPreference = surveyAnswers?.beds;
+    
+    // Convert beds preference to number or range
+    // "0" -> 0, "1" -> 1, "2" -> 2, "3+" -> use .gte(3)
+    let requestedBedrooms: number | null = null;
+    let useBedroomsGte = false;
+    if (bedsPreference === "0") requestedBedrooms = 0;
+    else if (bedsPreference === "1") requestedBedrooms = 1;
+    else if (bedsPreference === "2") requestedBedrooms = 2;
+    else if (bedsPreference === "3+") {
+      requestedBedrooms = 3;
+      useBedroomsGte = true;
+    }
+
     // Step 1: Get count of Active listings if not cached
-    let count = activeCount;
+    // If filters are present, always recalculate count to ensure accuracy
+    const hasFilters = (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
+    let count = hasFilters ? null : activeCount; // Invalidate cache if filters are present
     if (count === null) {
-      const { count: activeCountResult, error: countErr } = await supabase
+      let countQuery = supabase
         .from("pepe_listings")
         .select("*", { count: "exact", head: true })
         .eq("status", "Active");
+
+      // Apply price filter if available
+      if (maxPrice !== undefined && maxPrice !== null) {
+        countQuery = countQuery.lte("monthly_rent_usd", maxPrice);
+      }
+
+      // Apply bedrooms filter if available
+      if (requestedBedrooms !== null) {
+        if (useBedroomsGte) {
+          countQuery = countQuery.gte("bedrooms", requestedBedrooms);
+        } else {
+          countQuery = countQuery.eq("bedrooms", requestedBedrooms);
+        }
+      }
+
+      const { count: activeCountResult, error: countErr } = await countQuery;
 
       if (countErr) {
         setListing(null);
@@ -192,10 +239,26 @@ export default function DecisionPage() {
 
     // Step 3: Query listing at safe offset
     // Try common ID column name variations: "ID", "id", "listing_uuid", "uuid"
-    const { data, error: qErr } = await supabase
+    let listingQuery = supabase
       .from("pepe_listings")
       .select("*")
-      .eq("status", "Active")
+      .eq("status", "Active");
+
+    // Apply price filter if available
+    if (maxPrice !== undefined && maxPrice !== null) {
+      listingQuery = listingQuery.lte("monthly_rent_usd", maxPrice);
+    }
+
+    // Apply bedrooms filter if available
+    if (requestedBedrooms !== null) {
+      if (useBedroomsGte) {
+        listingQuery = listingQuery.gte("bedrooms", requestedBedrooms);
+      } else {
+        listingQuery = listingQuery.eq("bedrooms", requestedBedrooms);
+      }
+    }
+
+    const { data, error: qErr } = await listingQuery
       .order("listing_id", { ascending: true })
       .range(safeOffset, safeOffset);
 
