@@ -457,10 +457,6 @@ export default function DecisionPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: "0 auto" }}>
-      <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-        {sessionId ? `Session: ${sessionId}` : ""}
-      </div>
-
       {loading ? <div>Loading…</div> : null}
 
       {debugStatus ? (
