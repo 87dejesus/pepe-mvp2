@@ -140,6 +140,8 @@ export default function DecisionPage() {
   const [debugStatus, setDebugStatus] = useState<string | null>(null);
   const [showFeedbackScreen, setShowFeedbackScreen] = useState(false);
   const [fadeIn, setFadeIn] = useState(true);
+  const [noMoreListings, setNoMoreListings] = useState(false);
+  const [hasFilters, setHasFilters] = useState(false);
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -181,8 +183,9 @@ export default function DecisionPage() {
 
     // Step 1: Get count of Active listings if not cached
     // If filters are present, always recalculate count to ensure accuracy
-    const hasFilters = (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
-    let count = hasFilters ? null : activeCount; // Invalidate cache if filters are present
+    const filtersActive = (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
+    setHasFilters(filtersActive);
+    let count = filtersActive ? null : activeCount; // Invalidate cache if filters are present
     if (count === null) {
       let countQuery = supabase
         .from("pepe_listings")
@@ -217,7 +220,8 @@ export default function DecisionPage() {
 
       if (count === 0) {
         setListing(null);
-        setError("No Active listings available.");
+        setError(null); // Clear error, we'll show a better message
+        setNoMoreListings(false); // This is "no matches", not "seen all"
         setLoading(false);
         return;
       }
@@ -225,7 +229,8 @@ export default function DecisionPage() {
 
     // Check if we've seen all listings
     const seenIds = getSeenListingIds();
-    if (seenIds.size >= count) {
+    if (seenIds.size >= count && count > 0) {
+      setNoMoreListings(true);
       setShowFeedbackScreen(true);
       setListing(null);
       setLoading(false);
@@ -233,9 +238,44 @@ export default function DecisionPage() {
     }
 
     // Step 2: Determine safe offset (random if not specified, within valid range)
-    const safeOffset = typeof requestedOffset === "number" 
-      ? Math.max(0, Math.min(requestedOffset, count - 1))
-      : Math.floor(Math.random() * count);
+    // Ensure offset is within bounds and try to avoid already-seen listings
+    let safeOffset: number;
+    if (count === 0) {
+      // This should have been caught earlier, but handle it just in case
+      setListing(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    
+    // If we've seen all or almost all listings, check if there are any unseen
+    if (seenIds.size >= count) {
+      setNoMoreListings(true);
+      setShowFeedbackScreen(true);
+      setListing(null);
+      setLoading(false);
+      return;
+    }
+    
+    // Try to find an unseen listing, but limit attempts to avoid infinite loops
+    let attempts = 0;
+    const maxAttempts = Math.min(100, count * 2); // Reasonable limit based on count
+    
+    do {
+      safeOffset = typeof requestedOffset === "number" 
+        ? Math.max(0, Math.min(requestedOffset, count - 1))
+        : Math.floor(Math.random() * count);
+      attempts++;
+      
+      // If we've tried many times, just use the offset even if seen (better than infinite loop)
+      if (attempts >= maxAttempts) break;
+      
+      // If we haven't seen many listings yet, don't worry about avoiding them
+      if (seenIds.size < count * 0.5) break;
+    } while (attempts < maxAttempts && seenIds.size > 0 && count > seenIds.size);
+    
+    // Final safety check: ensure offset is within bounds
+    safeOffset = Math.max(0, Math.min(safeOffset, count - 1));
 
     // Step 3: Query listing at safe offset
     // Try common ID column name variations: "ID", "id", "listing_uuid", "uuid"
@@ -269,10 +309,20 @@ export default function DecisionPage() {
       return;
     }
 
-    // Fail-safe: if count > 0 but query returns empty, invalidate stale cache
+    // Fail-safe: if count > 0 but query returns empty, check if we've seen all
     if (!qErr && (!data || data.length === 0)) {
+      const currentSeenIds = getSeenListingIds();
+      if (currentSeenIds.size >= count && count > 0) {
+        // We've seen all available listings
+        setNoMoreListings(true);
+        setShowFeedbackScreen(true);
+        setListing(null);
+        setLoading(false);
+        return;
+      }
+      // Otherwise, invalidate cache and try again
       setListing(null);
-      setError("No Active listing found.");
+      setError("No Active listing found at this offset.");
       setActiveCount(null); // Invalidate cache for next manual attempt
       setLoading(false);
       return;
@@ -351,11 +401,15 @@ export default function DecisionPage() {
   function nextListing() {
     // Check if we've seen all listings before loading next one
     const seenIds = getSeenListingIds();
-    if (activeCount !== null && seenIds.size >= activeCount) {
+    const currentCount = activeCount;
+    if (currentCount !== null && currentCount > 0 && seenIds.size >= currentCount) {
+      setNoMoreListings(true);
       setShowFeedbackScreen(true);
       setListing(null);
       return;
     }
+    // Reset noMoreListings state when trying to load next
+    setNoMoreListings(false);
     loadListing(); // Will pick random offset within valid range
   }
 
@@ -384,6 +438,20 @@ export default function DecisionPage() {
   function restartSearch() {
     clearSeenListings();
     // Redirect to beginning of flow (questionnaire)
+    window.location.href = "/flow";
+  }
+
+  function clearFiltersAndRestart() {
+    // Clear survey answers from localStorage
+    const LS_KEY = "pepe_answers_v1";
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(LS_KEY);
+    }
+    clearSeenListings();
+    setActiveCount(null); // Reset count cache
+    setNoMoreListings(false);
+    setError(null);
+    // Redirect to survey to set new preferences
     window.location.href = "/flow";
   }
 
@@ -425,11 +493,91 @@ export default function DecisionPage() {
         </div>
       ) : null}
 
+      {!loading && !listing && !error && activeCount === 0 ? (
+        <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+          <h1 style={{ marginTop: 0, marginBottom: 16 }}>No listings match your filters</h1>
+          <p style={{ fontSize: 18, marginBottom: 32, opacity: 0.8 }}>
+            {hasFilters 
+              ? "Try adjusting your budget or bedroom preferences to see more options."
+              : "No active listings are currently available."}
+          </p>
+          
+          {hasFilters ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <button
+                onClick={clearFiltersAndRestart}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.15)",
+                  background: "white",
+                  cursor: "pointer",
+                  fontWeight: 900,
+                  fontSize: 16,
+                }}
+              >
+                Update Search Preferences
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Clear filters but keep seen listings, reload without filters
+                  const LS_KEY = "pepe_answers_v1";
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem(LS_KEY);
+                  }
+                  setActiveCount(null);
+                  setError(null);
+                  loadListing();
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.15)",
+                  background: "rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 16,
+                }}
+              >
+                Show All Listings (Clear Filters)
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={restartSearch}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Restart Search
+            </button>
+          )}
+        </div>
+      ) : null}
+
       {showFeedbackScreen ? (
         <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <h1 style={{ marginTop: 0, marginBottom: 16 }}>We haven't found your match yet.</h1>
+          <h1 style={{ marginTop: 0, marginBottom: 16 }}>
+            {noMoreListings 
+              ? "You've seen all available listings"
+              : "We haven't found your match yet."}
+          </h1>
           <p style={{ fontSize: 18, marginBottom: 32, opacity: 0.8 }}>
-            Help us refine your search.
+            {noMoreListings
+              ? hasFilters
+                ? "You've viewed all listings that match your current filters. Try adjusting your preferences to see more options."
+                : "You've viewed all available listings. Check back later for new options."
+              : "Help us refine your search."}
           </p>
           
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
@@ -482,21 +630,68 @@ export default function DecisionPage() {
             </button>
           </div>
 
-          <button
-            onClick={restartSearch}
-            style={{
-              width: "100%",
-              padding: "14px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "white",
-              cursor: "pointer",
-              fontWeight: 900,
-              fontSize: 16,
-            }}
-          >
-            Restart Search
-          </button>
+          {hasFilters && noMoreListings ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <button
+                onClick={clearFiltersAndRestart}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.15)",
+                  background: "white",
+                  cursor: "pointer",
+                  fontWeight: 900,
+                  fontSize: 16,
+                }}
+              >
+                Update Search Preferences
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Clear filters but keep seen listings, reload without filters
+                  const LS_KEY = "pepe_answers_v1";
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem(LS_KEY);
+                  }
+                  setActiveCount(null);
+                  setNoMoreListings(false);
+                  setShowFeedbackScreen(false);
+                  setError(null);
+                  loadListing();
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.15)",
+                  background: "rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 16,
+                }}
+              >
+                Show All Listings (Clear Filters)
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={restartSearch}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                background: "white",
+                cursor: "pointer",
+                fontWeight: 900,
+                fontSize: 16,
+              }}
+            >
+              Restart Search
+            </button>
+          )}
         </div>
       ) : !loading && !listing ? (
         <div style={{ marginTop: 10 }}>
