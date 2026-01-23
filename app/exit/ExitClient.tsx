@@ -356,7 +356,6 @@ export default function ExitClient() {
     <div style={{ padding: 24, maxWidth: 860, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 10, opacity: 0.75 }}>
         <div style={{ fontSize: 12 }}>{listing?.listing_id ? `Listing: ${listing.listing_id}` : "Listing: —"}</div>
-        <div style={{ fontSize: 12 }}>{decision?.session_id ? `Session: ${decision.session_id}` : ""}</div>
       </div>
 
       <h1 style={{ marginTop: 0 }}>{title}</h1>
