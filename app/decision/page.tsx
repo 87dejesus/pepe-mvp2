@@ -142,6 +142,9 @@ export default function DecisionPage() {
   const [fadeIn, setFadeIn] = useState(true);
   const [noMoreListings, setNoMoreListings] = useState(false);
   const [hasFilters, setHasFilters] = useState(false);
+  const [applyButtonLabel, setApplyButtonLabel] = useState("Apply now");
+  const [passButtonLabel, setPassButtonLabel] = useState("Wait consciously");
+  const [applyButtonColor, setApplyButtonColor] = useState("#1a2b3c");
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -355,6 +358,14 @@ export default function DecisionPage() {
     // Mark this listing as seen if we haven't seen it before
     addSeenListingId(normalizedRow.id);
     }
+    
+    // Randomize button labels and color for each new listing
+    const applyLabels = ["I love it!", "Check it out", "Schedule a Tour", "Send to Pepe", "Dream Home"];
+    const passLabels = ["Not today", "Next please", "Keep looking", "Wait consciously"];
+    setApplyButtonLabel(applyLabels[Math.floor(Math.random() * applyLabels.length)]);
+    setPassButtonLabel(passLabels[Math.floor(Math.random() * passLabels.length)]);
+    // Randomly pick between Navy Blue and Hunter Green for Apply button
+    setApplyButtonColor(Math.random() > 0.5 ? "#1a2b3c" : "#2d4a3e");
     
     setListing(normalizedRow);
     setLoading(false);
@@ -784,7 +795,7 @@ export default function DecisionPage() {
                 padding: 16,
               }}
             >
-              <h3 style={{ marginTop: 0 }}>Apply now</h3>
+              <h3 style={{ marginTop: 0, fontSize: 20, fontWeight: 700 }}>Take Action</h3>
               <ul style={{ marginTop: 8, lineHeight: 1.55 }}>
                 {tradeoffs?.applyNow.map((t) => (
                   <li key={t}>{t}</li>
@@ -803,16 +814,37 @@ export default function DecisionPage() {
                   width: "100%",
                   marginTop: 10,
                   padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: listing ? "white" : "#f7f7f7",
+                  borderRadius: 14,
+                  border: "none",
+                  background: listing ? applyButtonColor : "#f7f7f7",
+                  color: listing ? "white" : "#999",
                   cursor: listing ? "pointer" : "not-allowed",
-                  fontWeight: 900,
+                  fontWeight: 700,
                   fontSize: 16,
                   opacity: listing ? 1 : 0.6,
+                  transition: "all 0.2s ease-in-out",
+                  boxShadow: listing ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (listing) {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                    e.currentTarget.style.opacity = "0.95";
+                    // Darken the color on hover
+                    const hoverColor = applyButtonColor === "#1a2b3c" ? "#0f1a24" : "#1e3328";
+                    e.currentTarget.style.background = hoverColor;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (listing) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.background = applyButtonColor;
+                  }
                 }}
               >
-                Apply now
+                {applyButtonLabel}
               </button>
             </div>
 
@@ -824,7 +856,7 @@ export default function DecisionPage() {
                 padding: 16,
               }}
             >
-              <h3 style={{ marginTop: 0 }}>Wait consciously</h3>
+              <h3 style={{ marginTop: 0, fontSize: 20, fontWeight: 700 }}>Keep Looking</h3>
               <ul style={{ marginTop: 8, lineHeight: 1.55 }}>
                 {tradeoffs?.waitConsciously.map((t) => (
                   <li key={t}>{t}</li>
@@ -843,16 +875,35 @@ export default function DecisionPage() {
                   width: "100%",
                   marginTop: 10,
                   padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: listing ? "white" : "#f7f7f7",
+                  borderRadius: 14,
+                  border: listing ? "1px solid #64748b" : "1px solid #e2e8f0",
+                  background: listing ? "#64748b" : "#f7f7f7",
+                  color: listing ? "white" : "#999",
                   cursor: listing ? "pointer" : "not-allowed",
-                  fontWeight: 900,
+                  fontWeight: 700,
                   fontSize: 16,
                   opacity: listing ? 1 : 0.6,
+                  transition: "all 0.2s ease-in-out",
+                  boxShadow: listing ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (listing) {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                    e.currentTarget.style.opacity = "0.95";
+                    e.currentTarget.style.background = "#475569";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (listing) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.background = "#64748b";
+                  }
                 }}
               >
-                Wait consciously
+                {passButtonLabel}
               </button>
             </div>
           </div>
