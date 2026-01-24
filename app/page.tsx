@@ -6,11 +6,13 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black">
       <header className="flex w-full max-w-3xl mx-auto items-center justify-between px-6 py-4 bg-white dark:bg-black">
         <Image
-          src="/icon.png"
-          alt="Pepe"
-          width={40}
-          height={40}
-          className="h-10 w-auto object-contain"
+          src="/logo-v2.png"
+          alt="Pepe Logo"
+          width={600}
+          height={200}
+          className="h-12 w-auto object-contain"
+          priority
+          unoptimized
         />
         <Link
           href="/flow"
