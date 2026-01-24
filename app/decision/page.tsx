@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { sendGAEvent } from "@next/third-parties/google";
 import { supabase } from "../../lib/supabase";
 
 type PressureLevel = "High" | "Medium" | "Low";
@@ -387,6 +388,12 @@ export default function DecisionPage() {
   function logDecision(outcome: "apply" | "wait") {
     if (!listing) {
       return;
+    }
+
+    if (outcome === "apply") {
+      sendGAEvent({ event: "lead_capture", value: listing.listing_id });
+    } else {
+      sendGAEvent({ event: "listing_pass", value: listing.listing_id });
     }
 
     const currentSessionId = sessionId || getSessionId();
