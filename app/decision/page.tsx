@@ -158,7 +158,7 @@ export default function DecisionPage() {
 
     // Load survey answers from localStorage
     const LS_KEY = "pepe_answers_v1";
-    let surveyAnswers: { budgetMax?: number; beds?: "0" | "1" | "2" | "3+" } | null = null;
+    let surveyAnswers: { boroughs?: string[]; budgetMax?: number; beds?: "0" | "1" | "2" | "3+" } | null = null;
     try {
       const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
       if (stored) {
@@ -170,6 +170,7 @@ export default function DecisionPage() {
     }
 
     // Extract filter values
+    const selectedBoroughs = surveyAnswers?.boroughs; // Array of boroughs like ["Manhattan", "Brooklyn"]
     const maxPrice = surveyAnswers?.budgetMax;
     const bedsPreference = surveyAnswers?.beds;
     
@@ -187,7 +188,7 @@ export default function DecisionPage() {
 
     // Step 1: Get count of Active listings if not cached
     // If filters are present, always recalculate count to ensure accuracy
-    const filtersActive = (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
+    const filtersActive = (selectedBoroughs && selectedBoroughs.length > 0) || (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
     setHasFilters(filtersActive);
     let count = filtersActive ? null : activeCount; // Invalidate cache if filters are present
     if (count === null) {
@@ -195,6 +196,12 @@ export default function DecisionPage() {
         .from("pepe_listings")
         .select("*", { count: "exact", head: true })
         .eq("status", "Active");
+
+      // Apply borough filter if available - STRICT MATCH (critical for accuracy)
+      if (selectedBoroughs && selectedBoroughs.length > 0) {
+        // Use .in() for strict matching - only show listings in selected boroughs
+        countQuery = countQuery.in("borough", selectedBoroughs);
+      }
 
       // Apply price filter if available
       if (maxPrice !== undefined && maxPrice !== null) {
@@ -287,6 +294,12 @@ export default function DecisionPage() {
       .from("pepe_listings")
       .select("*")
       .eq("status", "Active");
+
+    // Apply borough filter if available - STRICT MATCH (critical for accuracy)
+    if (selectedBoroughs && selectedBoroughs.length > 0) {
+      // Use .in() for strict matching - only show listings in selected boroughs
+      listingQuery = listingQuery.in("borough", selectedBoroughs);
+    }
 
     // Apply price filter if available
     if (maxPrice !== undefined && maxPrice !== null) {
@@ -428,6 +441,8 @@ export default function DecisionPage() {
     }
     // Reset noMoreListings state when trying to load next
     setNoMoreListings(false);
+    // Invalidate cache to force fresh query and avoid lag
+    setActiveCount(null);
     loadListing(); // Will pick random offset within valid range
   }
 
