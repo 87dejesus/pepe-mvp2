@@ -27,10 +27,10 @@ export default function Home() {
             Stop the NYC Rental Chaos
           </h1>
           <p className="max-w-2xl text-xl leading-8 text-zinc-700 dark:text-zinc-300">
-            The apartment hunt in NYC is brutal. It's exhausting. The endless scrolling, the decision fatigue, the fear of settling for a place you'll regret.
+            NYC rentals don't give you time to think. Pepe helps you objectively weigh the trade-offs of a listing in seconds, so you can decide if you should act now or wait for the next one.
           </p>
           <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Pepe helps you cut through the noise and decide with confidence. No more second-guessing. No more "what if I waited?" No more regret.
+            Stop scrolling and start deciding. Pepe aligns your non-negotiables with the reality of the market, so you can move with clarity instead of panic.
           </p>
           <Link
             href="/decision"
