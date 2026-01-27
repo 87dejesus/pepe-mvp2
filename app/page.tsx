@@ -34,16 +34,27 @@ export default function Home() {
             />
           </div>
           <h1 className="text-5xl font-bold leading-tight tracking-tight text-black dark:text-zinc-50">
-            withPepe 🏠
+            Stop the NYC Rental Chaos withPepe{" "}
+            <Image
+              src="/logo-v2.png"
+              alt="Pepe"
+              width={40}
+              height={40}
+              className="inline-block ml-2"
+              unoptimized
+            />
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Find your perfect NYC apartment match
+          <p className="max-w-2xl text-xl leading-8 text-zinc-700 dark:text-zinc-300">
+            The apartment hunt in NYC is brutal. It's exhausting. The endless scrolling, the decision fatigue, the fear of settling for a place you'll regret.
+          </p>
+          <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Pepe helps you cut through the noise and decide with confidence. No more second-guessing. No more "what if I waited?" No more regret.
           </p>
           <Link
             href="/decision"
             className="flex h-12 items-center justify-center rounded-full bg-black px-8 text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
           >
-            Get Started
+            Decide with Confidence
           </Link>
         </div>
       </main>
