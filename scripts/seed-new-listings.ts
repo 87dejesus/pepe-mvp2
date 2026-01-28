@@ -30,8 +30,7 @@ const SAMPLE_LISTINGS = [
     description: "Charming pre-war one bedroom with exposed brick and hardwood floors. Natural light floods through oversized windows. Quiet tree-lined block.",
     vibe_keywords: ["charming", "exposed brick", "hardwood", "natural light", "quiet", "tree-lined", "pre-war"],
     freshness_score: 85,
-    source: "manual",
-  },
+      },
   {
     address: "456 Bergen Street, Unit 3",
     borough: "Brooklyn",
@@ -45,8 +44,7 @@ const SAMPLE_LISTINGS = [
     description: "Spacious two bedroom with modern renovations. Open layout with high ceilings. Close to Prospect Park. Laundry in building.",
     vibe_keywords: ["spacious", "modern", "renovated", "open layout", "high ceilings"],
     freshness_score: 92,
-    source: "manual",
-  },
+      },
   {
     address: "789 Steinway Street, Apt 4F",
     borough: "Queens",
@@ -60,8 +58,7 @@ const SAMPLE_LISTINGS = [
     description: "Bright one bedroom near the N/W trains. Sunny southern exposure with views. Doorman building with rooftop access.",
     vibe_keywords: ["bright", "sunny", "views", "doorman", "rooftop"],
     freshness_score: 78,
-    source: "manual",
-  },
+      },
   {
     address: "321 Grand Concourse, Unit 12A",
     borough: "Bronx",
@@ -75,8 +72,7 @@ const SAMPLE_LISTINGS = [
     description: "Affordable two bedroom in an Art Deco building. High ceilings with original details. Hardwood floors throughout.",
     vibe_keywords: ["high ceilings", "original details", "hardwood"],
     freshness_score: 65,
-    source: "manual",
-  },
+      },
   {
     address: "555 Waverly Place, Garden Apt",
     borough: "Manhattan",
@@ -90,8 +86,7 @@ const SAMPLE_LISTINGS = [
     description: "Cozy studio with private garden access. Peaceful retreat on a quiet block. Windowed kitchen and exposed brick.",
     vibe_keywords: ["cozy", "garden", "peaceful", "quiet", "windowed kitchen", "exposed brick"],
     freshness_score: 100,
-    source: "manual",
-  },
+      },
   {
     address: "888 Manhattan Ave, Apt 6R",
     borough: "Brooklyn",
@@ -105,8 +100,7 @@ const SAMPLE_LISTINGS = [
     description: "Modern one bedroom with dishwasher and central air. Bright corner unit. Near waterfront parks.",
     vibe_keywords: ["modern", "bright", "dishwasher", "central air", "waterfront"],
     freshness_score: 88,
-    source: "manual",
-  },
+      },
   {
     address: "200 Claremont Ave, Apt 8B",
     borough: "Manhattan",
@@ -120,8 +114,7 @@ const SAMPLE_LISTINGS = [
     description: "Classic pre-war charm near Columbia. Quiet residential area with tree-lined streets. Courtyard views.",
     vibe_keywords: ["pre-war", "charm", "quiet", "tree-lined", "courtyard"],
     freshness_score: 72,
-    source: "manual",
-  },
+      },
   {
     address: "45 Court Street, Unit 2F",
     borough: "Brooklyn",
@@ -135,8 +128,7 @@ const SAMPLE_LISTINGS = [
     description: "Spacious two bed two bath with laundry in unit. Doorman building. Manhattan views from living room.",
     vibe_keywords: ["spacious", "laundry in unit", "doorman", "views"],
     freshness_score: 95,
-    source: "manual",
-  },
+      },
 ];
 
 async function seed() {

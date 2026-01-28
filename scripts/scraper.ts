@@ -215,10 +215,10 @@ class ListingScraper {
     if (!this.page) throw new Error("Browser not initialized");
 
     console.log(`Navigating to: ${url}`);
-    await this.page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+    await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
 
-    console.log("Waiting for page to fully load...");
-    await this.page.waitForTimeout(5000);
+    console.log("Waiting for page to load...");
+    await this.page.waitForTimeout(8000);
 
     await this.page.screenshot({ path: "streeteasy-debug.png", fullPage: true });
     console.log("Screenshot saved to streeteasy-debug.png");
@@ -387,6 +387,100 @@ class ListingScraper {
   }
 
   /**
+   * Scrape Craigslist search results
+   */
+  async scrapeCraigslist(url: string): Promise<ScrapedListing[]> {
+    if (!this.page) throw new Error("Browser not initialized");
+
+    // Force list view in URL
+    const listUrl = url.includes("?") ? `${url}&view=list` : `${url}#search=1~list~0~0`;
+
+    console.log(`Navigating to: ${listUrl}`);
+    await this.page.goto(listUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+
+    // Wait for page to fully load
+    console.log("Waiting for listings to load...");
+    await this.page.waitForTimeout(5000);
+
+    // Try clicking list view button if gallery is shown
+    try {
+      const listBtn = await this.page.$('button[data-mode="list"], .cl-list-view');
+      if (listBtn) {
+        await listBtn.click();
+        await this.page.waitForTimeout(3000);
+      }
+    } catch {
+      // Already in list view or button not found
+    }
+
+    // Scroll to trigger lazy loading
+    await this.page.evaluate(() => window.scrollBy(0, 500));
+    await this.page.waitForTimeout(2000);
+
+    await this.page.screenshot({ path: "craigslist-debug.png" });
+    console.log("Screenshot saved to craigslist-debug.png");
+
+    console.log("Extracting listings...");
+
+    const listings = await this.page.evaluate(() => {
+      const results: Array<{
+        title: string;
+        price: string;
+        url: string;
+        neighborhood: string;
+        bedrooms: string;
+        datePosted: string;
+      }> = [];
+
+      // Craigslist gallery items
+      const cards = document.querySelectorAll(".cl-search-result, .result-row, li.cl-static-search-result");
+
+      cards.forEach((card) => {
+        try {
+          const titleEl = card.querySelector(".titlestring, .result-title, a.posting-title");
+          const priceEl = card.querySelector(".priceinfo, .result-price, .price");
+          const linkEl = card.querySelector("a.posting-title, a.result-title, a[href*='/apa/']") as HTMLAnchorElement;
+          const hoodEl = card.querySelector(".meta .nearby, .result-hood");
+          const bedsEl = card.querySelector(".bedrooms, .housing");
+          const dateEl = card.querySelector("time, .result-date");
+
+          if (titleEl) {
+            results.push({
+              title: titleEl.textContent?.trim() || "",
+              price: priceEl?.textContent?.trim() || "",
+              url: linkEl?.href || "",
+              neighborhood: hoodEl?.textContent?.trim().replace(/[()]/g, "") || "",
+              bedrooms: bedsEl?.textContent?.trim() || "",
+              datePosted: dateEl?.getAttribute("datetime") || dateEl?.textContent?.trim() || "",
+            });
+          }
+        } catch {
+          // Skip
+        }
+      });
+
+      return results;
+    });
+
+    console.log(`Found ${listings.length} listings`);
+
+    return listings.map((l) => ({
+      address: l.title,
+      borough: normalizeBorough(l.neighborhood || l.title),
+      neighborhood: l.neighborhood,
+      price: cleanPrice(l.price),
+      bedrooms: cleanBedrooms(l.bedrooms),
+      bathrooms: 1,
+      pets: "Unknown",
+      original_url: l.url,
+      description: l.title,
+      vibe_keywords: extractVibeKeywords(l.title),
+      freshness_score: calculateFreshnessScore(l.datePosted),
+      source: "craigslist",
+    }));
+  }
+
+  /**
    * Generic scraper for unknown sites
    */
   async scrapeGeneric(url: string): Promise<ScrapedListing[]> {
@@ -433,7 +527,6 @@ async function saveListings(listings: ScrapedListing[]): Promise<number> {
         description: l.description,
         vibe_keywords: l.vibe_keywords,
         freshness_score: l.freshness_score,
-        source: l.source,
         status: "Active",
       }))
     )
@@ -491,6 +584,8 @@ Features:
       listings = await scraper.scrapeStreetEasy(url);
     } else if (url.includes("zillow.com")) {
       listings = await scraper.scrapeZillow(url);
+    } else if (url.includes("craigslist.org")) {
+      listings = await scraper.scrapeCraigslist(url);
     } else {
       listings = await scraper.scrapeGeneric(url);
     }
