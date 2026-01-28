@@ -1,952 +1,362 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { sendGAEvent } from "@next/third-parties/google";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "../../lib/supabase";
 
-type PressureLevel = "High" | "Medium" | "Low";
+const LS_KEY = "pepe_answers_v2";
 
-type Listing = {
-  id: string; // UUID (primary key)
-  listing_id: string; // NYC-0001 (human)
-  city: string;
-  borough: string;
-  neighborhood: string;
-  bedrooms: number;
-  bathrooms: number;
-  monthly_rent_usd: number;
-  deal_incentive: string | null;
-  broker_fee: string | null;
-  building_type: string | null;
-  constraints: string | null;
-  commute_note: string;
-  pressure_signals: string | null;
-  primary_image_url: string | null;
-  apply_url: string;
-  curation_note: string;
-  status: string | null;
-  last_checked_date: string | null;
+type Answers = {
+  boroughs: string[];
+  budget: number;
+  bedrooms: string;
+  bathrooms: string;
+  pets: string;
+  amenities: string[];
+  timing: string;
 };
 
-function getSessionId(): string {
-  const key = "pepe_session_id";
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
+type Listing = {
+  id: string;
+  borough: string;
+  neighborhood: string | null;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  pets: string | null;
+  image_url: string | null;
+  original_url: string | null;
+  description: string | null;
+  vibe_keywords: string[] | null;
+  address: string | null;
+  freshness_score: number | null;
+};
 
-  const id =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `sess_${Math.random().toString(36).slice(2)}_${Date.now()}`;
-
-  window.localStorage.setItem(key, id);
-  return id;
-}
-
-function money(n: number) {
-  try {
-    return `$${n.toLocaleString()}`;
-  } catch {
-    return `$${n}`;
-  }
-}
-
-function formatDateMMDDYYYY(iso: string | null) {
-  if (!iso) return null;
-  // iso might be "2026-01-09" or timestamp; handle both
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) {
-    // fallback for "YYYY-MM-DD"
-    const parts = iso.split("-");
-    if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-    return iso;
-  }
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const y = String(d.getFullYear());
-  return `${m}/${day}/${y}`;
-}
-
-function computePressure(listing: Listing): { level: PressureLevel; reasons: string[] } {
-  const text = (listing.pressure_signals ?? "").toLowerCase();
-  const reasons: string[] = [];
-
-  const highSignals = ["multiple", "bidding", "fast", "urgent", "limited", "today", "high demand", "move-in asap"];
-  const mediumSignals = ["available", "new building", "several", "inventory", "incentive", "promo"];
-
-  const hasHigh = highSignals.some((s) => text.includes(s));
-  const hasMedium = mediumSignals.some((s) => text.includes(s));
-
-  if (hasHigh) reasons.push("Pressure signals suggest competition or speed is required.");
-  if (listing.deal_incentive) reasons.push("Incentives can disappear quickly in NYC.");
-  if ((listing.broker_fee ?? "").toLowerCase() === "yes") reasons.push("Broker fee increases switching cost.");
-
-  let level: PressureLevel = "Low";
-  if (hasHigh) level = "High";
-  else if (hasMedium || listing.deal_incentive) level = "Medium";
-
-  if (reasons.length === 0) reasons.push("No strong pressure signals were detected.");
-
-  return { level, reasons };
-}
-
-function buildTradeoffs(listing: Listing, level: PressureLevel) {
-  const applyNow: string[] = [];
-  const waitConsciously: string[] = [];
-
-  // Apply now bullets
-  applyNow.push("Speed increases odds in competitive markets");
-  if (level !== "Low") applyNow.push("Delaying may remove incentives");
-  applyNow.push("If it fits your criteria, acting early is rational");
-
-  // Wait consciously bullets
-  waitConsciously.push("Waiting preserves optionality");
-  waitConsciously.push("Useful if constraints are unclear");
-  if (level === "High") waitConsciously.push("Only wait with a clear comparison plan");
-
-  return { applyNow, waitConsciously };
-}
-
-function getSeenListingIds(): Set<string> {
-  const key = "pepe_seen_listings";
-  const stored = window.localStorage.getItem(key);
-  if (!stored) return new Set();
-  try {
-    const ids = JSON.parse(stored) as string[];
-    return new Set(ids);
-  } catch {
-    return new Set();
-  }
-}
-
-function addSeenListingId(id: string): void {
-  const key = "pepe_seen_listings";
-  const seen = getSeenListingIds();
-  seen.add(id);
-  window.localStorage.setItem(key, JSON.stringify(Array.from(seen)));
-}
-
-function clearSeenListings(): void {
-  const key = "pepe_seen_listings";
-  window.localStorage.removeItem(key);
-}
+type MatchType = "perfect" | "partial" | null;
 
 export default function DecisionPage() {
-  const router = useRouter();
-  const [sessionId, setSessionId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [view, setView] = useState<"intro" | "loading" | "listing" | "no-results">("intro");
   const [listing, setListing] = useState<Listing | null>(null);
+  const [matchType, setMatchType] = useState<MatchType>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeCount, setActiveCount] = useState<number | null>(null);
-  const [debugStatus, setDebugStatus] = useState<string | null>(null);
-  const [showFeedbackScreen, setShowFeedbackScreen] = useState(false);
-  const [fadeIn, setFadeIn] = useState(true);
-  const [noMoreListings, setNoMoreListings] = useState(false);
-  const [hasFilters, setHasFilters] = useState(false);
-  const [applyButtonLabel, setApplyButtonLabel] = useState("Apply now");
-  const [passButtonLabel, setPassButtonLabel] = useState("Wait consciously");
-  const [applyButtonColor, setApplyButtonColor] = useState("#1a2b3c");
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [hasAnswers, setHasAnswers] = useState<boolean | null>(null);
+  const [debugMessage, setDebugMessage] = useState<string>("");
 
   useEffect(() => {
-    setSessionId(getSessionId());
+    setMounted(true);
+    const stored = localStorage.getItem(LS_KEY);
+    setHasAnswers(!!stored);
   }, []);
 
-  async function loadListing(requestedOffset?: number) {
-    setLoading(true);
-    setError(null);
-    setFadeIn(false); // Fade out when starting to load new listing
-
-    // Load survey answers from localStorage
-    const LS_KEY = "pepe_answers_v1";
-    let surveyAnswers: { boroughs?: string[]; budgetMax?: number; beds?: "0" | "1" | "2" | "3+" } | null = null;
+  function getAnswers(): Answers | null {
     try {
-      const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
-      if (stored) {
-        surveyAnswers = JSON.parse(stored);
-      }
-    } catch (e) {
-      // If parsing fails, continue without filters
-      console.warn("Failed to parse survey answers:", e);
+      const stored = localStorage.getItem(LS_KEY);
+      if (!stored) return null;
+      return JSON.parse(stored) as Answers;
+    } catch {
+      return null;
     }
-
-    // Extract filter values
-    const selectedBoroughs = surveyAnswers?.boroughs; // Array of boroughs like ["Manhattan", "Brooklyn"]
-    const maxPrice = surveyAnswers?.budgetMax;
-    const bedsPreference = surveyAnswers?.beds;
-    
-    // Convert beds preference to number or range
-    // "0" -> 0, "1" -> 1, "2" -> 2, "3+" -> use .gte(3)
-    let requestedBedrooms: number | null = null;
-    let useBedroomsGte = false;
-    if (bedsPreference === "0") requestedBedrooms = 0;
-    else if (bedsPreference === "1") requestedBedrooms = 1;
-    else if (bedsPreference === "2") requestedBedrooms = 2;
-    else if (bedsPreference === "3+") {
-      requestedBedrooms = 3;
-      useBedroomsGte = true;
-    }
-
-    // Step 1: Get count of Active listings if not cached
-    // If filters are present, always recalculate count to ensure accuracy
-    const filtersActive = (selectedBoroughs && selectedBoroughs.length > 0) || (maxPrice !== undefined && maxPrice !== null) || requestedBedrooms !== null;
-    setHasFilters(filtersActive);
-    let count = filtersActive ? null : activeCount; // Invalidate cache if filters are present
-    if (count === null) {
-      let countQuery = supabase
-        .from("pepe_listings")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "Active");
-
-      // Apply borough filter if available - STRICT MATCH (critical for accuracy)
-      if (selectedBoroughs && selectedBoroughs.length > 0) {
-        // Use .in() for strict matching - only show listings in selected boroughs
-        countQuery = countQuery.in("borough", selectedBoroughs);
-      }
-
-      // Apply price filter if available
-      if (maxPrice !== undefined && maxPrice !== null) {
-        countQuery = countQuery.lte("monthly_rent_usd", maxPrice);
-      }
-
-      // Apply bedrooms filter if available
-      if (requestedBedrooms !== null) {
-        if (useBedroomsGte) {
-          countQuery = countQuery.gte("bedrooms", requestedBedrooms);
-        } else {
-          countQuery = countQuery.eq("bedrooms", requestedBedrooms);
-        }
-      }
-
-      const { count: activeCountResult, error: countErr } = await countQuery;
-
-      if (countErr) {
-        setListing(null);
-        setError(countErr.message);
-        setLoading(false);
-        return;
-      }
-
-      count = activeCountResult ?? 0;
-      setActiveCount(count);
-
-      if (count === 0) {
-        setListing(null);
-        setError(null); // Clear error, we'll show a better message
-        setNoMoreListings(false); // This is "no matches", not "seen all"
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Check if we've seen all listings
-    const seenIds = getSeenListingIds();
-    if (seenIds.size >= count && count > 0) {
-      setNoMoreListings(true);
-      setShowFeedbackScreen(true);
-      setListing(null);
-      setLoading(false);
-      return;
-    }
-
-    // Step 2: Determine safe offset (random if not specified, within valid range)
-    // Ensure offset is within bounds and try to avoid already-seen listings
-    let safeOffset: number;
-    if (count === 0) {
-      // This should have been caught earlier, but handle it just in case
-      setListing(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    
-    // If we've seen all or almost all listings, check if there are any unseen
-    if (seenIds.size >= count) {
-      setNoMoreListings(true);
-      setShowFeedbackScreen(true);
-      setListing(null);
-      setLoading(false);
-      return;
-    }
-    
-    // Try to find an unseen listing, but limit attempts to avoid infinite loops
-    let attempts = 0;
-    const maxAttempts = Math.min(100, count * 2); // Reasonable limit based on count
-    
-    do {
-      safeOffset = typeof requestedOffset === "number" 
-        ? Math.max(0, Math.min(requestedOffset, count - 1))
-        : Math.floor(Math.random() * count);
-      attempts++;
-      
-      // If we've tried many times, just use the offset even if seen (better than infinite loop)
-      if (attempts >= maxAttempts) break;
-      
-      // If we haven't seen many listings yet, don't worry about avoiding them
-      if (seenIds.size < count * 0.5) break;
-    } while (attempts < maxAttempts && seenIds.size > 0 && count > seenIds.size);
-    
-    // Final safety check: ensure offset is within bounds
-    safeOffset = Math.max(0, Math.min(safeOffset, count - 1));
-
-    // Step 3: Query listing at safe offset
-    // Try common ID column name variations: "ID", "id", "listing_uuid", "uuid"
-    let listingQuery = supabase
-      .from("pepe_listings")
-      .select("*")
-      .eq("status", "Active");
-
-    // Apply borough filter if available - STRICT MATCH (critical for accuracy)
-    if (selectedBoroughs && selectedBoroughs.length > 0) {
-      // Use .in() for strict matching - only show listings in selected boroughs
-      listingQuery = listingQuery.in("borough", selectedBoroughs);
-    }
-
-    // Apply price filter if available
-    if (maxPrice !== undefined && maxPrice !== null) {
-      listingQuery = listingQuery.lte("monthly_rent_usd", maxPrice);
-    }
-
-    // Apply bedrooms filter if available
-    if (requestedBedrooms !== null) {
-      if (useBedroomsGte) {
-        listingQuery = listingQuery.gte("bedrooms", requestedBedrooms);
-      } else {
-        listingQuery = listingQuery.eq("bedrooms", requestedBedrooms);
-      }
-    }
-
-    const { data, error: qErr } = await listingQuery
-      .order("listing_id", { ascending: true })
-      .range(safeOffset, safeOffset);
-
-    if (qErr) {
-      setListing(null);
-      setError(qErr.message);
-      setLoading(false);
-      return;
-    }
-
-    // Fail-safe: if count > 0 but query returns empty, check if we've seen all
-    if (!qErr && (!data || data.length === 0)) {
-      const currentSeenIds = getSeenListingIds();
-      if (currentSeenIds.size >= count && count > 0) {
-        // We've seen all available listings
-        setNoMoreListings(true);
-        setShowFeedbackScreen(true);
-        setListing(null);
-        setLoading(false);
-        return;
-      }
-      // Otherwise, invalidate cache and try again
-      setListing(null);
-      setError("No Active listing found at this offset.");
-      setActiveCount(null); // Invalidate cache for next manual attempt
-      setLoading(false);
-      return;
-    }
-
-    // Validate data structure at runtime - ensure id exists before casting
-    const rawRow = data?.[0];
-    if (!rawRow || typeof rawRow !== "object" || Array.isArray(rawRow)) {
-      setListing(null);
-      setError("Invalid listing data: missing required ID field.");
-      setLoading(false);
-      return;
-    }
-
-    const r = rawRow as Record<string, unknown>;
-    // Use listing_id as the primary identifier and map it to id
-    const listingId = r["listing_id"] as string | undefined;
-    if (!listingId || typeof listingId !== "string" || listingId.trim() === "") {
-      setListing(null);
-      setError("Invalid listing data: missing required listing_id field. Available columns: " + Object.keys(r).join(", "));
-      setLoading(false);
-      return;
-    }
-
-    // Normalize the row to always have "id" field mapped from listing_id for consistency
-    const normalizedRow = { ...r, id: listingId } as Listing;
-    
-    // Check if we've already seen this specific listing
-    if (!seenIds.has(normalizedRow.id)) {
-    // Mark this listing as seen if we haven't seen it before
-    addSeenListingId(normalizedRow.id);
-    }
-    
-    // Randomize button labels and color for each new listing
-    const applyLabels = ["I love it!", "Check it out", "Schedule a Tour", "Send to Pepe", "Dream Home"];
-    const passLabels = ["Not today", "Next please", "Keep looking", "Wait consciously"];
-    setApplyButtonLabel(applyLabels[Math.floor(Math.random() * applyLabels.length)]);
-    setPassButtonLabel(passLabels[Math.floor(Math.random() * passLabels.length)]);
-    // Randomly pick between Navy Blue and Hunter Green for Apply button
-    setApplyButtonColor(Math.random() > 0.5 ? "#1a2b3c" : "#2d4a3e");
-    
-    setListing(normalizedRow);
-    setLoading(false);
-    // Trigger fade-in animation after a brief delay to ensure smooth transition
-    setTimeout(() => setFadeIn(true), 50);
   }
 
-  useEffect(() => {
-    loadListing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  function buildBedroomFilter(bedrooms: string): { eq?: number; gte?: number } {
+    if (bedrooms === "0") return { eq: 0 };
+    if (bedrooms === "1") return { eq: 1 };
+    if (bedrooms === "2") return { eq: 2 };
+    if (bedrooms === "3+") return { gte: 3 };
+    return {};
+  }
 
-  const pressure = useMemo(() => (listing ? computePressure(listing) : null), [listing]);
-  const tradeoffs = useMemo(
-    () => (listing && pressure ? buildTradeoffs(listing, pressure.level) : null),
-    [listing, pressure]
-  );
+  function matchesPetRequirement(listingPets: string | null, userPets: string): boolean {
+    if (userPets === "none") return true;
+    if (!listingPets) return true;
 
-  function logDecision(outcome: "apply" | "wait") {
-    if (!listing) {
-      return;
+    const petsLower = listingPets.toLowerCase();
+    if (petsLower.includes("no pets") || petsLower === "none") {
+      return userPets === "none";
     }
-
-    if (outcome === "apply") {
-      sendGAEvent({ event: "lead_capture", value: listing.listing_id });
-    } else {
-      sendGAEvent({ event: "listing_pass", value: listing.listing_id });
-    }
-
-    const currentSessionId = sessionId || getSessionId();
-    const payload = {
-      session_id: currentSessionId,
-      step: 1,
-      listing_id: listing.listing_id,
-      listing_uuid: listing.id,
-      outcome,
-      paywall_seen: false,
-      subscribed: false,
-    };
-
-    // Fire-and-forget insert - don't await to avoid blocking navigation
-    void supabase.from("pepe_decision_logs").insert(payload);
-
-    // Navigate immediately - cannot be blocked
-    // Append listing_uuid to URL as source of truth
-    const targetUrl = `/exit?choice=${outcome}&listing_uuid=${listing.id}`;
-    window.location.assign(targetUrl);
+    return true;
   }
 
-  function nextListing() {
-    // Check if we've seen all listings before loading next one
-    const seenIds = getSeenListingIds();
-    const currentCount = activeCount;
-    if (currentCount !== null && currentCount > 0 && seenIds.size >= currentCount) {
-      setNoMoreListings(true);
-      setShowFeedbackScreen(true);
-      setListing(null);
-      return;
-    }
-    // Reset noMoreListings state when trying to load next
-    setNoMoreListings(false);
-    // Invalidate cache to force fresh query and avoid lag
-    setActiveCount(null);
-    loadListing(); // Will pick random offset within valid range
-  }
-
-  async function logFeedback(feedback: "price_too_high" | "wrong_location" | "style_not_for_me") {
-    const currentSessionId = sessionId || getSessionId();
-    const payload = {
-      session_id: currentSessionId,
-      step: 1,
-      listing_id: null,
-      listing_uuid: null,
-      outcome: feedback as string,
-      paywall_seen: false,
-      subscribed: false,
-    };
-
-    // Fire-and-forget insert
-    void supabase.from("pepe_decision_logs").insert(payload);
-  }
-
-  function handleFeedbackClick(feedback: "price_too_high" | "wrong_location" | "style_not_for_me") {
-    logFeedback(feedback);
-    // After logging, could navigate or show thank you message
-    // For now, just log it
-  }
-
-  function restartSearch() {
-    clearSeenListings();
-    // Redirect to beginning of flow (questionnaire)
-    window.location.href = "/flow";
-  }
-
-  function clearFiltersAndRestart() {
-    // Clear survey answers from localStorage
-    const LS_KEY = "pepe_answers_v1";
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(LS_KEY);
-    }
-    clearSeenListings();
-    setActiveCount(null); // Reset count cache
-    setNoMoreListings(false);
+  async function handleFindListings() {
+    setView("loading");
     setError(null);
-    // Redirect to survey to set new preferences
+    setDebugMessage("");
+
+    const answers = getAnswers();
+    if (!answers) {
+      setError("No preferences found. Please complete the questionnaire first.");
+      setView("intro");
+      return;
+    }
+
+    try {
+      const bedroomFilter = buildBedroomFilter(answers.bedrooms);
+
+      let query = supabase
+        .from("listings")
+        .select("*")
+        .eq("status", "Active")
+        .in("borough", answers.boroughs)
+        .lte("price", answers.budget);
+
+      if (bedroomFilter.eq !== undefined) {
+        query = query.eq("bedrooms", bedroomFilter.eq);
+      } else if (bedroomFilter.gte !== undefined) {
+        query = query.gte("bedrooms", bedroomFilter.gte);
+      }
+
+      if (answers.bathrooms === "1") {
+        query = query.gte("bathrooms", 1);
+      } else if (answers.bathrooms === "1.5") {
+        query = query.gte("bathrooms", 1.5);
+      } else if (answers.bathrooms === "2+") {
+        query = query.gte("bathrooms", 2);
+      }
+
+      const { data: perfectMatches, error: err1 } = await query;
+
+      if (err1) {
+        setError(err1.message);
+        setDebugMessage(`Query error: ${err1.message}`);
+        setView("intro");
+        return;
+      }
+
+      const unseenPerfect = (perfectMatches || []).filter(
+        (l) => !seenIds.has(l.id) && matchesPetRequirement(l.pets, answers.pets)
+      );
+
+      if (unseenPerfect.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unseenPerfect.length);
+        const row = unseenPerfect[randomIndex];
+
+        setSeenIds((prev) => new Set([...prev, row.id]));
+        setListing(row);
+        setMatchType("perfect");
+        setView("listing");
+        return;
+      }
+
+      // Fallback: Borough + Budget only
+      const partialQuery = supabase
+        .from("listings")
+        .select("*")
+        .eq("status", "Active")
+        .in("borough", answers.boroughs)
+        .lte("price", answers.budget);
+
+      const { data: partialMatches, error: err2 } = await partialQuery;
+
+      if (err2) {
+        setError(err2.message);
+        setView("intro");
+        return;
+      }
+
+      const unseenPartial = (partialMatches || []).filter(
+        (l) => !seenIds.has(l.id) && matchesPetRequirement(l.pets, answers.pets)
+      );
+
+      if (unseenPartial.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unseenPartial.length);
+        const row = unseenPartial[randomIndex];
+
+        setSeenIds((prev) => new Set([...prev, row.id]));
+        setListing(row);
+        setMatchType("partial");
+        setView("listing");
+        return;
+      }
+
+      setDebugMessage(
+        `Filters: Boroughs=[${answers.boroughs.join(", ")}], Budget=$${answers.budget}, Bedrooms=${answers.bedrooms}\n` +
+        `DB returned: ${perfectMatches?.length || 0} perfect, ${partialMatches?.length || 0} partial matches.`
+      );
+      setView("no-results");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Unexpected error occurred.";
+      setError(errorMessage);
+      setView("intro");
+    }
+  }
+
+  function handleNextListing() {
+    handleFindListings();
+  }
+
+  function handleApply() {
+    if (listing?.original_url) {
+      window.open(listing.original_url, "_blank");
+    }
+  }
+
+  function handleRestartFlow() {
+    localStorage.removeItem(LS_KEY);
     window.location.href = "/flow";
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+        <div style={{ width: 48, height: 48, border: "3px solid #059669", borderTopColor: "transparent", borderRadius: "50%", margin: "40px auto 24px", animation: "spin 1s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (hasAnswers === false) {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+        <Image src="/logo-v2.png" alt="Pepe" width={100} height={100} className="mx-auto" style={{ objectFit: "contain", marginTop: 40, marginBottom: 24 }} unoptimized />
+        <h1 style={{ marginBottom: 16, color: "#27272a" }}>Let&apos;s Get Started</h1>
+        <p style={{ fontSize: 18, marginBottom: 32, color: "#52525b", lineHeight: 1.6 }}>Tell us what you&apos;re looking for so we can find the perfect place for you.</p>
+        <button onClick={() => (window.location.href = "/flow")} style={{ width: "100%", padding: "16px 24px", borderRadius: 14, border: "none", background: "#059669", color: "white", cursor: "pointer", fontWeight: 700, fontSize: 18 }}>
+          Start Questionnaire
+        </button>
+      </div>
+    );
+  }
+
+  if (view === "intro") {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+        <Image src="/logo-v2.png" alt="Pepe" width={100} height={100} className="mx-auto" style={{ objectFit: "contain", marginTop: 40, marginBottom: 24 }} unoptimized />
+        <h1 style={{ marginBottom: 16, color: "#27272a" }}>Ready to Find Your Place?</h1>
+        <p style={{ fontSize: 18, marginBottom: 32, color: "#52525b", lineHeight: 1.6 }}>We&apos;ll show you curated NYC listings one at a time, filtered by your non-negotiables.</p>
+        {error && <div style={{ color: "#dc2626", marginBottom: 16, padding: 12, background: "#fef2f2", borderRadius: 8 }}>{error}</div>}
+        <button onClick={handleFindListings} style={{ width: "100%", padding: "16px 24px", borderRadius: 14, border: "none", background: "#059669", color: "white", cursor: "pointer", fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
+          Find Listings
+        </button>
+        <button onClick={() => (window.location.href = "/flow")} style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", background: "white", cursor: "pointer", fontWeight: 600, fontSize: 16, color: "#27272a" }}>
+          Update My Preferences
+        </button>
+      </div>
+    );
+  }
+
+  if (view === "loading") {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+        <div style={{ width: 48, height: 48, border: "3px solid #059669", borderTopColor: "transparent", borderRadius: "50%", margin: "40px auto 24px", animation: "spin 1s linear infinite" }} />
+        <h1 style={{ fontSize: 24, color: "#27272a" }}>Searching...</h1>
+        <p style={{ color: "#71717a" }}>Finding apartments that match your criteria...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (view === "no-results") {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+        <Image src="/logo-v2.png" alt="Pepe" width={80} height={80} className="mx-auto" style={{ objectFit: "contain", marginTop: 40, marginBottom: 16 }} unoptimized />
+        <h1 style={{ marginBottom: 16, color: "#27272a" }}>No Matches Found</h1>
+        <p style={{ fontSize: 18, marginBottom: 24, color: "#52525b", lineHeight: 1.6 }}>We couldn&apos;t find any listings that match your criteria.</p>
+        {debugMessage && (
+          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 8, padding: 16, marginBottom: 24, textAlign: "left", fontSize: 13, color: "#92400e", whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
+            <strong>Debug:</strong><br />{debugMessage}
+          </div>
+        )}
+        <button onClick={handleRestartFlow} style={{ width: "100%", padding: "16px 24px", borderRadius: 14, border: "none", background: "#059669", color: "white", cursor: "pointer", fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
+          Update My Preferences
+        </button>
+        <button onClick={() => { setSeenIds(new Set()); handleFindListings(); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", background: "white", cursor: "pointer", fontWeight: 600, fontSize: 16, color: "#27272a" }}>
+          Start Over
+        </button>
+      </div>
+    );
+  }
+
+  if (view === "listing" && listing) {
+    return (
+      <div style={{ padding: 24, maxWidth: 900, margin: "0 auto", background: "#FDFCF8", minHeight: "100vh" }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          {matchType === "perfect" ? (
+            <div style={{ display: "inline-block", padding: "10px 20px", background: "#dcfce7", color: "#166534", borderRadius: 20, fontSize: 14, fontWeight: 600 }}>
+              Perfect Match for your Peace of Mind
+            </div>
+          ) : (
+            <div style={{ display: "inline-block", padding: "10px 20px", background: "#fef3c7", color: "#92400e", borderRadius: 20, fontSize: 14, fontWeight: 600 }}>
+              Close match - fits your main criteria
+            </div>
+          )}
+        </div>
+
+        <h1 style={{ textAlign: "center", marginTop: 0, marginBottom: 8, color: "#27272a" }}>
+          {listing.neighborhood}, {listing.borough}
+        </h1>
+
+        {listing.address && (
+          <div style={{ textAlign: "center", marginBottom: 8, color: "#71717a", fontSize: 14 }}>
+            {listing.address}
+          </div>
+        )}
+
+        <div style={{ textAlign: "center", marginBottom: 20, color: "#52525b", fontSize: 18 }}>
+          {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} bed`} &bull; {listing.bathrooms} bath &bull; <strong>${listing.price.toLocaleString()}/mo</strong>
+        </div>
+
+        {listing.image_url && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <img src={listing.image_url} alt="Listing" style={{ width: "100%", maxWidth: 800, borderRadius: 16, border: "1px solid rgba(0,0,0,0.1)" }} />
+          </div>
+        )}
+
+        {listing.description && (
+          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16, marginBottom: 20, background: "white" }}>
+            <div style={{ fontWeight: 700, marginBottom: 8, color: "#27272a" }}>About This Place</div>
+            <div style={{ lineHeight: 1.6, color: "#52525b" }}>{listing.description}</div>
+          </div>
+        )}
+
+        {listing.vibe_keywords && listing.vibe_keywords.length > 0 && (
+          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16, marginBottom: 20, background: "#f0fdf4" }}>
+            <div style={{ fontWeight: 700, marginBottom: 8, color: "#166534" }}>Vibe</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {listing.vibe_keywords.map((keyword, i) => (
+                <span key={i} style={{ padding: "4px 12px", background: "#dcfce7", borderRadius: 12, fontSize: 14, color: "#166534" }}>{keyword}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {listing.freshness_score && listing.freshness_score >= 70 && (
+          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16, marginBottom: 20, background: "#fef3c7" }}>
+            <div style={{ fontWeight: 700, marginBottom: 8, color: "#92400e" }}>Fresh Listing</div>
+            <div style={{ lineHeight: 1.6, color: "#78350f" }}>This listing was recently posted - act fast!</div>
+          </div>
+        )}
+
+        <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16, marginBottom: 20, background: "white" }}>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            <div><strong>Pets:</strong> {listing.pets || "Ask landlord"}</div>
+            <div><strong>Bedrooms:</strong> {listing.bedrooms === 0 ? "Studio" : listing.bedrooms}</div>
+            <div><strong>Bathrooms:</strong> {listing.bathrooms}</div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <button onClick={handleApply} style={{ flex: 1, minWidth: 200, padding: "14px 20px", borderRadius: 12, border: "none", background: "#059669", color: "white", cursor: "pointer", fontWeight: 700, fontSize: 16 }}>
+            View Listing
+          </button>
+          <button onClick={handleNextListing} style={{ flex: 1, minWidth: 200, padding: "14px 20px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", background: "white", cursor: "pointer", fontWeight: 700, fontSize: 16, color: "#27272a" }}>
+            Next Listing
+          </button>
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={() => setView("intro")} style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", color: "#71717a", fontSize: 14 }}>
+            Back to Start
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 980, margin: "0 auto" }}>
-      {loading ? <div>Loading…</div> : null}
-
-      {debugStatus ? (
-        <div
-          style={{
-            border: "2px solid rgba(59, 130, 246, 0.5)",
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 12,
-            background: "rgba(59, 130, 246, 0.1)",
-            fontWeight: 600,
-          }}
-        >
-          <div style={{ marginBottom: 4 }}>Debug Status:</div>
-          <div>{debugStatus}</div>
-        </div>
-      ) : null}
-
-      {!loading && error ? (
-        <div
-          style={{
-            border: "1px solid rgba(220, 38, 38, 0.35)",
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>Error</div>
-          <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
-        </div>
-      ) : null}
-
-      {!loading && !listing && !error && activeCount === 0 ? (
-        <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <h1 style={{ marginTop: 0, marginBottom: 16 }}>No listings match your filters</h1>
-          <p style={{ fontSize: 18, marginBottom: 32, opacity: 0.8 }}>
-            {hasFilters 
-              ? "Try adjusting your budget or bedroom preferences to see more options."
-              : "No active listings are currently available."}
-          </p>
-          
-          {hasFilters ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <button
-                onClick={clearFiltersAndRestart}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: "white",
-                  cursor: "pointer",
-                  fontWeight: 900,
-                  fontSize: 16,
-                }}
-              >
-                Update Search Preferences
-              </button>
-              
-              <button
-                onClick={() => {
-                  // Clear filters but keep seen listings, reload without filters
-                  const LS_KEY = "pepe_answers_v1";
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem(LS_KEY);
-                  }
-                  setActiveCount(null);
-                  setError(null);
-                  loadListing();
-                }}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: "rgba(0,0,0,0.05)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: 16,
-                }}
-              >
-                Show All Listings (Clear Filters)
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={restartSearch}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Restart Search
-            </button>
-          )}
-        </div>
-      ) : null}
-
-      {showFeedbackScreen ? (
-        <div style={{ padding: 24, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <h1 style={{ marginTop: 0, marginBottom: 16 }}>
-            {noMoreListings 
-              ? "You've seen all available listings"
-              : "We haven't found your match yet."}
-          </h1>
-          <p style={{ fontSize: 18, marginBottom: 32, opacity: 0.8 }}>
-            {noMoreListings
-              ? hasFilters
-                ? "You've viewed all listings that match your current filters. Try adjusting your preferences to see more options."
-                : "You've viewed all available listings. Check back later for new options."
-              : "Help us refine your search."}
-          </p>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-            <button
-              onClick={() => handleFeedbackClick("price_too_high")}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Price too high
-            </button>
-            
-            <button
-              onClick={() => handleFeedbackClick("wrong_location")}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Wrong location
-            </button>
-            
-            <button
-              onClick={() => handleFeedbackClick("style_not_for_me")}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Style not for me
-            </button>
-          </div>
-
-          {hasFilters && noMoreListings ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <button
-                onClick={clearFiltersAndRestart}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: "white",
-                  cursor: "pointer",
-                  fontWeight: 900,
-                  fontSize: 16,
-                }}
-              >
-                Update Search Preferences
-              </button>
-              
-              <button
-                onClick={() => {
-                  // Clear filters but keep seen listings, reload without filters
-                  const LS_KEY = "pepe_answers_v1";
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem(LS_KEY);
-                  }
-                  setActiveCount(null);
-                  setNoMoreListings(false);
-                  setShowFeedbackScreen(false);
-                  setError(null);
-                  loadListing();
-                }}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  background: "rgba(0,0,0,0.05)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: 16,
-                }}
-              >
-                Show All Listings (Clear Filters)
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={restartSearch}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Restart Search
-            </button>
-          )}
-        </div>
-      ) : !loading && !listing ? (
-        <div style={{ marginTop: 10 }}>
-          <div style={{ fontWeight: 900 }}>No Active listing found</div>
-          <button
-            onClick={nextListing}
-            style={{
-              marginTop: 10,
-              padding: "12px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "white",
-              cursor: "pointer",
-              fontWeight: 900,
-            }}
-          >
-            Next listing
-          </button>
-        </div>
-      ) : null}
-
-      {!loading && listing ? (
-        <div
-          style={{
-            opacity: fadeIn ? 1 : 0,
-            transition: "opacity 0.3s ease-in-out",
-          }}
-        >
-          <div style={{ textAlign: "center", marginBottom: 10, opacity: 0.8, fontSize: 12 }}>
-            Listing: {listing.listing_id}
-            {listing.last_checked_date ? (
-              <span style={{ marginLeft: 10 }}>
-                last checked: {formatDateMMDDYYYY(listing.last_checked_date)}
-              </span>
-            ) : null}
-          </div>
-
-          <h1 style={{ textAlign: "center", marginTop: 0 }}>
-            {listing.neighborhood}, {listing.borough}
-          </h1>
-
-          <div style={{ textAlign: "center", marginBottom: 16, opacity: 0.9 }}>
-            {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} bed`} • {listing.bathrooms} bath •{" "}
-            {money(Number(listing.monthly_rent_usd))}/mo
-          </div>
-
-          {listing.primary_image_url ? (
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-              <img
-                src={listing.primary_image_url}
-                alt="Listing"
-                loading="lazy"
-                style={{
-                  width: "100%",
-                  maxWidth: 900,
-                  borderRadius: 18,
-                  border: "1px solid rgba(0,0,0,0.08)",
-                }}
-              />
-            </div>
-          ) : null}
-
-          <div
-            style={{
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 14,
-              padding: 16,
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ fontWeight: 900, marginBottom: 8 }}>Curation note</div>
-            <div style={{ lineHeight: 1.55 }}>{listing.curation_note}</div>
-
-            {listing.pressure_signals ? (
-              <>
-                <div style={{ fontWeight: 900, marginTop: 14, marginBottom: 8 }}>Pressure signals</div>
-                <div style={{ lineHeight: 1.55 }}>{listing.pressure_signals}</div>
-              </>
-            ) : null}
-
-            {pressure ? (
-              <div style={{ marginTop: 14, opacity: 0.9 }}>
-                <b>Pressure level:</b> {pressure.level}
-              </div>
-            ) : null}
-          </div>
-
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <div
-              style={{
-                flex: "1 1 360px",
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 14,
-                padding: 16,
-              }}
-            >
-              <h3 style={{ marginTop: 0, fontSize: 20, fontWeight: 700 }}>Take Action</h3>
-              <ul style={{ marginTop: 8, lineHeight: 1.55 }}>
-                {tradeoffs?.applyNow.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-
-              <button
-                type="button"
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  logDecision("apply");
-                }}
-                disabled={!listing}
-                style={{
-                  width: "100%",
-                  marginTop: 10,
-                  padding: "14px 16px",
-                  borderRadius: 14,
-                  border: "none",
-                  background: listing ? applyButtonColor : "#f7f7f7",
-                  color: listing ? "white" : "#999",
-                  cursor: listing ? "pointer" : "not-allowed",
-                  fontWeight: 700,
-                  fontSize: 16,
-                  opacity: listing ? 1 : 0.6,
-                  transition: "all 0.2s ease-in-out",
-                  boxShadow: listing ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (listing) {
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-                    e.currentTarget.style.opacity = "0.95";
-                    // Darken the color on hover
-                    const hoverColor = applyButtonColor === "#1a2b3c" ? "#0f1a24" : "#1e3328";
-                    e.currentTarget.style.background = hoverColor;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (listing) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.background = applyButtonColor;
-                  }
-                }}
-              >
-                {applyButtonLabel}
-              </button>
-            </div>
-
-            <div
-              style={{
-                flex: "1 1 360px",
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 14,
-                padding: 16,
-              }}
-            >
-              <h3 style={{ marginTop: 0, fontSize: 20, fontWeight: 700 }}>Keep Looking</h3>
-              <ul style={{ marginTop: 8, lineHeight: 1.55 }}>
-                {tradeoffs?.waitConsciously.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-
-              <button
-                type="button"
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  logDecision("wait");
-                }}
-                disabled={!listing}
-                style={{
-                  width: "100%",
-                  marginTop: 10,
-                  padding: "14px 16px",
-                  borderRadius: 14,
-                  border: listing ? "1px solid #64748b" : "1px solid #e2e8f0",
-                  background: listing ? "#64748b" : "#f7f7f7",
-                  color: listing ? "white" : "#999",
-                  cursor: listing ? "pointer" : "not-allowed",
-                  fontWeight: 700,
-                  fontSize: 16,
-                  opacity: listing ? 1 : 0.6,
-                  transition: "all 0.2s ease-in-out",
-                  boxShadow: listing ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (listing) {
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-                    e.currentTarget.style.opacity = "0.95";
-                    e.currentTarget.style.background = "#475569";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (listing) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.background = "#64748b";
-                  }
-                }}
-              >
-                {passButtonLabel}
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
-            <button
-              onClick={nextListing}
-              style={{
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-              }}
-            >
-              Next listing
-            </button>
-          </div>
-        </div>
-      ) : null}
+    <div style={{ padding: 24, textAlign: "center", background: "#FDFCF8", minHeight: "100vh" }}>
+      <p style={{ color: "#27272a" }}>Something went wrong. Please refresh the page.</p>
     </div>
   );
 }
