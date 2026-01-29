@@ -1,1 +1,9 @@
-{ "installCommand": "npm install --legacy-peer-deps" }
+{
+  "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
