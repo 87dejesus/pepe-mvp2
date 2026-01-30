@@ -32,28 +32,59 @@ export default function DecisionPage() {
   const item = listings[currentIndex];
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center">
-      <div className="w-full max-w-md bg-white border-b-4 border-black shadow-lg">
-        {item?.images?.[0] ? (
-          <img src={item.images[0]} className="w-full h-80 object-cover border-b-4 border-black" />
-        ) : (
-          <div className="w-full h-80 bg-gray-200 flex items-center justify-center italic font-bold">No Image</div>
-        )}
-        <div className="p-6 pb-24">
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter">{item?.neighborhood || 'NYC'}</h2>
-          <p className="font-black text-2xl text-[#00A651] mt-1">${item?.price}</p>
-          <div className="flex gap-2 mt-2 font-bold text-sm uppercase">
-             <span className="bg-gray-200 px-2 py-1 border border-black">{item?.bedrooms} Bed</span>
-             <span className="bg-gray-200 px-2 py-1 border border-black">{item?.bathrooms} Bath</span>
+    <main className="min-h-screen bg-[#fdfcee] bg-[radial-gradient(#00000022_1px,transparent_1px)] bg-[length:20px_20px] flex flex-col items-center px-4 py-6">
+      {/* Card do Apartamento - Estilo Neobrutalista */}
+      <div className="w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        {/* Container da Imagem com Preço Absoluto */}
+        <div className="relative">
+          {item?.images?.[0] ? (
+            <img
+              src={item.images[0]}
+              alt={item?.neighborhood || 'Listing'}
+              className="w-full h-72 object-cover border-b-4 border-black"
+            />
+          ) : (
+            <div className="w-full h-72 bg-gray-200 flex items-center justify-center italic font-black text-gray-500 border-b-4 border-black">
+              No Image
+            </div>
+          )}
+          {/* Preço - Box Verde no Canto Superior Direito da Imagem */}
+          <div className="absolute top-3 right-3 bg-[#00A651] border-4 border-black px-3 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="text-white font-black text-xl">${item?.price?.toLocaleString()}</span>
           </div>
-          <p className="mt-6 text-base font-bold leading-tight border-t-2 border-black pt-4">{item?.description}</p>
+        </div>
+
+        {/* Info do Apartamento */}
+        <div className="p-5 pb-28">
+          {/* Bairro - Negrito, Itálico, Caixa Alta */}
+          <h2 className="text-2xl font-black italic uppercase tracking-tight">
+            {item?.neighborhood || 'NYC'}
+          </h2>
+
+          {/* Badges de Quartos e Banheiros */}
+          <div className="flex gap-2 mt-3">
+            <span className="bg-white border-2 border-black px-3 py-1 font-bold text-sm uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              {item?.bedrooms} Bed
+            </span>
+            <span className="bg-white border-2 border-black px-3 py-1 font-bold text-sm uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              {item?.bathrooms} Bath
+            </span>
+          </div>
+
+          {/* Descricao */}
+          {item?.description && (
+            <p className="mt-5 text-sm font-medium leading-relaxed border-t-4 border-black pt-4">
+              {item.description}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="fixed bottom-6 w-full max-w-md px-6 z-[999]">
+      {/* Botao NEXT LISTING - Verde Neobrutalista */}
+      <div className="fixed bottom-6 w-full max-w-md px-4 z-[999]">
         <button
           onClick={handleNext}
-          className="w-full bg-black text-white text-2xl font-black py-5 rounded-2xl border-b-8 border-gray-800 shadow-2xl active:border-b-0 active:translate-y-2 transition-all"
+          className="w-full bg-[#00A651] text-white text-xl font-black italic uppercase py-4 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all"
         >
           NEXT LISTING →
         </button>
