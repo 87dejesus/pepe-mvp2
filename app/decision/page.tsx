@@ -43,41 +43,69 @@ type MatchAnalysis = {
   score: number;
   pressureLevel: 'HIGH' | 'MEDIUM' | 'LOW';
   pressureText: string;
-  reasons: string[];
-  concerns: string[];
+  contextLine: string;
   pepeTake: string;
   waitTradeoff: string;
+  hasImage: boolean;
 };
 
+function formatBedroomText(bedrooms: number): string {
+  if (bedrooms === 0) return 'Studio';
+  if (bedrooms === 1) return '1 bed';
+  return `${bedrooms} beds`;
+}
+
+function formatBathroomText(bathrooms: number): string {
+  if (bathrooms === 1) return '1 bath';
+  return `${bathrooms} baths`;
+}
+
+function generateContextLine(listing: Listing, answers: Answers): string {
+  const lines: string[] = [];
+
+  // Size context
+  if (listing.bedrooms === 0) {
+    lines.push('Compact layout, better for one person');
+  } else if (listing.bedrooms === 1) {
+    lines.push('Space for a couple or solo with a home office');
+  } else if (listing.bedrooms >= 2) {
+    lines.push('Room for roommates or a growing household');
+  }
+
+  // Budget context
+  const budgetDiff = answers.budget - listing.price;
+  if (budgetDiff >= 500) {
+    lines.push('leaves breathing room in your budget');
+  } else if (budgetDiff < 0) {
+    lines.push('stretches your stated budget');
+  }
+
+  // Pet context
+  if (answers.pets !== 'none' && listing.pets_allowed) {
+    lines.push('pet-friendly');
+  } else if (answers.pets !== 'none' && !listing.pets_allowed) {
+    lines.push('pet policy unclear');
+  }
+
+  return lines.slice(0, 2).join(', ') + '.';
+}
+
 function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
-  const reasons: string[] = [];
-  const concerns: string[] = [];
   let score = 50;
+  const hasImage = !!(listing.images && listing.images.length > 0 && listing.images[0]);
 
   // Budget Analysis
   const budgetDiff = answers.budget - listing.price;
   const budgetPercent = (budgetDiff / answers.budget) * 100;
 
   if (listing.price <= answers.budget) {
-    if (budgetPercent >= 20) {
-      score += 20;
-      reasons.push(`$${(answers.budget - listing.price).toLocaleString()} under budget`);
-    } else if (budgetPercent >= 10) {
-      score += 15;
-      reasons.push('Comfortably within budget');
-    } else {
-      score += 10;
-      reasons.push('Fits budget');
-    }
+    if (budgetPercent >= 20) score += 20;
+    else if (budgetPercent >= 10) score += 15;
+    else score += 10;
   } else {
     const overPercent = ((listing.price - answers.budget) / answers.budget) * 100;
-    if (overPercent <= 10) {
-      score -= 10;
-      concerns.push(`$${(listing.price - answers.budget).toLocaleString()} over budget`);
-    } else {
-      score -= 25;
-      concerns.push('Significantly over budget');
-    }
+    if (overPercent <= 10) score -= 10;
+    else score -= 25;
   }
 
   // Borough Match
@@ -86,56 +114,28 @@ function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
       b => listing.borough?.toLowerCase().includes(b.toLowerCase()) ||
            listing.neighborhood?.toLowerCase().includes(b.toLowerCase())
     );
-    if (boroughMatch) {
-      score += 15;
-      reasons.push('In your preferred area');
-    } else {
-      score -= 10;
-      concerns.push('Outside preferred borough');
-    }
+    if (boroughMatch) score += 15;
+    else score -= 10;
   }
 
   // Bedrooms Match
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
   const neededBedrooms = bedroomMap[answers.bedrooms] ?? 1;
-
-  if (listing.bedrooms >= neededBedrooms) {
-    score += 10;
-    if (listing.bedrooms > neededBedrooms) {
-      reasons.push('Extra bedroom available');
-    } else {
-      reasons.push('Right bedroom count');
-    }
-  } else {
-    score -= 15;
-    concerns.push('Fewer bedrooms than needed');
-  }
+  if (listing.bedrooms >= neededBedrooms) score += 10;
+  else score -= 15;
 
   // Bathrooms Match
   const bathroomMap: Record<string, number> = { '1': 1, '1.5': 1.5, '2+': 2 };
   const neededBathrooms = bathroomMap[answers.bathrooms] ?? 1;
-
-  if (listing.bathrooms >= neededBathrooms) {
-    score += 5;
-    reasons.push('Bathroom count works');
-  } else {
-    score -= 5;
-    concerns.push('Fewer bathrooms');
-  }
+  if (listing.bathrooms >= neededBathrooms) score += 5;
+  else score -= 5;
 
   // Pets
-  if (answers.pets !== 'none' && !listing.pets_allowed) {
-    score -= 20;
-    concerns.push('Pet policy unclear');
-  } else if (answers.pets !== 'none' && listing.pets_allowed) {
-    score += 10;
-    reasons.push('Pet-friendly');
-  }
+  if (answers.pets !== 'none' && !listing.pets_allowed) score -= 20;
+  else if (answers.pets !== 'none' && listing.pets_allowed) score += 10;
 
   // Timing urgency bonus
-  if (answers.timing === 'asap') {
-    score += 5;
-  }
+  if (answers.timing === 'asap') score += 5;
 
   // Clamp score
   score = Math.max(0, Math.min(100, score));
@@ -146,47 +146,58 @@ function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
 
   if (score >= 75) {
     pressureLevel = 'HIGH';
-    pressureText = 'Strong match. In NYC, places like this move fast. Waiting means risking it.';
+    pressureText = 'This matches what you told me matters. In NYC, listings like this move fast.';
   } else if (score >= 55) {
     pressureLevel = 'MEDIUM';
-    pressureText = 'Decent fit with tradeoffs. Worth considering, but not urgent.';
+    pressureText = 'Decent fit, but there are tradeoffs. Take your time to weigh them.';
   } else {
     pressureLevel = 'LOW';
-    pressureText = 'Weak match. No pressure here—keep looking.';
+    pressureText = 'This one has gaps. No rush here.';
   }
 
+  // Generate context line
+  const contextLine = generateContextLine(listing, answers);
+
   // Generate Pepe's Take
-  const pepeTake = generatePepeTake(score, reasons, concerns);
+  const pepeTake = generatePepeTake(listing, answers, score, hasImage);
 
   // Generate Wait Tradeoff text
-  const waitTradeoff = generateWaitTradeoff(listing, score, concerns);
+  const waitTradeoff = generateWaitTradeoff(listing, score);
 
-  return { score, pressureLevel, pressureText, reasons, concerns, pepeTake, waitTradeoff };
+  return { score, pressureLevel, pressureText, contextLine, pepeTake, waitTradeoff, hasImage };
 }
 
 function generatePepeTake(
+  listing: Listing,
+  answers: Answers,
   score: number,
-  reasons: string[],
-  concerns: string[]
+  hasImage: boolean
 ): string {
+  if (!hasImage) {
+    return `I can't fully assess this one without seeing it. The numbers work, but photos matter. Proceed with caution or request images before deciding.`;
+  }
+
   if (score >= 80) {
-    return `This checks your boxes. NYC apartments like this don't wait. Act now or risk losing it.`;
+    return `This checks your boxes. Budget works, location fits, size matches. Apartments like this don't wait around in this market.`;
   } else if (score >= 65) {
-    return `Good match. Not perfect, but solid. In this market, "good enough" is often the right call.`;
+    const budgetNote = listing.price <= answers.budget
+      ? 'Budget is comfortable.'
+      : 'It stretches your budget, but might be worth it.';
+    return `Solid match overall. ${budgetNote} Not perfect, but in NYC, "good enough" often is.`;
   } else if (score >= 50) {
-    return `Mixed signals. ${concerns[0] || 'Some compromises here'}. Only you know if they're worth it.`;
+    return `Mixed signals here. It works on some levels, not others. Only you know which tradeoffs you can live with.`;
   } else {
-    return `This one doesn't fit what you told me. ${concerns[0] || 'Too many gaps'}. Keep exploring.`;
+    return `This one doesn't line up with what you told me. The gaps would likely frustrate you daily.`;
   }
 }
 
-function generateWaitTradeoff(listing: Listing, score: number, concerns: string[]): string {
+function generateWaitTradeoff(listing: Listing, score: number): string {
   if (score >= 75) {
-    return `By waiting, you accept that this ${listing.neighborhood} listing may be gone tomorrow. If another renter acts first, you'll need to find something else that matches ${listing.bedrooms}BR under $${listing.price?.toLocaleString()}.`;
+    return `You're choosing to let this one go for now. That's valid—but know that someone else might act on it today. If it disappears, you'll need to find another ${formatBedroomText(listing.bedrooms)} in ${listing.neighborhood} under $${listing.price?.toLocaleString()}.`;
   } else if (score >= 55) {
-    return `Waiting is reasonable here. The concerns (${concerns.slice(0, 2).join(', ') || 'tradeoffs'}) are real. But remember: in NYC, "perfect" rarely exists. You're trading certainty for optionality.`;
+    return `Waiting makes sense here. The fit isn't strong enough to rush. But remember: in NYC, "perfect" rarely shows up. You're trading this certainty for the hope of something better.`;
   } else {
-    return `Good call to wait. This listing has gaps that would frustrate you daily. Your criteria exist for a reason—trust them.`;
+    return `Good instinct. This listing doesn't match what you need. Your criteria exist for a reason—trust them and keep looking.`;
   }
 }
 
@@ -230,7 +241,6 @@ export default function DecisionPage() {
         .eq('status', 'Active');
 
       if (data && answers) {
-        // Sort by match score (best first)
         const sorted = [...data].sort((a, b) => {
           const scoreA = analyzeMatch(a, answers).score;
           const scoreB = analyzeMatch(b, answers).score;
@@ -262,7 +272,7 @@ export default function DecisionPage() {
     localStorage.setItem(DECISIONS_KEY, JSON.stringify(updated));
   };
 
-  const handleApply = () => {
+  const handleTakeStep = () => {
     const item = listings[currentIndex];
     if (item?.url) {
       saveDecision(item.id, 'applied');
@@ -292,8 +302,8 @@ export default function DecisionPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#00A651] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-base font-medium text-gray-600">Finding your matches...</p>
+          <div className="w-10 h-10 border-3 border-[#00A651] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-500">Finding your matches...</p>
         </div>
       </div>
     );
@@ -304,16 +314,13 @@ export default function DecisionPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">🐸</span>
-          </div>
-          <h1 className="text-xl font-bold mb-2">First, tell me what you need</h1>
+          <h1 className="text-xl font-semibold mb-2">First, tell me what you need</h1>
           <p className="text-gray-500 text-sm mb-6">
             I need your criteria to find the right matches.
           </p>
           <Link
             href="/flow"
-            className="inline-block bg-[#00A651] text-white font-semibold py-3 px-6 rounded-lg"
+            className="inline-block bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg"
           >
             Start Questionnaire
           </Link>
@@ -327,7 +334,7 @@ export default function DecisionPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
-          <h1 className="text-xl font-bold mb-2">No listings yet</h1>
+          <h1 className="text-xl font-semibold mb-2">No listings available</h1>
           <p className="text-gray-500 text-sm">Check back soon.</p>
         </div>
       </div>
@@ -336,106 +343,107 @@ export default function DecisionPage() {
 
   const item = listings[currentIndex];
   const currentDecision = decisions[item?.id];
+  const hasImage = item?.images?.[0];
 
   return (
-    <main className="min-h-screen bg-[#f8f8f8] flex flex-col">
-      {/* Minimal Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0">
-        <Link href="/flow" className="text-sm text-gray-500 hover:text-black">
-          ← Criteria
+    <main className="min-h-screen bg-[#fafafa] flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
+        <Link href="/flow" className="text-sm text-gray-400 hover:text-gray-600">
+          ← Edit criteria
         </Link>
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm text-gray-500">
           {currentIndex + 1} of {listings.length}
         </span>
       </header>
 
-      {/* Main Content - Scrollable */}
+      {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-md mx-auto p-4 pb-48">
+        <div className="max-w-md mx-auto p-4 pb-56">
 
           {/* Listing Card */}
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
 
             {/* Image */}
-            <div className="relative aspect-[4/3]">
-              {item?.images?.[0] ? (
+            <div className="relative aspect-[4/3] bg-gray-100">
+              {hasImage ? (
                 <img
                   src={item.images[0]}
-                  alt={item.neighborhood}
+                  alt={`${item.neighborhood} listing`}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400">No image</span>
+                <div className="w-full h-full flex items-center justify-center">
+                  <p className="text-sm text-gray-400">No photo available</p>
                 </div>
               )}
 
               {/* Price Badge */}
-              <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-bold text-lg px-3 py-1 rounded-lg">
+              <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-semibold px-3 py-1.5 rounded-lg text-base">
                 ${item?.price?.toLocaleString()}/mo
               </div>
 
-              {/* Decision Badge (if already decided) */}
+              {/* Decision Badge */}
               {currentDecision && (
-                <div className={`absolute top-3 right-3 px-3 py-1 rounded-lg font-semibold text-sm ${
+                <div className={`absolute top-3 right-3 px-3 py-1 rounded-lg text-sm font-medium ${
                   currentDecision === 'applied'
                     ? 'bg-[#00A651] text-white'
-                    : 'bg-yellow-400 text-black'
+                    : 'bg-amber-100 text-amber-800'
                 }`}>
-                  {currentDecision === 'applied' ? '✓ Applied' : '⏸ Waiting'}
+                  {currentDecision === 'applied' ? 'Step taken' : 'Waiting'}
                 </div>
               )}
             </div>
 
             {/* Info */}
             <div className="p-4">
-              {/* Location */}
-              <h1 className="text-xl font-bold">
+              {/* Location - Human format */}
+              <h1 className="text-lg font-semibold text-gray-900">
                 {item?.neighborhood}
-              </h1>
-              <p className="text-sm text-gray-500 mb-3">{item?.borough}</p>
-
-              {/* Specs */}
-              <div className="flex gap-2 text-sm mb-4">
-                <span className="bg-gray-100 px-2 py-1 rounded font-medium">
-                  {item?.bedrooms} bed
-                </span>
-                <span className="bg-gray-100 px-2 py-1 rounded font-medium">
-                  {item?.bathrooms} bath
-                </span>
-                {item?.pets_allowed && (
-                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
-                    Pets OK
-                  </span>
+                {item?.borough && item.borough !== item.neighborhood && (
+                  <span className="text-gray-400 font-normal"> · {item.borough}</span>
                 )}
-              </div>
+              </h1>
+
+              {/* Specs - Cleaner format */}
+              <p className="text-sm text-gray-500 mt-1">
+                {formatBedroomText(item?.bedrooms)} · {formatBathroomText(item?.bathrooms)}
+                {item?.pets_allowed && ' · Pets OK'}
+              </p>
+
+              {/* Context Line */}
+              {analysis && (
+                <p className="text-sm text-gray-600 mt-2 italic">
+                  {analysis.contextLine}
+                </p>
+              )}
 
               {/* Pressure Level */}
               {analysis && (
-                <div className={`rounded-lg p-3 mb-4 ${
+                <div className={`mt-4 rounded-lg p-3 ${
                   analysis.pressureLevel === 'HIGH'
-                    ? 'bg-red-50 border border-red-200'
+                    ? 'bg-red-50'
                     : analysis.pressureLevel === 'MEDIUM'
-                    ? 'bg-yellow-50 border border-yellow-200'
-                    : 'bg-gray-50 border border-gray-200'
+                    ? 'bg-amber-50'
+                    : 'bg-gray-50'
                 }`}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xs font-bold uppercase ${
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${
                       analysis.pressureLevel === 'HIGH'
                         ? 'text-red-600'
                         : analysis.pressureLevel === 'MEDIUM'
-                        ? 'text-yellow-700'
-                        : 'text-gray-600'
+                        ? 'text-amber-600'
+                        : 'text-gray-500'
                     }`}>
-                      {analysis.pressureLevel} PRESSURE
+                      {analysis.pressureLevel} pressure
                     </span>
-                    <span className="text-sm font-bold">{analysis.score}% match</span>
+                    <span className="text-sm font-medium text-gray-700">{analysis.score}% match</span>
                   </div>
                   <p className={`text-sm ${
                     analysis.pressureLevel === 'HIGH'
                       ? 'text-red-700'
                       : analysis.pressureLevel === 'MEDIUM'
-                      ? 'text-yellow-800'
+                      ? 'text-amber-700'
                       : 'text-gray-600'
                   }`}>
                     {analysis.pressureText}
@@ -443,42 +451,29 @@ export default function DecisionPage() {
                 </div>
               )}
 
-              {/* Pepe's Take */}
+              {/* Pepe's Take - Text only, no emoji */}
               {analysis && (
-                <div className="bg-[#f0fdf4] rounded-lg p-3 mb-4">
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg">🐸</span>
-                    <div>
-                      <p className="text-xs font-bold text-[#00A651] uppercase mb-1">Pepe's Take</p>
-                      <p className="text-sm text-gray-700">{analysis.pepeTake}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Facts */}
-              {analysis && (
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {analysis.reasons.slice(0, 2).map((r, i) => (
-                    <div key={i} className="flex items-center gap-1 text-green-700">
-                      <span>✓</span> {r}
-                    </div>
-                  ))}
-                  {analysis.concerns.slice(0, 2).map((c, i) => (
-                    <div key={i} className="flex items-center gap-1 text-yellow-700">
-                      <span>!</span> {c}
-                    </div>
-                  ))}
+                <div className="mt-4 border-l-2 border-[#00A651] pl-3">
+                  <p className="text-xs font-semibold text-[#00A651] uppercase tracking-wide mb-1">
+                    Pepe's take
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {analysis.pepeTake}
+                  </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Wait Confirmation (shows after clicking WAIT) */}
+          {/* Wait Confirmation */}
           {showWaitConfirm && analysis && (
-            <div className="mt-4 bg-yellow-50 border border-yellow-300 rounded-xl p-4">
-              <p className="text-sm font-bold text-yellow-800 mb-2">Decision recorded: Wait consciously</p>
-              <p className="text-sm text-yellow-700">{analysis.waitTradeoff}</p>
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm font-medium text-amber-800 mb-2">
+                Decision recorded: Waiting consciously
+              </p>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                {analysis.waitTradeoff}
+              </p>
             </div>
           )}
 
@@ -486,40 +481,45 @@ export default function DecisionPage() {
       </div>
 
       {/* Fixed Footer Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-6">
-        <div className="max-w-md mx-auto space-y-2">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6">
+        <div className="max-w-md mx-auto space-y-3">
 
           {/* Primary Actions Row */}
           <div className="flex gap-2">
             <button
-              onClick={handleApply}
+              onClick={handleTakeStep}
               disabled={!item?.url}
-              className={`flex-1 py-3 rounded-xl font-bold text-white transition-all ${
+              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
                 item?.url
-                  ? 'bg-[#00A651] active:scale-[0.98]'
-                  : 'bg-gray-300 cursor-not-allowed'
+                  ? 'bg-[#00A651] text-white active:scale-[0.98]'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {currentDecision === 'applied' ? '✓ Applied' : 'Apply Now'}
+              {currentDecision === 'applied' ? 'Step taken' : 'Take the step'}
             </button>
 
             <button
               onClick={handleWait}
-              disabled={showWaitConfirm}
-              className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+              disabled={showWaitConfirm || currentDecision === 'wait'}
+              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
                 showWaitConfirm || currentDecision === 'wait'
-                  ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300'
-                  : 'bg-yellow-400 text-black active:scale-[0.98]'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-amber-400 text-amber-900 active:scale-[0.98]'
               }`}
             >
-              {showWaitConfirm || currentDecision === 'wait' ? '⏸ Waiting' : 'Wait Consciously'}
+              {showWaitConfirm || currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
             </button>
           </div>
 
-          {/* Navigation Row */}
+          {/* Microcopy */}
+          <p className="text-xs text-gray-400 text-center">
+            You're not committing yet. You're keeping this option alive.
+          </p>
+
+          {/* Navigation */}
           <button
             onClick={handleNext}
-            className="w-full py-3 rounded-xl font-medium text-gray-600 bg-gray-100 active:bg-gray-200 transition-all"
+            className="w-full py-3 rounded-xl font-medium text-gray-500 bg-gray-100 active:bg-gray-200 transition-all"
           >
             Next listing →
           </button>
