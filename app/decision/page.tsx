@@ -247,7 +247,7 @@ export default function DecisionPage() {
     }
   }, []);
 
-  // Fetch listings and sort by match score
+  // Fetch listings, filter by criteria, and sort by match score
   useEffect(() => {
     async function fetchListings() {
       const { data } = await supabase
@@ -256,7 +256,27 @@ export default function DecisionPage() {
         .eq('status', 'Active');
 
       if (data && answers) {
-        const sorted = [...data].sort((a, b) => {
+        // Strict filtering by questionnaire answers
+        const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
+        const neededBedrooms = bedroomMap[answers.bedrooms] ?? 1;
+
+        const filtered = data.filter((listing: Listing) => {
+          // Bedroom filter: exact match for studio/1/2, or >= for 3+
+          if (answers.bedrooms === '3+') {
+            if (listing.bedrooms < 3) return false;
+          } else {
+            if (listing.bedrooms !== neededBedrooms) return false;
+          }
+
+          // Budget filter: allow up to 10% over budget
+          const maxPrice = answers.budget * 1.1;
+          if (listing.price > maxPrice) return false;
+
+          return true;
+        });
+
+        // Sort filtered listings by match score
+        const sorted = filtered.sort((a, b) => {
           const scoreA = analyzeMatch(a, answers).score;
           const scoreB = analyzeMatch(b, answers).score;
           return scoreB - scoreA;
@@ -353,13 +373,34 @@ export default function DecisionPage() {
     );
   }
 
-  // No listings
+  // No listings matching criteria
   if (listings.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
-          <h1 className="text-xl font-semibold mb-2">No listings available</h1>
-          <p className="text-gray-500 text-sm">Check back soon.</p>
+          <img
+            src="/brand/pepe-ny.jpeg"
+            alt="Pepe"
+            className="w-20 h-20 rounded-full object-cover border-3 border-[#00A651] mx-auto mb-4"
+          />
+          <h1 className="text-xl font-semibold mb-2">No matches right now</h1>
+          <p className="text-gray-500 text-sm mb-6">
+            I couldn't find listings that match your criteria. This happens when inventory is tight for your specific needs.
+          </p>
+          <div className="space-y-3">
+            <Link
+              href="/flow"
+              className="block w-full bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg"
+            >
+              Adjust my criteria
+            </Link>
+            <button
+              onClick={() => window.location.reload()}
+              className="block w-full bg-gray-100 text-gray-600 font-medium py-3 px-6 rounded-lg"
+            >
+              Check again
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -545,13 +586,16 @@ export default function DecisionPage() {
           <div className="flex gap-2">
             <button
               onClick={handleTakeStep}
+              disabled={!item?.original_url && currentDecision !== 'applied'}
               className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
                 currentDecision === 'applied'
                   ? 'bg-[#00A651]/20 text-[#00A651]'
+                  : !item?.original_url
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : 'bg-[#00A651] text-white active:scale-[0.98]'
               }`}
             >
-              {currentDecision === 'applied' ? 'Step taken' : 'Take the step'}
+              {currentDecision === 'applied' ? 'Step taken' : !item?.original_url ? 'No link available' : 'Apply now'}
             </button>
 
             <button
@@ -569,13 +613,13 @@ export default function DecisionPage() {
 
           {/* Microcopy */}
           <p className="text-xs text-gray-400 text-center">
-            You're not committing yet. You're keeping this option alive.
+            {!item?.original_url ? 'This listing has no application link yet.' : "You're not committing yet. You're keeping this option alive."}
           </p>
 
-          {/* Navigation */}
+          {/* Navigation - Smaller */}
           <button
             onClick={handleNext}
-            className="w-full py-3 rounded-xl font-medium text-gray-500 bg-gray-100 active:bg-gray-200 transition-all"
+            className="w-full py-2 rounded-lg text-sm font-medium text-gray-500 bg-gray-100 active:bg-gray-200 transition-all"
           >
             Next listing →
           </button>
