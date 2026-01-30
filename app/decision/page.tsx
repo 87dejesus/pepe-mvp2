@@ -249,27 +249,32 @@ export default function DecisionPage() {
 
   // Fetch listings, filter by criteria, and sort by match score
   useEffect(() => {
+    // Don't fetch until answers are loaded
+    if (!answers) return;
+
+    const currentAnswers = answers; // TypeScript narrowing
+
     async function fetchListings() {
       const { data } = await supabase
         .from('listings')
         .select('*')
         .eq('status', 'Active');
 
-      if (data && answers) {
+      if (data) {
         // Strict filtering by questionnaire answers
         const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
-        const neededBedrooms = bedroomMap[answers.bedrooms] ?? 1;
+        const neededBedrooms = bedroomMap[currentAnswers.bedrooms] ?? 1;
 
         const filtered = data.filter((listing: Listing) => {
           // Bedroom filter: exact match for studio/1/2, or >= for 3+
-          if (answers.bedrooms === '3+') {
+          if (currentAnswers.bedrooms === '3+') {
             if (listing.bedrooms < 3) return false;
           } else {
             if (listing.bedrooms !== neededBedrooms) return false;
           }
 
           // Budget filter: allow up to 10% over budget
-          const maxPrice = answers.budget * 1.1;
+          const maxPrice = currentAnswers.budget * 1.1;
           if (listing.price > maxPrice) return false;
 
           return true;
@@ -277,13 +282,11 @@ export default function DecisionPage() {
 
         // Sort filtered listings by match score
         const sorted = filtered.sort((a, b) => {
-          const scoreA = analyzeMatch(a, answers).score;
-          const scoreB = analyzeMatch(b, answers).score;
+          const scoreA = analyzeMatch(a, currentAnswers).score;
+          const scoreB = analyzeMatch(b, currentAnswers).score;
           return scoreB - scoreA;
         });
         setListings(sorted);
-      } else if (data) {
-        setListings(data);
       }
       setLoading(false);
     }
@@ -336,10 +339,12 @@ export default function DecisionPage() {
     setShowDetails(false);
     if (currentIndex < listings.length - 1) {
       setCurrentIndex(prev => prev + 1);
-    } else {
-      setCurrentIndex(0);
     }
+    // Don't cycle back - let user see "end of list" state
   };
+
+  // Check if we've seen all listings
+  const isLastListing = currentIndex >= listings.length - 1;
 
   // Loading state
   if (loading) {
@@ -623,12 +628,21 @@ export default function DecisionPage() {
           </p>
 
           {/* Navigation - Secondary, much smaller */}
-          <button
-            onClick={handleNext}
-            className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Skip to next →
-          </button>
+          {isLastListing ? (
+            <Link
+              href="/flow"
+              className="block w-full py-1.5 text-xs text-center text-[#00A651] hover:underline transition-colors"
+            >
+              End of matches · Adjust criteria
+            </Link>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Skip to next →
+            </button>
+          )}
 
         </div>
       </div>
