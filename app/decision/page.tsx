@@ -33,10 +33,11 @@ type Listing = {
   bedrooms: number;
   bathrooms: number;
   description: string;
+  image_url: string;
   images: string[];
   pets_allowed: boolean;
   amenities: string[];
-  url: string;
+  original_url: string;
   status: string;
 };
 
@@ -53,7 +54,10 @@ type MatchAnalysis = {
 };
 
 function getListingImage(listing: Listing): string {
-  // Check all possible image fields
+  // Prioritize image_url (has real images), then images array
+  if (listing.image_url) {
+    return listing.image_url;
+  }
   if (listing.images && listing.images.length > 0 && listing.images[0]) {
     return listing.images[0];
   }
@@ -62,7 +66,7 @@ function getListingImage(listing: Listing): string {
 }
 
 function hasRealImage(listing: Listing): boolean {
-  return !!(listing.images && listing.images.length > 0 && listing.images[0]);
+  return !!(listing.image_url || (listing.images && listing.images.length > 0 && listing.images[0] && !listing.images[0].includes('placehold')));
 }
 
 function formatBedroomText(bedrooms: number): string {
@@ -288,9 +292,9 @@ export default function DecisionPage() {
 
     saveDecision(item.id, 'applied');
 
-    if (item.url) {
+    if (item.original_url) {
       // Open listing URL in new tab
-      window.open(item.url, '_blank');
+      window.open(item.original_url, '_blank');
     } else {
       // No URL available - expand details instead
       setShowDetails(true);
@@ -501,9 +505,9 @@ export default function DecisionPage() {
                   <p className="text-sm text-gray-600 leading-relaxed">
                     {item.description}
                   </p>
-                  {item?.url && (
+                  {item?.original_url && (
                     <a
-                      href={item.url}
+                      href={item.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block mt-3 text-sm font-medium text-[#00A651] hover:underline"
