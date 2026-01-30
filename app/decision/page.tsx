@@ -12,6 +12,9 @@ const supabase = createClient(
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
 
+// Placeholder for listings without images
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
+
 type Answers = {
   boroughs: string[];
   budget: number;
@@ -45,9 +48,22 @@ type MatchAnalysis = {
   pressureText: string;
   contextLine: string;
   pepeTake: string;
-  waitTradeoff: string;
-  hasImage: boolean;
+  waitFeedback: string;
+  hasRealImage: boolean;
 };
+
+function getListingImage(listing: Listing): string {
+  // Check all possible image fields
+  if (listing.images && listing.images.length > 0 && listing.images[0]) {
+    return listing.images[0];
+  }
+  // Fallback to placeholder
+  return PLACEHOLDER_IMAGE;
+}
+
+function hasRealImage(listing: Listing): boolean {
+  return !!(listing.images && listing.images.length > 0 && listing.images[0]);
+}
 
 function formatBedroomText(bedrooms: number): string {
   if (bedrooms === 0) return 'Studio';
@@ -63,7 +79,6 @@ function formatBathroomText(bathrooms: number): string {
 function generateContextLine(listing: Listing, answers: Answers): string {
   const lines: string[] = [];
 
-  // Size context
   if (listing.bedrooms === 0) {
     lines.push('Compact layout, better for one person');
   } else if (listing.bedrooms === 1) {
@@ -72,7 +87,6 @@ function generateContextLine(listing: Listing, answers: Answers): string {
     lines.push('Room for roommates or a growing household');
   }
 
-  // Budget context
   const budgetDiff = answers.budget - listing.price;
   if (budgetDiff >= 500) {
     lines.push('leaves breathing room in your budget');
@@ -80,7 +94,6 @@ function generateContextLine(listing: Listing, answers: Answers): string {
     lines.push('stretches your stated budget');
   }
 
-  // Pet context
   if (answers.pets !== 'none' && listing.pets_allowed) {
     lines.push('pet-friendly');
   } else if (answers.pets !== 'none' && !listing.pets_allowed) {
@@ -92,7 +105,7 @@ function generateContextLine(listing: Listing, answers: Answers): string {
 
 function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
   let score = 50;
-  const hasImage = !!(listing.images && listing.images.length > 0 && listing.images[0]);
+  const hasImage = hasRealImage(listing);
 
   // Budget Analysis
   const budgetDiff = answers.budget - listing.price;
@@ -140,31 +153,26 @@ function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
   // Clamp score
   score = Math.max(0, Math.min(100, score));
 
-  // Determine pressure level
+  // Pressure level with human, supportive copy
   let pressureLevel: 'HIGH' | 'MEDIUM' | 'LOW';
   let pressureText: string;
 
   if (score >= 75) {
     pressureLevel = 'HIGH';
-    pressureText = 'This matches what you told me matters. In NYC, listings like this move fast.';
+    pressureText = 'This one aligns well with what you shared. Listings like this tend to move quickly in NYC—worth serious consideration.';
   } else if (score >= 55) {
     pressureLevel = 'MEDIUM';
-    pressureText = 'Decent fit, but there are tradeoffs. Take your time to weigh them.';
+    pressureText = 'A reasonable fit with some tradeoffs. Take your time to think it through.';
   } else {
     pressureLevel = 'LOW';
-    pressureText = 'This one has gaps. No rush here.';
+    pressureText = 'This one has some gaps compared to your criteria. No need to rush.';
   }
 
-  // Generate context line
   const contextLine = generateContextLine(listing, answers);
-
-  // Generate Pepe's Take
   const pepeTake = generatePepeTake(listing, answers, score, hasImage);
+  const waitFeedback = generateWaitFeedback(listing, score);
 
-  // Generate Wait Tradeoff text
-  const waitTradeoff = generateWaitTradeoff(listing, score);
-
-  return { score, pressureLevel, pressureText, contextLine, pepeTake, waitTradeoff, hasImage };
+  return { score, pressureLevel, pressureText, contextLine, pepeTake, waitFeedback, hasRealImage: hasImage };
 }
 
 function generatePepeTake(
@@ -174,30 +182,31 @@ function generatePepeTake(
   hasImage: boolean
 ): string {
   if (!hasImage) {
-    return `I can't fully assess this one without seeing it. The numbers work, but photos matter. Proceed with caution or request images before deciding.`;
+    return `I'd love to give you a full picture, but this listing doesn't have photos yet. The numbers look reasonable—consider reaching out to request images before deciding.`;
   }
 
   if (score >= 80) {
-    return `This checks your boxes. Budget works, location fits, size matches. Apartments like this don't wait around in this market.`;
+    return `This checks your boxes: budget works, location fits, size matches. Apartments like this tend to go quickly, but take the time you need to feel right about it.`;
   } else if (score >= 65) {
     const budgetNote = listing.price <= answers.budget
       ? 'Budget is comfortable.'
-      : 'It stretches your budget, but might be worth it.';
-    return `Solid match overall. ${budgetNote} Not perfect, but in NYC, "good enough" often is.`;
+      : 'It stretches your budget a bit, which is worth weighing.';
+    return `Solid match overall. ${budgetNote} Not perfect, but in NYC, a good fit is often better than waiting for perfect.`;
   } else if (score >= 50) {
-    return `Mixed signals here. It works on some levels, not others. Only you know which tradeoffs you can live with.`;
+    return `Mixed signals here. It works on some levels, not others. Only you know which tradeoffs feel manageable day-to-day.`;
   } else {
-    return `This one doesn't line up with what you told me. The gaps would likely frustrate you daily.`;
+    return `This one doesn't quite line up with what you told me matters. The gaps might become daily frustrations.`;
   }
 }
 
-function generateWaitTradeoff(listing: Listing, score: number): string {
+function generateWaitFeedback(listing: Listing, score: number): string {
+  // Supportive, clear structure: Validation → Clarity → Next step
   if (score >= 75) {
-    return `You're choosing to let this one go for now. That's valid—but know that someone else might act on it today. If it disappears, you'll need to find another ${formatBedroomText(listing.bedrooms)} in ${listing.neighborhood} under $${listing.price?.toLocaleString()}.`;
+    return `It's okay to pause and think—this is a big decision. Just know that strong matches like this ${formatBedroomText(listing.bedrooms)} in ${listing.neighborhood} at $${listing.price?.toLocaleString()} can get taken quickly. If that happens, we'll keep looking together for something similar.`;
   } else if (score >= 55) {
-    return `Waiting makes sense here. The fit isn't strong enough to rush. But remember: in NYC, "perfect" rarely shows up. You're trading this certainty for the hope of something better.`;
+    return `It's okay to wait on this one. The fit has some gaps, and you deserve to feel confident. Pausing means this specific option might go to someone else—but that's alright. We'll find others that might work better for you.`;
   } else {
-    return `Good instinct. This listing doesn't match what you need. Your criteria exist for a reason—trust them and keep looking.`;
+    return `Good instinct to pause here. This listing doesn't match your needs closely enough. Your criteria matter—we'll keep looking for something that truly fits.`;
   }
 }
 
@@ -208,7 +217,8 @@ export default function DecisionPage() {
   const [answers, setAnswers] = useState<Answers | null>(null);
   const [analysis, setAnalysis] = useState<MatchAnalysis | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
-  const [showWaitConfirm, setShowWaitConfirm] = useState(false);
+  const [showWaitFeedback, setShowWaitFeedback] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Load answers from localStorage
   useEffect(() => {
@@ -221,7 +231,6 @@ export default function DecisionPage() {
       }
     }
 
-    // Load previous decisions
     const storedDecisions = localStorage.getItem(DECISIONS_KEY);
     if (storedDecisions) {
       try {
@@ -261,7 +270,8 @@ export default function DecisionPage() {
       const currentListing = listings[currentIndex];
       if (currentListing) {
         setAnalysis(analyzeMatch(currentListing, answers));
-        setShowWaitConfirm(false);
+        setShowWaitFeedback(false);
+        setShowDetails(false);
       }
     }
   }, [currentIndex, listings, answers]);
@@ -274,9 +284,16 @@ export default function DecisionPage() {
 
   const handleTakeStep = () => {
     const item = listings[currentIndex];
-    if (item?.url) {
-      saveDecision(item.id, 'applied');
+    if (!item) return;
+
+    saveDecision(item.id, 'applied');
+
+    if (item.url) {
+      // Open listing URL in new tab
       window.open(item.url, '_blank');
+    } else {
+      // No URL available - expand details instead
+      setShowDetails(true);
     }
   };
 
@@ -284,12 +301,13 @@ export default function DecisionPage() {
     const item = listings[currentIndex];
     if (item) {
       saveDecision(item.id, 'wait');
-      setShowWaitConfirm(true);
+      setShowWaitFeedback(true);
     }
   };
 
   const handleNext = () => {
-    setShowWaitConfirm(false);
+    setShowWaitFeedback(false);
+    setShowDetails(false);
     if (currentIndex < listings.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
@@ -302,14 +320,14 @@ export default function DecisionPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-[#00A651] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 border-4 border-[#00A651] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm text-gray-500">Finding your matches...</p>
         </div>
       </div>
     );
   }
 
-  // No answers - redirect to flow
+  // No answers
   if (!answers) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
@@ -343,7 +361,7 @@ export default function DecisionPage() {
 
   const item = listings[currentIndex];
   const currentDecision = decisions[item?.id];
-  const hasImage = item?.images?.[0];
+  const imageUrl = getListingImage(item);
 
   return (
     <main className="min-h-screen bg-[#fafafa] flex flex-col">
@@ -364,17 +382,18 @@ export default function DecisionPage() {
           {/* Listing Card */}
           <div className="bg-white rounded-xl overflow-hidden shadow-sm">
 
-            {/* Image */}
-            <div className="relative aspect-[4/3] bg-gray-100">
-              {hasImage ? (
-                <img
-                  src={item.images[0]}
-                  alt={`${item.neighborhood} listing`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-400">No photo available</p>
+            {/* Image - Always rendered */}
+            <div className="relative aspect-[4/3]">
+              <img
+                src={imageUrl}
+                alt={`${item?.neighborhood || 'Listing'}`}
+                className="w-full h-full object-cover"
+              />
+
+              {/* Placeholder indicator */}
+              {!analysis?.hasRealImage && (
+                <div className="absolute top-3 left-3 bg-gray-800/70 text-white text-xs px-2 py-1 rounded">
+                  Photo pending
                 </div>
               )}
 
@@ -397,7 +416,7 @@ export default function DecisionPage() {
 
             {/* Info */}
             <div className="p-4">
-              {/* Location - Human format */}
+              {/* Location */}
               <h1 className="text-lg font-semibold text-gray-900">
                 {item?.neighborhood}
                 {item?.borough && item.borough !== item.neighborhood && (
@@ -405,7 +424,7 @@ export default function DecisionPage() {
                 )}
               </h1>
 
-              {/* Specs - Cleaner format */}
+              {/* Specs */}
               <p className="text-sm text-gray-500 mt-1">
                 {formatBedroomText(item?.bedrooms)} · {formatBathroomText(item?.bathrooms)}
                 {item?.pets_allowed && ' · Pets OK'}
@@ -422,7 +441,7 @@ export default function DecisionPage() {
               {analysis && (
                 <div className={`mt-4 rounded-lg p-3 ${
                   analysis.pressureLevel === 'HIGH'
-                    ? 'bg-red-50'
+                    ? 'bg-emerald-50'
                     : analysis.pressureLevel === 'MEDIUM'
                     ? 'bg-amber-50'
                     : 'bg-gray-50'
@@ -430,18 +449,19 @@ export default function DecisionPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className={`text-xs font-semibold uppercase tracking-wide ${
                       analysis.pressureLevel === 'HIGH'
-                        ? 'text-red-600'
+                        ? 'text-emerald-600'
                         : analysis.pressureLevel === 'MEDIUM'
                         ? 'text-amber-600'
                         : 'text-gray-500'
                     }`}>
-                      {analysis.pressureLevel} pressure
+                      {analysis.pressureLevel === 'HIGH' ? 'Strong match' :
+                       analysis.pressureLevel === 'MEDIUM' ? 'Worth considering' : 'Keep looking'}
                     </span>
                     <span className="text-sm font-medium text-gray-700">{analysis.score}% match</span>
                   </div>
                   <p className={`text-sm ${
                     analysis.pressureLevel === 'HIGH'
-                      ? 'text-red-700'
+                      ? 'text-emerald-700'
                       : analysis.pressureLevel === 'MEDIUM'
                       ? 'text-amber-700'
                       : 'text-gray-600'
@@ -451,28 +471,59 @@ export default function DecisionPage() {
                 </div>
               )}
 
-              {/* Pepe's Take - Text only, no emoji */}
+              {/* Pepe's Take - With real Pepe image */}
               {analysis && (
-                <div className="mt-4 border-l-2 border-[#00A651] pl-3">
-                  <p className="text-xs font-semibold text-[#00A651] uppercase tracking-wide mb-1">
-                    Pepe's take
+                <div className="mt-4 bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src="/pepe-ny.jpeg.jpeg"
+                      alt="Pepe"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#00A651] shrink-0"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-[#00A651] uppercase tracking-wide mb-1">
+                        Pepe's take
+                      </p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {analysis.pepeTake}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Expanded Details */}
+              {showDetails && item?.description && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Details
                   </p>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {analysis.pepeTake}
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {item.description}
                   </p>
+                  {item?.url && (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 text-sm font-medium text-[#00A651] hover:underline"
+                    >
+                      View original listing →
+                    </a>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Wait Confirmation */}
-          {showWaitConfirm && analysis && (
+          {/* Wait Feedback */}
+          {showWaitFeedback && analysis && (
             <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-sm font-medium text-amber-800 mb-2">
-                Decision recorded: Waiting consciously
+                Decision noted
               </p>
               <p className="text-sm text-amber-700 leading-relaxed">
-                {analysis.waitTradeoff}
+                {analysis.waitFeedback}
               </p>
             </div>
           )}
@@ -488,11 +539,10 @@ export default function DecisionPage() {
           <div className="flex gap-2">
             <button
               onClick={handleTakeStep}
-              disabled={!item?.url}
               className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                item?.url
-                  ? 'bg-[#00A651] text-white active:scale-[0.98]'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                currentDecision === 'applied'
+                  ? 'bg-[#00A651]/20 text-[#00A651]'
+                  : 'bg-[#00A651] text-white active:scale-[0.98]'
               }`}
             >
               {currentDecision === 'applied' ? 'Step taken' : 'Take the step'}
@@ -500,14 +550,14 @@ export default function DecisionPage() {
 
             <button
               onClick={handleWait}
-              disabled={showWaitConfirm || currentDecision === 'wait'}
+              disabled={showWaitFeedback || currentDecision === 'wait'}
               className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                showWaitConfirm || currentDecision === 'wait'
+                showWaitFeedback || currentDecision === 'wait'
                   ? 'bg-amber-100 text-amber-700'
                   : 'bg-amber-400 text-amber-900 active:scale-[0.98]'
               }`}
             >
-              {showWaitConfirm || currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
+              {showWaitFeedback || currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
             </button>
           </div>
 
