@@ -7,7 +7,7 @@ export default function Home() {
       {/* 1. TOPO: LOGO */}
       <div className="flex justify-center shrink-0">
         <div className="w-16 bg-white border-4 border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-           <img src="/brand/logo-v2.png" alt="Logo" className="w-full h-auto" />
+           <img src="/brand/icon.png" alt="Logo" className="w-full h-auto" />
         </div>
       </div>
 

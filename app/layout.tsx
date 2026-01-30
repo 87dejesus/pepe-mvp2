@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   description:
     "Find your perfect NYC home with Pepe. Swipe through curated listings and find a place you actually love.",
   icons: {
-    icon: "/brand/icon.png.png",
-    apple: "/brand/icon.png.png",
+    icon: "/brand/icon.png",
+    apple: "/brand/icon.png",
   },
 };
 
