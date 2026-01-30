@@ -584,30 +584,36 @@ export default function DecisionPage() {
 
           {/* Primary Actions Row */}
           <div className="flex gap-2">
-            <button
-              onClick={handleTakeStep}
-              disabled={!item?.original_url && currentDecision !== 'applied'}
-              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                currentDecision === 'applied'
-                  ? 'bg-[#00A651]/20 text-[#00A651]'
-                  : !item?.original_url
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#00A651] text-white active:scale-[0.98]'
-              }`}
-            >
-              {currentDecision === 'applied' ? 'Step taken' : !item?.original_url ? 'No link available' : 'Apply now'}
-            </button>
+            {item?.original_url ? (
+              <button
+                onClick={handleTakeStep}
+                className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
+                  currentDecision === 'applied'
+                    ? 'bg-[#00A651]/20 text-[#00A651]'
+                    : 'bg-[#00A651] text-white active:scale-[0.98]'
+                }`}
+              >
+                {currentDecision === 'applied' ? 'Applied' : 'Apply now'}
+              </button>
+            ) : (
+              <button
+                disabled
+                className="flex-1 py-3.5 rounded-xl font-semibold bg-gray-200 text-gray-400 cursor-not-allowed"
+              >
+                No link available
+              </button>
+            )}
 
             <button
               onClick={handleWait}
-              disabled={showWaitFeedback || currentDecision === 'wait'}
+              disabled={currentDecision === 'wait'}
               className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                showWaitFeedback || currentDecision === 'wait'
+                currentDecision === 'wait'
                   ? 'bg-amber-100 text-amber-700'
                   : 'bg-amber-400 text-amber-900 active:scale-[0.98]'
               }`}
             >
-              {showWaitFeedback || currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
+              {currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
             </button>
           </div>
 
@@ -616,12 +622,12 @@ export default function DecisionPage() {
             {!item?.original_url ? 'This listing has no application link yet.' : "You're not committing yet. You're keeping this option alive."}
           </p>
 
-          {/* Navigation - Smaller */}
+          {/* Navigation - Secondary, much smaller */}
           <button
             onClick={handleNext}
-            className="w-full py-2 rounded-lg text-sm font-medium text-gray-500 bg-gray-100 active:bg-gray-200 transition-all"
+            className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Next listing →
+            Skip to next →
           </button>
 
         </div>
