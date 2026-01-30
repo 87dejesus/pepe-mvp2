@@ -186,7 +186,7 @@ export default function FlowPage() {
             }}
           >
             <Image
-              src="/pepe-ny.jpeg.jpeg"
+              src="/brand/pepe-ny.jpeg"
               alt="Pepe"
               width={140}
               height={140}
@@ -254,7 +254,7 @@ export default function FlowPage() {
         }}
       >
         <Image
-          src="/pepe-ny.jpeg.jpeg"
+          src="/brand/pepe-ny.jpeg"
           alt="Pepe - Your NYC Guide"
           width={120}
           height={120}

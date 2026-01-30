@@ -7,7 +7,7 @@ export default function Home() {
       {/* 1. TOPO: LOGO */}
       <div className="flex justify-center shrink-0">
         <div className="w-16 bg-white border-4 border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-           <img src="/logo-v2.png" alt="Logo" className="w-full h-auto" />
+           <img src="/brand/logo-v2.png" alt="Logo" className="w-full h-auto" />
         </div>
       </div>
 
@@ -22,7 +22,7 @@ export default function Home() {
       {/* 3. PEPE (TAMANHO AJUSTADO) */}
       <div className="flex-1 flex items-center justify-center min-h-0 py-2">
         <img 
-          src="/pepe-ny.jpeg.jpeg" 
+          src="/brand/pepe-ny.jpeg" 
           alt="Pepe" 
           className="max-h-[35vh] w-auto border-[6px] border-black rounded-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] transform -rotate-1"
         />

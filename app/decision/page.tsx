@@ -482,7 +482,7 @@ export default function DecisionPage() {
                 <div className="mt-4 bg-gray-50 rounded-lg p-3">
                   <div className="flex items-start gap-3">
                     <img
-                      src="/pepe-ny.jpeg.jpeg"
+                      src="/brand/pepe-ny.jpeg"
                       alt="Pepe"
                       className="w-10 h-10 rounded-full object-cover border-2 border-[#00A651] shrink-0"
                     />

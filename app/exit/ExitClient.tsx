@@ -480,7 +480,7 @@ export default function ExitClient() {
       ) : (
         <div style={{ textAlign: "center", paddingTop: 20 }}>
           <img
-            src="/pepe-ny.jpeg.jpeg"
+            src="/brand/pepe-ny.jpeg"
             alt="Pepe"
             style={{
               width: 80,
