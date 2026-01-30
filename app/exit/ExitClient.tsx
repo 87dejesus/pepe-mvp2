@@ -478,57 +478,57 @@ export default function ExitClient() {
           </div>
         </>
       ) : (
-        <>
-          <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16 }}>
-            <div style={{ fontWeight: 900, marginBottom: 8 }}>Why this makes sense</div>
-            <div style={{ lineHeight: 1.55 }}>
-              Waiting preserves optionality — but only if you’re testing something specific.
-              <br />
-              Define what would change your decision, then compare fast.
-              <br />
-              If nothing changes, waiting becomes risk, not caution.
-            </div>
+        <div style={{ textAlign: "center", paddingTop: 20 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🫂</div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, color: "#1a1a1a" }}>
+            It's okay to pause
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: "#555", maxWidth: 400, margin: "0 auto 24px" }}>
+            Finding a home in NYC is hard. Taking time to think is not weakness — it's wisdom.
+            Trust your gut. The right place will feel right.
+          </p>
+          <p style={{ fontSize: 14, color: "#888", marginBottom: 32 }}>
+            We'll be here when you're ready to continue.
+          </p>
 
-            {listing?.pressure_signals ? (
-              <div style={{ marginTop: 10, opacity: 0.9 }}>
-                Pressure signals to watch: <b>{listing.pressure_signals}</b>
-              </div>
-            ) : null}
-          </div>
+          <button
+            onClick={() => (window.location.href = "/flow")}
+            style={{
+              width: "100%",
+              maxWidth: 320,
+              padding: "16px 24px",
+              borderRadius: 12,
+              border: "none",
+              background: "#00A651",
+              color: "white",
+              cursor: "pointer",
+              fontWeight: 700,
+              fontSize: 16,
+            }}
+          >
+            Come back when you're ready
+          </button>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-            <button
-              onClick={() => (window.location.href = "/decision")}
-              style={{
-                flex: 1,
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Back to decision
-            </button>
-            <button
-              onClick={() => (window.location.href = "/flow")}
-              style={{
-                flex: 1,
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                background: "white",
-                cursor: "pointer",
-                fontWeight: 900,
-                fontSize: 16,
-              }}
-            >
-              Restart flow
-            </button>
-          </div>
-        </>
+          <button
+            onClick={() => (window.location.href = "/decision")}
+            style={{
+              display: "block",
+              width: "100%",
+              maxWidth: 320,
+              margin: "12px auto 0",
+              padding: "14px 24px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              color: "#666",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            Or keep browsing listings
+          </button>
+        </div>
       )}
     </div>
   );

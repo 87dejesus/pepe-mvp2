@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
@@ -215,6 +216,7 @@ function generateWaitFeedback(listing: Listing, score: number): string {
 }
 
 export default function DecisionPage() {
+  const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -305,7 +307,7 @@ export default function DecisionPage() {
     const item = listings[currentIndex];
     if (item) {
       saveDecision(item.id, 'wait');
-      setShowWaitFeedback(true);
+      router.push('/exit?choice=wait');
     }
   };
 
