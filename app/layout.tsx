@@ -14,9 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pepe | Your NYC Apartment Matchmaker",
+  title: {
+    default: "Pepe | NYC Apartment Match",
+    template: "%s | Pepe",
+  },
   description:
     "Find your perfect NYC home with Pepe. Swipe through curated listings and find a place you actually love.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

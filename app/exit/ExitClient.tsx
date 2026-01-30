@@ -355,7 +355,7 @@ export default function ExitClient() {
   return (
     <div style={{ padding: 24, maxWidth: 860, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 10, opacity: 0.75 }}>
-        <div style={{ fontSize: 12 }}>{listing?.listing_id ? `Listing: ${listing.listing_id}` : "Listing: —"}</div>
+        <div style={{ fontSize: 12 }}>{listing?.listing_id ? `Listing: ${listing.listing_id}` : ""}</div>
       </div>
 
       <h1 style={{ marginTop: 0 }}>{title}</h1>
@@ -387,7 +387,7 @@ export default function ExitClient() {
           <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 16 }}>
             <div style={{ fontWeight: 900, marginBottom: 8 }}>Why this makes sense</div>
             <div style={{ lineHeight: 1.55 }}>
-              You chose speed over optionality — that is often correct in NYC when something fits.
+              You chose speed over optionality. That is often correct in NYC when something fits.
               <br />
               Market signals increase the cost of delay.
               <br />
@@ -479,12 +479,26 @@ export default function ExitClient() {
         </>
       ) : (
         <div style={{ textAlign: "center", paddingTop: 20 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🫂</div>
+          <img
+            src="/pepe-ny.jpeg.jpeg"
+            alt="Pepe"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: 16,
+              border: "3px solid #00A651",
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, color: "#1a1a1a" }}>
             It's okay to pause
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#555", maxWidth: 400, margin: "0 auto 24px" }}>
-            Finding a home in NYC is hard. Taking time to think is not weakness — it's wisdom.
+            Finding a home in NYC is hard. Taking time to think is not weakness, it's wisdom.
             Trust your gut. The right place will feel right.
           </p>
           <p style={{ fontSize: 14, color: "#888", marginBottom: 32 }}>
