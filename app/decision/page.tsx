@@ -302,6 +302,19 @@ export default function DecisionPage() {
     }
   }, [currentIndex, listings, answers]);
 
+  // Debug: log listing object to verify original_url field
+  useEffect(() => {
+    const item = listings[currentIndex];
+    if (item) {
+      console.log('Current listing:', {
+        id: item.id,
+        neighborhood: item.neighborhood,
+        original_url: item.original_url,
+        hasUrl: !!item.original_url
+      });
+    }
+  }, [currentIndex, listings]);
+
   const saveDecision = (listingId: string, decision: Decision) => {
     const updated = { ...decisions, [listingId]: decision };
     setDecisions(updated);
