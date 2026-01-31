@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-30-v2'; // Update this to verify deployments
+const BUILD_VERSION = '2026-01-30-v3'; // Update this to verify deployments
 
 // Placeholder for listings without images
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
@@ -37,9 +37,9 @@ type Listing = {
   description: string;
   image_url: string;
   images: string[];
-  pets_allowed: boolean;
+  pets: string; // "Unknown", "Yes", "No" from Supabase
   amenities: string[];
-  original_url: string;
+  original_url: string | null;
   status: string;
 };
 
@@ -100,9 +100,11 @@ function generateContextLine(listing: Listing, answers: Answers): string {
     lines.push('stretches your stated budget');
   }
 
-  if (answers.pets !== 'none' && listing.pets_allowed) {
+  const petsAllowed = listing.pets?.toLowerCase() === 'yes';
+  const petsUnknown = !listing.pets || listing.pets.toLowerCase() === 'unknown';
+  if (answers.pets !== 'none' && petsAllowed) {
     lines.push('pet-friendly');
-  } else if (answers.pets !== 'none' && !listing.pets_allowed) {
+  } else if (answers.pets !== 'none' && petsUnknown) {
     lines.push('pet policy unclear');
   }
 
@@ -149,9 +151,11 @@ function analyzeMatch(listing: Listing, answers: Answers): MatchAnalysis {
   if (listing.bathrooms >= neededBathrooms) score += 5;
   else score -= 5;
 
-  // Pets
-  if (answers.pets !== 'none' && !listing.pets_allowed) score -= 20;
-  else if (answers.pets !== 'none' && listing.pets_allowed) score += 10;
+  // Pets - check string field from Supabase
+  const petsAllowed = listing.pets?.toLowerCase() === 'yes';
+  const petsNotAllowed = listing.pets?.toLowerCase() === 'no';
+  if (answers.pets !== 'none' && petsNotAllowed) score -= 20;
+  else if (answers.pets !== 'none' && petsAllowed) score += 10;
 
   // Timing urgency bonus
   if (answers.timing === 'asap') score += 5;
@@ -288,6 +292,9 @@ export default function DecisionPage() {
         console.log('[DecisionClient] Filter criteria - bedrooms:', currentAnswers.bedrooms, '(need:', neededBedrooms, '), budget:', currentAnswers.budget);
 
         const filtered = data.filter((listing: Listing) => {
+          // CRITICAL: Only show listings with valid application URL
+          if (!listing.original_url) return false;
+
           // Bedroom filter: exact match for studio/1/2, or >= for 3+
           if (currentAnswers.bedrooms === '3+') {
             if (listing.bedrooms < 3) return false;
@@ -302,7 +309,9 @@ export default function DecisionPage() {
           return true;
         });
 
-        console.log('[DecisionClient] Filtered from', data.length, 'to', filtered.length, 'listings');
+        const withUrl = data.filter((l: Listing) => l.original_url);
+        console.log('[DecisionClient] Listings with URL:', withUrl.length, 'of', data.length);
+        console.log('[DecisionClient] After all filters:', filtered.length, 'listings');
 
         // Sort filtered listings by match score
         const sorted = filtered.sort((a, b) => {
@@ -310,10 +319,6 @@ export default function DecisionPage() {
           const scoreB = analyzeMatch(b, currentAnswers).score;
           return scoreB - scoreA;
         });
-
-        // Log if any have original_url
-        const withUrl = sorted.filter(l => l.original_url);
-        console.log('[DecisionClient] Listings with original_url:', withUrl.length, 'of', sorted.length);
 
         setTotalFetched(data.length);
         setListings(sorted);
@@ -343,17 +348,10 @@ export default function DecisionPage() {
 
   const handleTakeStep = () => {
     const item = listings[currentIndex];
-    if (!item) return;
+    if (!item || !item.original_url) return;
 
     saveDecision(item.id, 'applied');
-
-    if (item.original_url) {
-      // Open listing URL in new tab
-      window.open(item.original_url, '_blank');
-    } else {
-      // No URL available - expand details instead
-      setShowDetails(true);
-    }
+    window.open(item.original_url, '_blank');
   };
 
   const handleWait = () => {
@@ -410,6 +408,9 @@ export default function DecisionPage() {
 
   // No listings matching criteria
   if (listings.length === 0) {
+    const bedroomLabel = answers.bedrooms === '0' ? 'Studio' :
+                         answers.bedrooms === '1' ? '1 bedroom' :
+                         answers.bedrooms === '2' ? '2 bedrooms' : '3+ bedrooms';
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
@@ -419,8 +420,24 @@ export default function DecisionPage() {
             className="w-20 h-20 rounded-full object-cover border-3 border-[#00A651] mx-auto mb-4"
           />
           <h1 className="text-xl font-semibold mb-2">No matches right now</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            I couldn't find listings that match your criteria. This happens when inventory is tight for your specific needs.
+          <p className="text-gray-500 text-sm mb-4">
+            I couldn't find available listings that match:
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 mb-4 text-left text-sm">
+            <div className="text-gray-600">
+              <span className="font-medium">Type:</span> {bedroomLabel}
+            </div>
+            <div className="text-gray-600">
+              <span className="font-medium">Budget:</span> up to ${Math.round(answers.budget * 1.1).toLocaleString()}/mo
+            </div>
+            {totalFetched > 0 && (
+              <div className="text-gray-400 text-xs mt-2">
+                ({totalFetched} total listings checked)
+              </div>
+            )}
+          </div>
+          <p className="text-gray-400 text-xs mb-6">
+            Try adjusting bedroom type or increasing budget, then check back.
           </p>
           <div className="space-y-3">
             <Link
@@ -535,7 +552,7 @@ export default function DecisionPage() {
               {/* Specs */}
               <p className="text-sm text-gray-500 mt-1">
                 {formatBedroomText(item?.bedrooms)} · {formatBathroomText(item?.bathrooms)}
-                {item?.pets_allowed && ' · Pets OK'}
+                {item?.pets?.toLowerCase() === 'yes' && ' · Pets OK'}
               </p>
 
               {/* Context Line */}
@@ -645,25 +662,16 @@ export default function DecisionPage() {
 
           {/* Primary Actions Row */}
           <div className="flex gap-2">
-            {item?.original_url ? (
-              <button
-                onClick={handleTakeStep}
-                className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                  currentDecision === 'applied'
-                    ? 'bg-[#00A651]/20 text-[#00A651]'
-                    : 'bg-[#00A651] text-white active:scale-[0.98]'
-                }`}
-              >
-                {currentDecision === 'applied' ? 'Applied' : 'Apply now'}
-              </button>
-            ) : (
-              <button
-                disabled
-                className="flex-1 py-3.5 rounded-xl font-semibold bg-gray-200 text-gray-400 cursor-not-allowed"
-              >
-                No link available
-              </button>
-            )}
+            <button
+              onClick={handleTakeStep}
+              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
+                currentDecision === 'applied'
+                  ? 'bg-[#00A651]/20 text-[#00A651]'
+                  : 'bg-[#00A651] text-white active:scale-[0.98]'
+              }`}
+            >
+              {currentDecision === 'applied' ? 'Applied' : 'Apply now'}
+            </button>
 
             <button
               onClick={handleWait}
@@ -680,7 +688,7 @@ export default function DecisionPage() {
 
           {/* Microcopy */}
           <p className="text-xs text-gray-400 text-center">
-            {!item?.original_url ? 'This listing has no application link yet.' : "You're not committing yet. You're keeping this option alive."}
+            You're not committing yet. You're keeping this option alive.
           </p>
 
           {/* Navigation - Secondary, much smaller */}
