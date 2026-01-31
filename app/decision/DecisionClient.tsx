@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-30-v3'; // Update this to verify deployments
+const BUILD_VERSION = '2026-01-30-v4'; // Update this to verify deployments
 
 // Placeholder for listings without images
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
@@ -365,10 +365,10 @@ export default function DecisionPage() {
   const handleNext = () => {
     setShowWaitFeedback(false);
     setShowDetails(false);
-    if (currentIndex < listings.length - 1) {
+    // Allow going past last listing to show "end of matches" state
+    if (currentIndex < listings.length) {
       setCurrentIndex(prev => prev + 1);
     }
-    // Don't cycle back - let user see "end of list" state
   };
 
   // Check if we've seen all listings
@@ -451,6 +451,59 @@ export default function DecisionPage() {
               className="block w-full bg-gray-100 text-gray-600 font-medium py-3 px-6 rounded-lg"
             >
               Check again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // End of matches state - user has seen all listings
+  if (currentIndex >= listings.length) {
+    const bedroomLabel = answers.bedrooms === '0' ? 'Studio' :
+                         answers.bedrooms === '1' ? '1 bedroom' :
+                         answers.bedrooms === '2' ? '2 bedrooms' : '3+ bedrooms';
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="max-w-sm text-center">
+          <img
+            src="/brand/pepe-ny.jpeg"
+            alt="Pepe"
+            className="w-20 h-20 rounded-full object-cover border-3 border-[#00A651] mx-auto mb-4"
+          />
+          <h1 className="text-xl font-semibold mb-2">You've seen all matches</h1>
+          <p className="text-gray-500 text-sm mb-4">
+            That's everything I found for your criteria right now.
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 mb-4 text-left text-sm">
+            <div className="text-gray-600">
+              <span className="font-medium">Type:</span> {bedroomLabel}
+            </div>
+            <div className="text-gray-600">
+              <span className="font-medium">Budget:</span> up to ${Math.round(answers.budget * 1.1).toLocaleString()}/mo
+            </div>
+            <div className="text-gray-400 text-xs mt-2">
+              {listings.length} listing{listings.length !== 1 ? 's' : ''} reviewed
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Link
+              href="/flow"
+              className="block w-full bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg"
+            >
+              Adjust my criteria
+            </Link>
+            <Link
+              href="/exit?choice=wait"
+              className="block w-full bg-gray-100 text-gray-600 font-medium py-3 px-6 rounded-lg"
+            >
+              Come back later
+            </Link>
+            <button
+              onClick={() => setCurrentIndex(0)}
+              className="block w-full text-sm text-gray-400 hover:text-gray-600 py-2"
+            >
+              Review listings again
             </button>
           </div>
         </div>
