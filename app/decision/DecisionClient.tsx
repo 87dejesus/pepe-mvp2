@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-30-v4'; // Update this to verify deployments
+const BUILD_VERSION = '2026-01-30-v5'; // Update this to verify deployments
 
 // Placeholder for listings without images
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
@@ -555,14 +555,15 @@ export default function DecisionPage() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-md mx-auto p-4 pb-56">
+        <div className="max-w-md mx-auto p-4 pb-44">
 
-          {/* Listing Card */}
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+          {/* Listing Card - key forces re-render on item change */}
+          <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
 
-            {/* Image - Always rendered */}
+            {/* Image */}
             <div className="relative aspect-[4/3]">
               <img
+                key={`img-${item.id}`}
                 src={imageUrl}
                 alt={`${item?.neighborhood || 'Listing'}`}
                 className="w-full h-full object-cover"
