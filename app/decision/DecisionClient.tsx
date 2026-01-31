@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-30-v6'; // Update this to verify deployments
+const BUILD_VERSION = '2026-01-31-v7'; // Update this to verify deployments
 
 // Placeholder for listings without images
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
@@ -525,6 +525,11 @@ export default function DecisionPage() {
 
   return (
     <main className="min-h-screen bg-[#fafafa] flex flex-col">
+      {/* TEMP DEBUG BANNER - REMOVE AFTER CONFIRMING DEPLOY */}
+      <div className="bg-red-600 text-white text-center py-2 text-xs font-mono">
+        BUILD: {BUILD_VERSION} | Answers: {answers ? 'YES' : 'NO'} | Listings: {listings.length} | Analysis: {analysis ? 'YES' : 'NO'}
+      </div>
+
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <Link href="/flow" className="text-sm text-gray-400 hover:text-gray-600">
