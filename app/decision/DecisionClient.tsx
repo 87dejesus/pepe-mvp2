@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-30-v5'; // Update this to verify deployments
+const BUILD_VERSION = '2026-01-30-v6'; // Update this to verify deployments
 
 // Placeholder for listings without images
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
@@ -226,12 +226,28 @@ export default function DecisionPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Answers | null>(null);
-  const [analysis, setAnalysis] = useState<MatchAnalysis | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [showWaitFeedback, setShowWaitFeedback] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [totalFetched, setTotalFetched] = useState(0);
+
+  // Compute analysis synchronously to avoid race conditions
+  const currentItem = listings[currentIndex] || null;
+  const analysis = useMemo(() => {
+    if (currentItem && answers) {
+      return analyzeMatch(currentItem, answers);
+    }
+    return null;
+  }, [currentItem, answers]);
+
+  // Compute image URL synchronously
+  const imageUrl = useMemo(() => {
+    if (currentItem) {
+      return getListingImage(currentItem);
+    }
+    return PLACEHOLDER_IMAGE;
+  }, [currentItem]);
 
   // Load answers from localStorage
   useEffect(() => {
@@ -328,17 +344,11 @@ export default function DecisionPage() {
     fetchListings();
   }, [answers]);
 
-  // Analyze current listing when it changes
+  // Reset UI state when listing changes
   useEffect(() => {
-    if (listings.length > 0 && answers) {
-      const currentListing = listings[currentIndex];
-      if (currentListing) {
-        setAnalysis(analyzeMatch(currentListing, answers));
-        setShowWaitFeedback(false);
-        setShowDetails(false);
-      }
-    }
-  }, [currentIndex, listings, answers]);
+    setShowWaitFeedback(false);
+    setShowDetails(false);
+  }, [currentIndex]);
 
   const saveDecision = (listingId: string, decision: Decision) => {
     const updated = { ...decisions, [listingId]: decision };
@@ -347,17 +357,14 @@ export default function DecisionPage() {
   };
 
   const handleTakeStep = () => {
-    const item = listings[currentIndex];
-    if (!item || !item.original_url) return;
-
-    saveDecision(item.id, 'applied');
-    window.open(item.original_url, '_blank');
+    if (!currentItem || !currentItem.original_url) return;
+    saveDecision(currentItem.id, 'applied');
+    window.open(currentItem.original_url, '_blank');
   };
 
   const handleWait = () => {
-    const item = listings[currentIndex];
-    if (item) {
-      saveDecision(item.id, 'wait');
+    if (currentItem) {
+      saveDecision(currentItem.id, 'wait');
       router.push('/exit?choice=wait');
     }
   };
@@ -511,12 +518,10 @@ export default function DecisionPage() {
     );
   }
 
-  const item = listings[currentIndex];
-  const currentDecision = decisions[item?.id];
-  const imageUrl = getListingImage(item);
+  const currentDecision = decisions[currentItem?.id];
 
-  // Debug current listing
-  console.log('[DecisionClient] Current item:', item?.id, '- original_url:', item?.original_url, '- price:', item?.price);
+  // Debug current listing and image
+  console.log('[DecisionClient] Render - index:', currentIndex, 'id:', currentItem?.id, 'price:', currentItem?.price, 'image_url:', currentItem?.image_url?.slice(-20), 'computed imageUrl:', imageUrl?.slice(-20));
 
   return (
     <main className="min-h-screen bg-[#fafafa] flex flex-col">
@@ -547,25 +552,26 @@ export default function DecisionPage() {
           )}
           <div>Total fetched: {totalFetched}</div>
           <div>After filter: {listings.length}</div>
-          <div>Current item original_url: {item?.original_url || 'NULL'}</div>
-          <div>Current item price: ${item?.price}</div>
-          <div>Current item bedrooms: {item?.bedrooms}</div>
+          <div>Current item original_url: {currentItem?.original_url || 'NULL'}</div>
+          <div>Current item price: ${currentItem?.price}</div>
+          <div>Current item bedrooms: {currentItem?.bedrooms}</div>
+          <div>Image URL: {imageUrl?.slice(-30)}</div>
         </div>
       )}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-md mx-auto p-4 pb-44">
+        <div className="max-w-md mx-auto p-4 pb-36">
 
           {/* Listing Card - key forces re-render on item change */}
-          <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
+          <div key={currentItem.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
 
             {/* Image */}
             <div className="relative aspect-[4/3]">
               <img
-                key={`img-${item.id}`}
+                key={`img-${currentItem.id}`}
                 src={imageUrl}
-                alt={`${item?.neighborhood || 'Listing'}`}
+                alt={`${currentItem?.neighborhood || 'Listing'}`}
                 className="w-full h-full object-cover"
               />
 
@@ -578,7 +584,7 @@ export default function DecisionPage() {
 
               {/* Price Badge */}
               <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-semibold px-3 py-1.5 rounded-lg text-base">
-                ${item?.price?.toLocaleString()}/mo
+                ${currentItem?.price?.toLocaleString()}/mo
               </div>
 
               {/* Decision Badge */}
@@ -597,16 +603,16 @@ export default function DecisionPage() {
             <div className="p-4">
               {/* Location */}
               <h1 className="text-lg font-semibold text-gray-900">
-                {item?.neighborhood}
-                {item?.borough && item.borough !== item.neighborhood && (
-                  <span className="text-gray-400 font-normal"> · {item.borough}</span>
+                {currentItem?.neighborhood}
+                {currentItem?.borough && currentItem.borough !== currentItem.neighborhood && (
+                  <span className="text-gray-400 font-normal"> · {currentItem.borough}</span>
                 )}
               </h1>
 
               {/* Specs */}
               <p className="text-sm text-gray-500 mt-1">
-                {formatBedroomText(item?.bedrooms)} · {formatBathroomText(item?.bathrooms)}
-                {item?.pets?.toLowerCase() === 'yes' && ' · Pets OK'}
+                {formatBedroomText(currentItem?.bedrooms)} · {formatBathroomText(currentItem?.bathrooms)}
+                {currentItem?.pets?.toLowerCase() === 'yes' && ' · Pets OK'}
               </p>
 
               {/* Context Line */}
@@ -672,17 +678,17 @@ export default function DecisionPage() {
               )}
 
               {/* Expanded Details */}
-              {showDetails && item?.description && (
+              {showDetails && currentItem?.description && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     Details
                   </p>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    {item.description}
+                    {currentItem.description}
                   </p>
-                  {item?.original_url && (
+                  {currentItem?.original_url && (
                     <a
-                      href={item.original_url}
+                      href={currentItem.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block mt-3 text-sm font-medium text-[#00A651] hover:underline"
