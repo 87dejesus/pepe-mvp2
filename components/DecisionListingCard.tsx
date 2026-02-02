@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 type Listing = {
   id: string;
   neighborhood: string;
@@ -119,17 +123,27 @@ function getPepeTake(listing: Listing, answers: Answers, score: number, hasImage
 }
 
 export default function DecisionListingCard({ listing, answers }: Props) {
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Visual feedback: brief flash on listing change
+  useEffect(() => {
+    setIsTransitioning(true);
+    const timer = setTimeout(() => setIsTransitioning(false), 150);
+    return () => clearTimeout(timer);
+  }, [listing.id]);
+
   const hasImage = !!(listing.image_url || (listing.images?.length > 0 && listing.images[0]));
   const imageUrl = listing.image_url || listing.images?.[0] || '';
   const match = computeMatch(listing, answers);
   const pepeTake = getPepeTake(listing, answers, match.score, hasImage);
 
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+    <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       {/* Image */}
       <div className="relative aspect-[4/3] bg-gray-200">
         {imageUrl ? (
           <img
+            key={`img-${listing.id}`}
             src={imageUrl}
             alt={listing.neighborhood}
             className="w-full h-full object-cover"
@@ -163,8 +177,8 @@ export default function DecisionListingCard({ listing, answers }: Props) {
           </p>
         </div>
 
-        {/* Pressure Level - ALWAYS VISIBLE */}
-        <div className={`rounded-lg p-3 ${
+        {/* Pressure Level - ALWAYS VISIBLE, fixed min height */}
+        <div className={`rounded-lg p-3 min-h-[72px] ${
           match.level === 'HIGH' ? 'bg-emerald-50' :
           match.level === 'MEDIUM' ? 'bg-amber-50' : 'bg-gray-100'
         }`}>
@@ -186,31 +200,35 @@ export default function DecisionListingCard({ listing, answers }: Props) {
           </p>
         </div>
 
-        {/* Pepe's Take */}
-        <div className="bg-gray-50 rounded-lg p-3">
+        {/* Pepe's Take - fixed min height */}
+        <div className="bg-gray-50 rounded-lg p-3 min-h-[88px]">
           <div className="flex items-start gap-3">
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Pepe"
               className="w-10 h-10 rounded-full object-cover border-2 border-[#00A651] shrink-0"
             />
-            <div>
+            <div className="flex-1">
               <p className="text-xs font-semibold text-[#00A651] uppercase tracking-wide mb-1">
                 Pepe's take
               </p>
-              <p className="text-sm text-gray-700 leading-relaxed">
+              <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
                 {pepeTake}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Description snippet */}
-        {listing.description && (
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {listing.description}
-          </p>
-        )}
+        {/* Description snippet - fixed height slot */}
+        <div className="min-h-[40px]">
+          {listing.description ? (
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {listing.description}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-400 italic">No description available</p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -74,7 +74,7 @@ export default function DecisionClient() {
   useEffect(() => {
     if (!answers) return;
 
-    async function fetch() {
+    async function fetchData() {
       const { data } = await supabase
         .from('listings')
         .select('*')
@@ -102,11 +102,25 @@ export default function DecisionClient() {
           return scoreB - scoreA;
         });
 
-        setListings(filtered);
+        // SANITIZE: Ensure every listing has a unique ID
+        const seenIds = new Set<string>();
+        const sanitized = filtered.map((listing, index) => {
+          let uniqueId = listing.id;
+
+          // If id is null/undefined/empty OR already seen (duplicate), generate new one
+          if (!uniqueId || seenIds.has(uniqueId)) {
+            uniqueId = `generated-${Date.now()}-${index}`;
+          }
+
+          seenIds.add(uniqueId);
+          return { ...listing, id: uniqueId };
+        });
+
+        setListings(sanitized);
       }
       setLoading(false);
     }
-    fetch();
+    fetchData();
   }, [answers]);
 
   const currentListing = listings[currentIndex] || null;
@@ -212,9 +226,9 @@ export default function DecisionClient() {
         </span>
       </header>
 
-      {/* Main - scrollable */}
-      <main className="flex-1 overflow-auto p-4">
-        <div className="max-w-md mx-auto">
+      {/* Main - centered vertically */}
+      <main className="flex-1 overflow-auto p-4 flex flex-col justify-center min-h-0">
+        <div className="max-w-md mx-auto w-full">
           <DecisionListingCard
             key={currentListing.id}
             listing={currentListing}
