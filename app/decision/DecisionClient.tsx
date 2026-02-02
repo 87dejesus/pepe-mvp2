@@ -12,10 +12,9 @@ const supabase = createClient(
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
-const BUILD_VERSION = '2026-01-31-v7'; // Update this to verify deployments
 
-// Placeholder for listings without images
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80';
+// NO placeholder - show explicit "no image" state instead of fake photo
+const PLACEHOLDER_IMAGE = '';
 
 type Answers = {
   boroughs: string[];
@@ -229,7 +228,6 @@ export default function DecisionPage() {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [showWaitFeedback, setShowWaitFeedback] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
   const [totalFetched, setTotalFetched] = useState(0);
 
   // Compute analysis synchronously to avoid race conditions
@@ -251,85 +249,56 @@ export default function DecisionPage() {
 
   // Load answers from localStorage
   useEffect(() => {
-    console.log('[DecisionClient] Loading answers from localStorage, key:', LS_KEY);
     const stored = localStorage.getItem(LS_KEY);
-    console.log('[DecisionClient] Raw stored value:', stored);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        console.log('[DecisionClient] Parsed answers:', parsed);
-        setAnswers(parsed);
-      } catch (e) {
-        console.error('[DecisionClient] Failed to parse answers:', e);
+        setAnswers(JSON.parse(stored));
+      } catch {
+        // Invalid stored data
       }
-    } else {
-      console.warn('[DecisionClient] No answers found in localStorage');
     }
 
     const storedDecisions = localStorage.getItem(DECISIONS_KEY);
     if (storedDecisions) {
       try {
         setDecisions(JSON.parse(storedDecisions));
-      } catch (e) {
-        console.error('[DecisionClient] Failed to parse decisions:', e);
+      } catch {
+        // Invalid stored data
       }
     }
   }, []);
 
   // Fetch listings, filter by criteria, and sort by match score
   useEffect(() => {
-    // Don't fetch until answers are loaded
-    if (!answers) {
-      console.log('[DecisionClient] Skipping fetch - answers not loaded yet');
-      return;
-    }
+    if (!answers) return;
 
-    const currentAnswers = answers; // TypeScript narrowing
-    console.log('[DecisionClient] Fetching listings with answers:', currentAnswers);
+    const currentAnswers = answers;
 
     async function fetchListings() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('listings')
         .select('*')
         .eq('status', 'Active');
 
-      console.log('[DecisionClient] Supabase response - count:', data?.length, 'error:', error);
-
       if (data) {
-        // Log first listing to see available fields
-        if (data.length > 0) {
-          console.log('[DecisionClient] Sample listing fields:', Object.keys(data[0]));
-          console.log('[DecisionClient] Sample listing original_url:', data[0].original_url);
-        }
-
-        // Strict filtering by questionnaire answers
         const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
         const neededBedrooms = bedroomMap[currentAnswers.bedrooms] ?? 1;
-        console.log('[DecisionClient] Filter criteria - bedrooms:', currentAnswers.bedrooms, '(need:', neededBedrooms, '), budget:', currentAnswers.budget);
 
         const filtered = data.filter((listing: Listing) => {
-          // CRITICAL: Only show listings with valid application URL
           if (!listing.original_url) return false;
 
-          // Bedroom filter: exact match for studio/1/2, or >= for 3+
           if (currentAnswers.bedrooms === '3+') {
             if (listing.bedrooms < 3) return false;
           } else {
             if (listing.bedrooms !== neededBedrooms) return false;
           }
 
-          // Budget filter: allow up to 10% over budget
           const maxPrice = currentAnswers.budget * 1.1;
           if (listing.price > maxPrice) return false;
 
           return true;
         });
 
-        const withUrl = data.filter((l: Listing) => l.original_url);
-        console.log('[DecisionClient] Listings with URL:', withUrl.length, 'of', data.length);
-        console.log('[DecisionClient] After all filters:', filtered.length, 'listings');
-
-        // Sort filtered listings by match score
         const sorted = filtered.sort((a, b) => {
           const scoreA = analyzeMatch(a, currentAnswers).score;
           const scoreB = analyzeMatch(b, currentAnswers).score;
@@ -372,7 +341,6 @@ export default function DecisionPage() {
   const handleNext = () => {
     setShowWaitFeedback(false);
     setShowDetails(false);
-    // Allow going past last listing to show "end of matches" state
     if (currentIndex < listings.length) {
       setCurrentIndex(prev => prev + 1);
     }
@@ -520,68 +488,46 @@ export default function DecisionPage() {
 
   const currentDecision = decisions[currentItem?.id];
 
-  // Debug current listing and image
-  console.log('[DecisionClient] Render - index:', currentIndex, 'id:', currentItem?.id, 'price:', currentItem?.price, 'image_url:', currentItem?.image_url?.slice(-20), 'computed imageUrl:', imageUrl?.slice(-20));
-
   return (
-    <main className="min-h-screen bg-[#fafafa] flex flex-col">
-      {/* TEMP DEBUG BANNER - REMOVE AFTER CONFIRMING DEPLOY */}
-      <div className="bg-red-600 text-white text-center py-2 text-xs font-mono">
-        BUILD: {BUILD_VERSION} | Answers: {answers ? 'YES' : 'NO'} | Listings: {listings.length} | Analysis: {analysis ? 'YES' : 'NO'}
-      </div>
-
+    <main className="h-[100dvh] bg-[#fafafa] flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <Link href="/flow" className="text-sm text-gray-400 hover:text-gray-600">
           ← Edit criteria
         </Link>
-        <button
-          onClick={() => setShowDebug(!showDebug)}
-          className="text-sm text-gray-500"
-        >
+        <span className="text-sm text-gray-500">
           {currentIndex + 1} of {listings.length}
-        </button>
+        </span>
       </header>
 
-      {/* Debug Panel - Click counter to toggle */}
-      {showDebug && (
-        <div className="bg-gray-900 text-green-400 p-3 text-xs font-mono">
-          <div><strong>Debug Info</strong> (build: {BUILD_VERSION})</div>
-          <div>Answers loaded: {answers ? 'YES' : 'NO'}</div>
-          {answers && (
-            <>
-              <div>- bedrooms: {answers.bedrooms}</div>
-              <div>- budget: ${answers.budget}</div>
-              <div>- boroughs: {answers.boroughs.join(', ')}</div>
-            </>
-          )}
-          <div>Total fetched: {totalFetched}</div>
-          <div>After filter: {listings.length}</div>
-          <div>Current item original_url: {currentItem?.original_url || 'NULL'}</div>
-          <div>Current item price: ${currentItem?.price}</div>
-          <div>Current item bedrooms: {currentItem?.bedrooms}</div>
-          <div>Image URL: {imageUrl?.slice(-30)}</div>
-        </div>
-      )}
-
-      {/* Main Content */}
+      {/* Scrollable Content Area */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-md mx-auto p-4 pb-36">
+        <div className="max-w-md mx-auto p-4 pb-[140px]">
 
           {/* Listing Card - key forces re-render on item change */}
           <div key={currentItem.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
 
-            {/* Image */}
+            {/* Image - show real image or explicit "no image" state */}
             <div className="relative aspect-[4/3]">
-              <img
-                key={`img-${currentItem.id}`}
-                src={imageUrl}
-                alt={`${currentItem?.neighborhood || 'Listing'}`}
-                className="w-full h-full object-cover"
-              />
+              {imageUrl ? (
+                <img
+                  key={`img-${currentItem.id}-${imageUrl.slice(-20)}`}
+                  src={imageUrl}
+                  alt={`${currentItem?.neighborhood || 'Listing'}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center">
+                  <svg className="w-16 h-16 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-gray-500 text-sm font-medium">Image not available</span>
+                  <span className="text-gray-400 text-xs mt-1">Check the original listing</span>
+                </div>
+              )}
 
-              {/* Placeholder indicator */}
-              {!analysis?.hasRealImage && (
+              {/* Photo pending indicator - only for real but potentially outdated images */}
+              {imageUrl && !analysis?.hasRealImage && (
                 <div className="absolute top-3 left-3 bg-gray-800/70 text-white text-xs px-2 py-1 rounded">
                   Photo pending
                 </div>
@@ -721,8 +667,8 @@ export default function DecisionPage() {
         </div>
       </div>
 
-      {/* Fixed Footer Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6">
+      {/* Fixed Footer Actions - compact height */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-3 pb-4">
         <div className="max-w-md mx-auto space-y-3">
 
           {/* Primary Actions Row */}
