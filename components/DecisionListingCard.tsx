@@ -30,6 +30,7 @@ type Answers = {
 type Props = {
   listing: Listing;
   answers: Answers;
+  isDuplicateImage: boolean;
 };
 
 function formatBedrooms(n: number): string {
@@ -122,7 +123,7 @@ function getPepeTake(listing: Listing, answers: Answers, score: number, hasImage
   return "Doesn't line up well with what you told me matters.";
 }
 
-export default function DecisionListingCard({ listing, answers }: Props) {
+export default function DecisionListingCard({ listing, answers, isDuplicateImage }: Props) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Visual feedback: brief flash on listing change
@@ -132,28 +133,35 @@ export default function DecisionListingCard({ listing, answers }: Props) {
     return () => clearTimeout(timer);
   }, [listing.id]);
 
-  const hasImage = !!(listing.image_url || (listing.images?.length > 0 && listing.images[0]));
-  const imageUrl = listing.image_url || listing.images?.[0] || '';
+  // Get image URL
+  const rawImageUrl = listing.image_url || listing.images?.[0] || '';
+
+  // If duplicate detected by parent, hide the image
+  const showImage = rawImageUrl && !isDuplicateImage;
+
   const match = computeMatch(listing, answers);
-  const pepeTake = getPepeTake(listing, answers, match.score, hasImage);
+  const pepeTake = getPepeTake(listing, answers, match.score, !!showImage);
 
   return (
-    <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'} ${isDuplicateImage ? 'ring-2 ring-red-500' : ''}`}>
       {/* Image */}
       <div className="relative aspect-[4/3] bg-gray-200">
-        {imageUrl ? (
+        {showImage ? (
           <img
             key={`img-${listing.id}`}
-            src={imageUrl}
+            src={rawImageUrl}
             alt={listing.neighborhood}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+          <div className={`w-full h-full flex flex-col items-center justify-center ${isDuplicateImage ? 'bg-red-50 text-red-500' : 'text-gray-400'}`}>
             <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-sm">Image not available</span>
+            <span className="text-sm font-medium">
+              {isDuplicateImage ? 'Placeholder Image (Scraper Issue)' : 'Image not available'}
+            </span>
+            <span className="text-xs mt-1 opacity-60">Check original listing for photos</span>
           </div>
         )}
         <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-semibold px-3 py-1.5 rounded-lg">

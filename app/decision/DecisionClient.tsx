@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -49,6 +49,9 @@ export default function DecisionClient() {
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Answers | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+
+  // Track last image URL to detect duplicates from scraper
+  const lastImageUrlRef = useRef<string | null>(null);
 
   // Load from localStorage
   useEffect(() => {
@@ -214,6 +217,15 @@ export default function DecisionClient() {
   const currentDecision = decisions[currentListing.id];
   const isLast = currentIndex >= listings.length - 1;
 
+  // Detect duplicate image from scraper
+  const currentImageUrl = currentListing.image_url || currentListing.images?.[0] || '';
+  const isDuplicateImage = !!(currentImageUrl && currentImageUrl === lastImageUrlRef.current);
+
+  // Update ref AFTER comparison (will be used for next listing)
+  useEffect(() => {
+    lastImageUrlRef.current = currentImageUrl;
+  }, [currentImageUrl]);
+
   return (
     <div className="h-[100dvh] flex flex-col bg-[#fafafa]">
       {/* Header */}
@@ -228,11 +240,11 @@ export default function DecisionClient() {
 
       {/* Main - centered vertically */}
       <main className="flex-1 overflow-auto p-4 flex flex-col justify-center min-h-0">
-        <div className="max-w-md mx-auto w-full">
+        <div key={`card-wrapper-${currentListing.id}`} className="max-w-md mx-auto w-full">
           <DecisionListingCard
-            key={currentListing.id}
             listing={currentListing}
             answers={answers}
+            isDuplicateImage={isDuplicateImage}
           />
         </div>
       </main>
