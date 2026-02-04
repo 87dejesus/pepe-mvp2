@@ -45,7 +45,6 @@ type Decision = 'applied' | 'wait' | null;
 export default function DecisionClient() {
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [scrapedCount, setScrapedCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Answers | null>(null);
@@ -124,7 +123,6 @@ export default function DecisionClient() {
             return true;
           });
 
-        setScrapedCount(filtered.length);
         setListings(sanitized);
       }
       setLoading(false);
@@ -214,13 +212,6 @@ export default function DecisionClient() {
         </span>
       </header>
 
-      {/* Status panel */}
-      <div className="shrink-0 px-4 py-1.5 text-center">
-        <p className="text-[11px] text-gray-400">
-          Scraped: {scrapedCount} · Verified photos: {listings.length} · Viewing: {currentIndex + 1}
-        </p>
-      </div>
-
       {/* Main - centered vertically */}
       <main className="flex-1 overflow-auto p-4 flex flex-col justify-center min-h-0">
         <div key={`card-wrapper-${currentListing?.id ?? 'empty'}`} className="max-w-md mx-auto w-full">
@@ -228,6 +219,9 @@ export default function DecisionClient() {
             listing={currentListing}
             answers={answers}
           />
+          <p className="text-[11px] text-gray-400 text-center mt-2">
+            {listings.length} listing{listings.length !== 1 ? 's' : ''} with verified photos
+          </p>
         </div>
       </main>
 

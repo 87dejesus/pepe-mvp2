@@ -164,25 +164,15 @@ export default function DecisionListingCard({ listing, answers }: Props) {
           </p>
         </div>
 
-        {/* Pressure Level - ALWAYS VISIBLE, fixed min height */}
-        <div className={`rounded-lg p-3 min-h-[72px] ${
-          match.level === 'HIGH' ? 'bg-emerald-50' :
-          match.level === 'MEDIUM' ? 'bg-amber-50' : 'bg-gray-100'
-        }`}>
+        {/* Criteria match */}
+        <div className="rounded-lg p-3 min-h-[72px] bg-gray-50">
           <div className="flex items-center justify-between mb-1">
-            <span className={`text-xs font-semibold uppercase tracking-wide ${
-              match.level === 'HIGH' ? 'text-emerald-600' :
-              match.level === 'MEDIUM' ? 'text-amber-600' : 'text-gray-500'
-            }`}>
-              {match.level === 'HIGH' ? 'Good fit' :
-               match.level === 'MEDIUM' ? 'Worth considering' : 'Keep looking'}
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Criteria match
             </span>
             <span className="text-sm font-medium text-gray-700">{match.score}%</span>
           </div>
-          <p className={`text-sm ${
-            match.level === 'HIGH' ? 'text-emerald-700' :
-            match.level === 'MEDIUM' ? 'text-amber-700' : 'text-gray-600'
-          }`}>
+          <p className="text-sm text-gray-600">
             {match.text}
           </p>
         </div>
