@@ -43,86 +43,72 @@ function formatBathrooms(n: number): string {
   return `${n} baths`;
 }
 
-function computeMatch(listing: Listing, answers: Answers) {
-  let score = 50;
+// High-demand areas in NYC
+const HIGH_VELOCITY = ['manhattan', 'williamsburg', 'greenpoint', 'dumbo', 'park slope', 'cobble hill', 'brooklyn heights', 'long island city', 'astoria'];
+const MODERATE_VELOCITY = ['bushwick', 'bed-stuy', 'crown heights', 'prospect heights', 'harlem', 'washington heights', 'jackson heights', 'sunnyside', 'fort greene', 'clinton hill'];
 
-  // Budget
+function getMarketVelocity(listing: Listing): { level: string; text: string } {
+  const area = (listing.neighborhood || listing.borough || '').toLowerCase();
+
+  if (HIGH_VELOCITY.some(h => area.includes(h))) {
+    return {
+      level: 'High',
+      text: `Market Velocity: High. Inventory in ${listing.neighborhood || listing.borough} moves rapidly. Most listings rotate quickly.`,
+    };
+  }
+  if (MODERATE_VELOCITY.some(m => area.includes(m))) {
+    return {
+      level: 'Moderate',
+      text: `Market Velocity: Moderate. This area reflects the standard turnover rate for NYC.`,
+    };
+  }
+  return {
+    level: 'Low',
+    text: `Market Velocity: Low. Demand in ${listing.neighborhood || listing.borough} is currently stable compared to more central hubs.`,
+  };
+}
+
+function buildPepeFacts(listing: Listing, answers: Answers): string {
+  const facts: string[] = [];
+
+  // Price vs budget
   if (listing.price <= answers.budget) {
-    const pct = ((answers.budget - listing.price) / answers.budget) * 100;
-    if (pct >= 20) score += 20;
-    else if (pct >= 10) score += 15;
-    else score += 10;
+    const pct = Math.round(((answers.budget - listing.price) / answers.budget) * 100);
+    if (pct > 0) {
+      facts.push(`Price is ${pct}% below your stated budget.`);
+    } else {
+      facts.push('Price matches your stated budget exactly.');
+    }
   } else {
-    const over = ((listing.price - answers.budget) / answers.budget) * 100;
-    if (over <= 10) score -= 10;
-    else score -= 25;
+    const pct = Math.round(((listing.price - answers.budget) / answers.budget) * 100);
+    facts.push(`Price is ${pct}% above your stated budget.`);
   }
 
-  // Borough
+  // Borough match
   if (answers.boroughs.length > 0) {
-    const match = answers.boroughs.some(
+    const inPreferred = answers.boroughs.some(
       b => listing.borough?.toLowerCase().includes(b.toLowerCase()) ||
            listing.neighborhood?.toLowerCase().includes(b.toLowerCase())
     );
-    score += match ? 15 : -10;
+    if (inPreferred) {
+      facts.push('Located in one of your preferred areas.');
+    } else {
+      facts.push('Outside your preferred boroughs.');
+    }
   }
-
-  // Bedrooms
-  const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
-  const needed = bedroomMap[answers.bedrooms] ?? 1;
-  score += listing.bedrooms >= needed ? 10 : -15;
-
-  // Bathrooms
-  const bathMap: Record<string, number> = { '1': 1, '1.5': 1.5, '2+': 2 };
-  const neededBath = bathMap[answers.bathrooms] ?? 1;
-  score += listing.bathrooms >= neededBath ? 5 : -5;
 
   // Pets
-  const petsAllowed = listing.pets?.toLowerCase() === 'yes';
-  const petsNo = listing.pets?.toLowerCase() === 'no';
-  if (answers.pets !== 'none' && petsNo) score -= 20;
-  else if (answers.pets !== 'none' && petsAllowed) score += 10;
-
-  // Timing
-  if (answers.timing === 'asap') score += 5;
-
-  score = Math.max(0, Math.min(100, score));
-
-  let level: 'HIGH' | 'MEDIUM' | 'LOW';
-  let text: string;
-
-  if (score >= 75) {
-    level = 'HIGH';
-    text = 'Aligns well with your criteria.';
-  } else if (score >= 55) {
-    level = 'MEDIUM';
-    text = 'Reasonable fit with some tradeoffs.';
-  } else {
-    level = 'LOW';
-    text = 'Has gaps compared to your criteria.';
+  if (answers.pets !== 'none') {
+    const petsAllowed = listing.pets?.toLowerCase() === 'yes';
+    facts.push(petsAllowed ? 'Pets allowed.' : 'Pet policy not confirmed.');
   }
 
-  return { score, level, text };
-}
-
-function getPepeTake(listing: Listing, answers: Answers, score: number): string {
-  if (score >= 80) {
-    return "Hits your key criteria: budget, location, size. Take a closer look.";
-  }
-  if (score >= 65) {
-    const note = listing.price <= answers.budget ? 'Budget is comfortable.' : 'Stretches your budget a bit.';
-    return `Decent option. ${note} Worth comparing against the others.`;
-  }
-  if (score >= 50) {
-    return "Mixed signals. Works on some levels, not others.";
-  }
-  return "Doesn't line up well with what you told me matters.";
+  return facts.join(' ');
 }
 
 export default function DecisionListingCard({ listing, answers }: Props) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Visual feedback: brief flash on listing change
   useEffect(() => {
     setIsTransitioning(true);
     const timer = setTimeout(() => setIsTransitioning(false), 150);
@@ -130,19 +116,25 @@ export default function DecisionListingCard({ listing, answers }: Props) {
   }, [listing.id]);
 
   const imageUrl = listing.image_url || listing.images?.[0] || '';
-  const match = computeMatch(listing, answers);
-  const pepeTake = getPepeTake(listing, answers, match.score);
+  const velocity = getMarketVelocity(listing);
+  const pepeFacts = buildPepeFacts(listing, answers);
 
   return (
     <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       {/* Image */}
       <div className="relative aspect-[4/3] bg-gray-200">
-        <img
-          key={`img-${listing.id}`}
-          src={imageUrl}
-          alt={listing.neighborhood}
-          className="w-full h-full object-cover"
-        />
+        {imageUrl ? (
+          <img
+            key={`img-${listing.id}`}
+            src={imageUrl}
+            alt={listing.neighborhood}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <span className="text-sm">No photo available</span>
+          </div>
+        )}
         <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-semibold px-3 py-1.5 rounded-lg">
           ${listing.price?.toLocaleString()}/mo
         </div>
@@ -164,48 +156,38 @@ export default function DecisionListingCard({ listing, answers }: Props) {
           </p>
         </div>
 
-        {/* Criteria match */}
-        <div className="rounded-lg p-3 min-h-[72px] bg-gray-50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Criteria match
-            </span>
-            <span className="text-sm font-medium text-gray-700">{match.score}%</span>
-          </div>
-          <p className="text-sm text-gray-600">
-            {match.text}
+        {/* Market Velocity */}
+        <div className="rounded-lg p-3 bg-gray-50">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {velocity.text}
           </p>
         </div>
 
-        {/* Pepe's Take - fixed min height */}
-        <div className="bg-gray-50 rounded-lg p-3 min-h-[88px]">
+        {/* Pepe's Take */}
+        <div className="rounded-lg p-3 bg-gray-50">
           <div className="flex items-start gap-3">
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Pepe"
-              className="w-10 h-10 rounded-full object-cover border-2 border-[#00A651] shrink-0"
+              className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0"
             />
             <div className="flex-1">
-              <p className="text-xs font-semibold text-[#00A651] uppercase tracking-wide mb-1">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                 Pepe's take
               </p>
-              <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
-                {pepeTake}
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {pepeFacts}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Description snippet - fixed height slot */}
-        <div className="min-h-[40px]">
-          {listing.description ? (
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {listing.description}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-400 italic">No description available</p>
-          )}
-        </div>
+        {/* Description */}
+        {listing.description && (
+          <p className="text-sm text-gray-500 line-clamp-2">
+            {listing.description}
+          </p>
+        )}
       </div>
     </div>
   );

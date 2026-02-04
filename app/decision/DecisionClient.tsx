@@ -103,25 +103,16 @@ export default function DecisionClient() {
           return scoreB - scoreA;
         });
 
-        // SANITIZE: unique IDs + remove listings with no image or duplicate images
+        // Ensure unique IDs
         const seenIds = new Set<string>();
-        const seenImageUrls = new Set<string>();
-        const sanitized = filtered
-          .map((listing, index) => {
-            let uniqueId = listing.id;
-            if (!uniqueId || seenIds.has(uniqueId)) {
-              uniqueId = `generated-${Date.now()}-${index}`;
-            }
-            seenIds.add(uniqueId);
-            return { ...listing, id: uniqueId };
-          })
-          .filter((listing) => {
-            const imageUrl = listing.image_url || listing.images?.[0] || '';
-            if (!imageUrl) return false;
-            if (seenImageUrls.has(imageUrl)) return false;
-            seenImageUrls.add(imageUrl);
-            return true;
-          });
+        const sanitized = filtered.map((listing, index) => {
+          let uniqueId = listing.id;
+          if (!uniqueId || seenIds.has(uniqueId)) {
+            uniqueId = `generated-${Date.now()}-${index}`;
+          }
+          seenIds.add(uniqueId);
+          return { ...listing, id: uniqueId };
+        });
 
         setListings(sanitized);
       }
@@ -219,9 +210,6 @@ export default function DecisionClient() {
             listing={currentListing}
             answers={answers}
           />
-          <p className="text-[11px] text-gray-400 text-center mt-2">
-            {listings.length} listing{listings.length !== 1 ? 's' : ''} with verified photos
-          </p>
         </div>
       </main>
 
@@ -243,18 +231,15 @@ export default function DecisionClient() {
               onClick={handleWait}
               className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
                 currentDecision === 'wait'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-amber-400 text-amber-900 active:scale-[0.98]'
+                  ? 'bg-gray-200 text-gray-500'
+                  : 'bg-gray-100 text-gray-700 border border-gray-300 active:scale-[0.98]'
               }`}
             >
-              {currentDecision === 'wait' ? 'Waiting' : 'Wait consciously'}
+              {currentDecision === 'wait' ? 'Saved' : 'Wait consciously'}
             </button>
           </div>
-          <p className="text-xs text-gray-400 text-center">
-            You're not committing yet. You're keeping this option alive.
-          </p>
           <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
-            Skip to next → ({currentIndex + 1}/{listings.length})
+            Skip to next ({currentIndex + 1} of {listings.length})
           </button>
         </div>
       </footer>
