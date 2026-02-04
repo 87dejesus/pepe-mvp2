@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
@@ -43,7 +42,6 @@ type Listing = {
 type Decision = 'applied' | 'wait' | null;
 
 export default function DecisionClient() {
-  const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -103,16 +101,25 @@ export default function DecisionClient() {
           return scoreB - scoreA;
         });
 
-        // Ensure unique IDs
+        // Ensure unique IDs + deduplicate images
         const seenIds = new Set<string>();
-        const sanitized = filtered.map((listing, index) => {
-          let uniqueId = listing.id;
-          if (!uniqueId || seenIds.has(uniqueId)) {
-            uniqueId = `generated-${Date.now()}-${index}`;
-          }
-          seenIds.add(uniqueId);
-          return { ...listing, id: uniqueId };
-        });
+        const seenImageUrls = new Set<string>();
+        const sanitized = filtered
+          .map((listing, index) => {
+            let uniqueId = listing.id;
+            if (!uniqueId || seenIds.has(uniqueId)) {
+              uniqueId = `generated-${Date.now()}-${index}`;
+            }
+            seenIds.add(uniqueId);
+            return { ...listing, id: uniqueId };
+          })
+          .filter((listing) => {
+            const imageUrl = listing.image_url || listing.images?.[0] || '';
+            if (!imageUrl) return false;
+            if (seenImageUrls.has(imageUrl)) return false;
+            seenImageUrls.add(imageUrl);
+            return true;
+          });
 
         setListings(sanitized);
       }
@@ -138,7 +145,9 @@ export default function DecisionClient() {
   const handleWait = () => {
     if (!currentListing) return;
     saveDecision(currentListing.id, 'wait');
-    router.push('/exit?choice=wait');
+    if (listings.length > 1) {
+      setCurrentIndex((prev) => (prev + 1) % listings.length);
+    }
   };
 
   const handleNext = () => {
@@ -229,13 +238,9 @@ export default function DecisionClient() {
             </button>
             <button
               onClick={handleWait}
-              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                currentDecision === 'wait'
-                  ? 'bg-gray-200 text-gray-500'
-                  : 'bg-gray-100 text-gray-700 border border-gray-300 active:scale-[0.98]'
-              }`}
+              className="flex-1 py-3.5 rounded-xl font-semibold transition-all bg-gray-100 text-gray-700 border border-gray-300 active:scale-[0.98]"
             >
-              {currentDecision === 'wait' ? 'Saved' : 'Wait consciously'}
+              Wait consciously
             </button>
           </div>
           <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
