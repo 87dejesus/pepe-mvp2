@@ -151,8 +151,8 @@ export default function DecisionClient() {
   };
 
   const handleNext = () => {
-    if (currentIndex < listings.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+    if (listings.length > 0) {
+      setCurrentIndex((prev) => (prev + 1) % listings.length);
     }
   };
 
@@ -198,28 +198,7 @@ export default function DecisionClient() {
     );
   }
 
-  // End of listings
-  if (!currentListing) {
-    return (
-      <div className="h-[100dvh] flex items-center justify-center bg-white p-6">
-        <div className="text-center max-w-sm">
-          <h1 className="text-xl font-semibold mb-2">You've seen all matches</h1>
-          <p className="text-gray-500 text-sm mb-6">{listings.length} listings reviewed.</p>
-          <div className="space-y-3">
-            <Link href="/flow" className="block bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg">
-              Adjust criteria
-            </Link>
-            <button onClick={() => setCurrentIndex(0)} className="block w-full text-gray-500 text-sm py-2">
-              Review again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const currentDecision = decisions[currentListing.id];
-  const isLast = currentIndex >= listings.length - 1;
+  const currentDecision = currentListing ? decisions[currentListing.id] : null;
 
   return (
     <div className="h-[100dvh] flex flex-col bg-[#fafafa]">
@@ -233,9 +212,14 @@ export default function DecisionClient() {
         </span>
       </header>
 
+      {/* Debug banner */}
+      <div className="shrink-0 bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-xs font-mono text-yellow-800">
+        DEBUG | total: {listings.length} | index: {currentIndex} | id: {currentListing?.id ?? 'null'} | img: {(currentListing?.image_url || currentListing?.images?.[0] || 'none').slice(0, 60)}
+      </div>
+
       {/* Main - centered vertically */}
       <main className="flex-1 overflow-auto p-4 flex flex-col justify-center min-h-0">
-        <div key={`card-wrapper-${currentListing.id}`} className="max-w-md mx-auto w-full">
+        <div key={`card-wrapper-${currentListing?.id ?? 'empty'}`} className="max-w-md mx-auto w-full">
           <DecisionListingCard
             listing={currentListing}
             answers={answers}
@@ -271,15 +255,9 @@ export default function DecisionClient() {
           <p className="text-xs text-gray-400 text-center">
             You're not committing yet. You're keeping this option alive.
           </p>
-          {isLast ? (
-            <Link href="/flow" className="block text-center text-xs text-[#00A651] py-1">
-              End of matches · Adjust criteria
-            </Link>
-          ) : (
-            <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
-              Skip to next →
-            </button>
-          )}
+          <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
+            Skip to next → ({currentIndex + 1}/{listings.length})
+          </button>
         </div>
       </footer>
     </div>
