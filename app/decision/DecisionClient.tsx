@@ -128,6 +128,15 @@ export default function DecisionClient() {
 
   const currentListing = listings[currentIndex] || null;
 
+  // Derived image values — computed unconditionally so the useEffect below is safe
+  const currentImageUrl = currentListing?.image_url || currentListing?.images?.[0] || '';
+  const isDuplicateImage = !!(currentImageUrl && currentImageUrl === lastImageUrlRef.current);
+
+  // Update ref AFTER comparison (will be used for next listing)
+  useEffect(() => {
+    lastImageUrlRef.current = currentImageUrl;
+  }, [currentImageUrl]);
+
   const saveDecision = (id: string, dec: Decision) => {
     const updated = { ...decisions, [id]: dec };
     setDecisions(updated);
@@ -216,15 +225,6 @@ export default function DecisionClient() {
 
   const currentDecision = decisions[currentListing.id];
   const isLast = currentIndex >= listings.length - 1;
-
-  // Detect duplicate image from scraper
-  const currentImageUrl = currentListing.image_url || currentListing.images?.[0] || '';
-  const isDuplicateImage = !!(currentImageUrl && currentImageUrl === lastImageUrlRef.current);
-
-  // Update ref AFTER comparison (will be used for next listing)
-  useEffect(() => {
-    lastImageUrlRef.current = currentImageUrl;
-  }, [currentImageUrl]);
 
   return (
     <div className="h-[100dvh] flex flex-col bg-[#fafafa]">
