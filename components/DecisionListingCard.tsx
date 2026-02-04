@@ -43,64 +43,41 @@ function formatBathrooms(n: number): string {
   return `${n} baths`;
 }
 
-// High-demand areas in NYC
 const HIGH_VELOCITY = ['manhattan', 'williamsburg', 'greenpoint', 'dumbo', 'park slope', 'cobble hill', 'brooklyn heights', 'long island city', 'astoria'];
 const MODERATE_VELOCITY = ['bushwick', 'bed-stuy', 'crown heights', 'prospect heights', 'harlem', 'washington heights', 'jackson heights', 'sunnyside', 'fort greene', 'clinton hill'];
 
-function getMarketVelocity(listing: Listing): { level: string; text: string } {
+function getMarketVelocity(listing: Listing): string {
   const area = (listing.neighborhood || listing.borough || '').toLowerCase();
-
   if (HIGH_VELOCITY.some(h => area.includes(h))) {
-    return {
-      level: 'High',
-      text: `Market Velocity: High. Inventory in ${listing.neighborhood || listing.borough} moves rapidly. Most listings rotate quickly.`,
-    };
+    return `High — inventory in ${listing.neighborhood || listing.borough} moves rapidly.`;
   }
   if (MODERATE_VELOCITY.some(m => area.includes(m))) {
-    return {
-      level: 'Moderate',
-      text: `Market Velocity: Moderate. This area reflects the standard turnover rate for NYC.`,
-    };
+    return 'Moderate — standard turnover rate for NYC.';
   }
-  return {
-    level: 'Low',
-    text: `Market Velocity: Low. Demand in ${listing.neighborhood || listing.borough} is currently stable compared to more central hubs.`,
-  };
+  return `Low — demand in ${listing.neighborhood || listing.borough} is stable.`;
 }
 
 function buildPepeFacts(listing: Listing, answers: Answers): string {
   const facts: string[] = [];
 
-  // Price vs budget
   if (listing.price <= answers.budget) {
     const pct = Math.round(((answers.budget - listing.price) / answers.budget) * 100);
-    if (pct > 0) {
-      facts.push(`Price is ${pct}% below your stated budget.`);
-    } else {
-      facts.push('Price matches your stated budget exactly.');
-    }
+    facts.push(pct > 0 ? `${pct}% below budget.` : 'At budget.');
   } else {
     const pct = Math.round(((listing.price - answers.budget) / answers.budget) * 100);
-    facts.push(`Price is ${pct}% above your stated budget.`);
+    facts.push(`${pct}% above budget.`);
   }
 
-  // Borough match
   if (answers.boroughs.length > 0) {
     const inPreferred = answers.boroughs.some(
       b => listing.borough?.toLowerCase().includes(b.toLowerCase()) ||
            listing.neighborhood?.toLowerCase().includes(b.toLowerCase())
     );
-    if (inPreferred) {
-      facts.push('Located in one of your preferred areas.');
-    } else {
-      facts.push('Outside your preferred boroughs.');
-    }
+    facts.push(inPreferred ? 'In preferred area.' : 'Outside preferred boroughs.');
   }
 
-  // Pets
   if (answers.pets !== 'none') {
-    const petsAllowed = listing.pets?.toLowerCase() === 'yes';
-    facts.push(petsAllowed ? 'Pets allowed.' : 'Pet policy not confirmed.');
+    facts.push(listing.pets?.toLowerCase() === 'yes' ? 'Pets OK.' : 'Pet policy unconfirmed.');
   }
 
   return facts.join(' ');
@@ -111,22 +88,23 @@ export default function DecisionListingCard({ listing, answers }: Props) {
 
   useEffect(() => {
     setIsTransitioning(true);
-    const timer = setTimeout(() => setIsTransitioning(false), 150);
+    const timer = setTimeout(() => setIsTransitioning(false), 120);
     return () => clearTimeout(timer);
   }, [listing.id]);
 
-  const imageUrl = listing.image_url || listing.images?.[0] || '';
+  const rawImageUrl = listing.image_url || listing.images?.[0] || '';
+  const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
   const velocity = getMarketVelocity(listing);
   const pepeFacts = buildPepeFacts(listing, answers);
 
   return (
-    <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      {/* Image */}
-      <div className="relative aspect-[4/3] bg-gray-200">
-        {imageUrl ? (
+    <div className={`bg-white rounded-xl overflow-hidden shadow-sm transition-opacity duration-120 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Image 4:3 */}
+      <div className="relative aspect-[4/3] bg-gray-100">
+        {hasValidImage ? (
           <img
             key={`img-${listing.id}`}
-            src={imageUrl}
+            src={rawImageUrl}
             alt={listing.neighborhood}
             className="w-full h-full object-cover"
           />
@@ -135,56 +113,47 @@ export default function DecisionListingCard({ listing, answers }: Props) {
             <span className="text-sm">No photo available</span>
           </div>
         )}
-        <div className="absolute bottom-3 left-3 bg-[#00A651] text-white font-semibold px-3 py-1.5 rounded-lg">
+        <div className="absolute bottom-2 left-2 bg-[#00A651] text-white font-semibold text-sm px-2.5 py-1 rounded-lg">
           ${listing.price?.toLocaleString()}/mo
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Location */}
+      {/* Content — compact */}
+      <div className="px-4 pt-3 pb-2 space-y-2">
+        {/* Location + specs */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 leading-tight">
             {listing.neighborhood}
             {listing.borough && listing.borough !== listing.neighborhood && (
               <span className="text-gray-400 font-normal"> · {listing.borough}</span>
             )}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500 mt-0.5">
             {formatBedrooms(listing.bedrooms)} · {formatBathrooms(listing.bathrooms)}
             {listing.pets?.toLowerCase() === 'yes' && ' · Pets OK'}
           </p>
         </div>
 
-        {/* Market Velocity */}
-        <div className="rounded-lg p-3 bg-gray-50">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {velocity.text}
+        {/* Market Velocity — single line */}
+        <p className="text-xs text-gray-500">
+          <span className="font-medium text-gray-600">Market velocity:</span> {velocity}
+        </p>
+
+        {/* Pepe's Take — inline */}
+        <div className="flex items-start gap-2">
+          <img
+            src="/brand/pepe-ny.jpeg"
+            alt="Pepe"
+            className="w-6 h-6 rounded-full object-cover border border-gray-200 shrink-0 mt-0.5"
+          />
+          <p className="text-xs text-gray-600 leading-relaxed">
+            {pepeFacts}
           </p>
         </div>
 
-        {/* Pepe's Take */}
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="flex items-start gap-3">
-            <img
-              src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
-              className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0"
-            />
-            <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                Pepe's take
-              </p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {pepeFacts}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
+        {/* Description — one line */}
         {listing.description && (
-          <p className="text-sm text-gray-500 line-clamp-2">
+          <p className="text-xs text-gray-400 line-clamp-1">
             {listing.description}
           </p>
         )}

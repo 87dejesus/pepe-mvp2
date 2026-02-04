@@ -216,8 +216,6 @@ export default function DecisionClient() {
     );
   }
 
-  const currentDecision = currentListing ? decisions[currentListing.id] : null;
-
   return (
     <div className="h-[100dvh] flex flex-col bg-[#fafafa]">
       {/* Header */}
@@ -246,23 +244,19 @@ export default function DecisionClient() {
           <div className="flex gap-2">
             <button
               onClick={handleApply}
-              className={`flex-1 py-3.5 rounded-xl font-semibold transition-all ${
-                currentDecision === 'applied'
-                  ? 'bg-[#00A651]/20 text-[#00A651]'
-                  : 'bg-[#00A651] text-white active:scale-[0.98]'
-              }`}
+              className="flex-1 py-3 rounded-xl font-semibold bg-[#00A651] text-white active:scale-[0.98] transition-transform"
             >
-              {currentDecision === 'applied' ? 'Applied' : 'Apply now'}
+              Apply now
             </button>
             <button
               onClick={handleWait}
-              className="flex-1 py-3.5 rounded-xl font-semibold transition-all bg-gray-100 text-gray-700 border border-gray-300 active:scale-[0.98]"
+              className="flex-1 py-3 rounded-xl font-semibold bg-amber-400 text-amber-900 active:scale-[0.98] transition-transform"
             >
               Wait consciously
             </button>
           </div>
           <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
-            Skip to next ({currentIndex + 1} of {listings.length})
+            Skip ({currentIndex + 1} of {listings.length})
           </button>
         </div>
       </footer>
