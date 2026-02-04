@@ -93,7 +93,7 @@ function computeMatch(listing: Listing, answers: Answers) {
 
   if (score >= 75) {
     level = 'HIGH';
-    text = 'Strong match. Listings like this move fast in NYC.';
+    text = 'Aligns well with your criteria.';
   } else if (score >= 55) {
     level = 'MEDIUM';
     text = 'Reasonable fit with some tradeoffs.';
@@ -107,11 +107,11 @@ function computeMatch(listing: Listing, answers: Answers) {
 
 function getPepeTake(listing: Listing, answers: Answers, score: number): string {
   if (score >= 80) {
-    return "This checks your boxes: budget, location, size. Worth serious consideration.";
+    return "Hits your key criteria: budget, location, size. Take a closer look.";
   }
   if (score >= 65) {
     const note = listing.price <= answers.budget ? 'Budget is comfortable.' : 'Stretches your budget a bit.';
-    return `Solid match. ${note} In NYC, good enough often beats waiting for perfect.`;
+    return `Decent option. ${note} Worth comparing against the others.`;
   }
   if (score >= 50) {
     return "Mixed signals. Works on some levels, not others.";
@@ -174,7 +174,7 @@ export default function DecisionListingCard({ listing, answers }: Props) {
               match.level === 'HIGH' ? 'text-emerald-600' :
               match.level === 'MEDIUM' ? 'text-amber-600' : 'text-gray-500'
             }`}>
-              {match.level === 'HIGH' ? 'Strong match' :
+              {match.level === 'HIGH' ? 'Good fit' :
                match.level === 'MEDIUM' ? 'Worth considering' : 'Keep looking'}
             </span>
             <span className="text-sm font-medium text-gray-700">{match.score}%</span>
