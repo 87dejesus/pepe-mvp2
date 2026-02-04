@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -50,8 +50,6 @@ export default function DecisionClient() {
   const [answers, setAnswers] = useState<Answers | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
 
-  // Track last image URL to detect duplicates from scraper
-  const lastImageUrlRef = useRef<string | null>(null);
 
   // Load from localStorage
   useEffect(() => {
@@ -105,19 +103,25 @@ export default function DecisionClient() {
           return scoreB - scoreA;
         });
 
-        // SANITIZE: Ensure every listing has a unique ID
+        // SANITIZE: unique IDs + remove listings with no image or duplicate images
         const seenIds = new Set<string>();
-        const sanitized = filtered.map((listing, index) => {
-          let uniqueId = listing.id;
-
-          // If id is null/undefined/empty OR already seen (duplicate), generate new one
-          if (!uniqueId || seenIds.has(uniqueId)) {
-            uniqueId = `generated-${Date.now()}-${index}`;
-          }
-
-          seenIds.add(uniqueId);
-          return { ...listing, id: uniqueId };
-        });
+        const seenImageUrls = new Set<string>();
+        const sanitized = filtered
+          .map((listing, index) => {
+            let uniqueId = listing.id;
+            if (!uniqueId || seenIds.has(uniqueId)) {
+              uniqueId = `generated-${Date.now()}-${index}`;
+            }
+            seenIds.add(uniqueId);
+            return { ...listing, id: uniqueId };
+          })
+          .filter((listing) => {
+            const imageUrl = listing.image_url || listing.images?.[0] || '';
+            if (!imageUrl) return false;
+            if (seenImageUrls.has(imageUrl)) return false;
+            seenImageUrls.add(imageUrl);
+            return true;
+          });
 
         setListings(sanitized);
       }
@@ -127,15 +131,6 @@ export default function DecisionClient() {
   }, [answers]);
 
   const currentListing = listings[currentIndex] || null;
-
-  // Derived image values — computed unconditionally so the useEffect below is safe
-  const currentImageUrl = currentListing?.image_url || currentListing?.images?.[0] || '';
-  const isDuplicateImage = !!(currentImageUrl && currentImageUrl === lastImageUrlRef.current);
-
-  // Update ref AFTER comparison (will be used for next listing)
-  useEffect(() => {
-    lastImageUrlRef.current = currentImageUrl;
-  }, [currentImageUrl]);
 
   const saveDecision = (id: string, dec: Decision) => {
     const updated = { ...decisions, [id]: dec };
@@ -244,7 +239,6 @@ export default function DecisionClient() {
           <DecisionListingCard
             listing={currentListing}
             answers={answers}
-            isDuplicateImage={isDuplicateImage}
           />
         </div>
       </main>
