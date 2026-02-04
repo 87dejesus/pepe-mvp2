@@ -85,12 +85,30 @@ export default function DecisionClient() {
 
         const filtered = data.filter((l: Listing) => {
           if (!l.original_url) return false;
+
+          // Budget: strict cap
+          if (l.price > answers!.budget) return false;
+
+          // Bedrooms
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 3) return false;
           } else {
             if (l.bedrooms !== needed) return false;
           }
-          if (l.price > answers!.budget * 1.1) return false;
+
+          // Borough/location: must match at least one preferred borough
+          if (answers!.boroughs.length > 0) {
+            const boroughMatch = answers!.boroughs.some(
+              b => (l.borough || '').toLowerCase().includes(b.toLowerCase()) ||
+                   (l.neighborhood || '').toLowerCase().includes(b.toLowerCase())
+            );
+            if (!boroughMatch) return false;
+          }
+
+          // Placeholder image filter (scraper artifact)
+          const img = l.image_url || l.images?.[0] || '';
+          if (img.includes('add7ffb')) return false;
+
           return true;
         });
 
