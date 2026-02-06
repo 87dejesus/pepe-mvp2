@@ -255,26 +255,19 @@ class ListingScraper {
     if (!this.page) return;
 
     // Human-like scrolling with random pauses
-    await this.page.evaluate(async () => {
-      await new Promise<void>((resolve) => {
+    await this.page.evaluate(() => {
+      return new Promise((resolve) => {
         let totalHeight = 0;
         const maxScroll = 10000;
-
-        const scroll = () => {
-          const distance = 100 + Math.floor(Math.random() * 100); // Random 100-200px
-          const delay = 50 + Math.floor(Math.random() * 100); // Random 50-150ms
-
+        const timer = setInterval(() => {
+          const distance = 100 + Math.floor(Math.random() * 100);
           window.scrollBy(0, distance);
           totalHeight += distance;
-
           if (totalHeight >= document.body.scrollHeight || totalHeight > maxScroll) {
-            resolve();
-          } else {
-            setTimeout(scroll, delay);
+            clearInterval(timer);
+            resolve(true);
           }
-        };
-
-        scroll();
+        }, 100 + Math.floor(Math.random() * 100));
       });
     });
 
@@ -395,20 +388,50 @@ class ListingScraper {
         return [];
       }
 
+      // Wait for JS to render listings
+      await this.page.waitForTimeout(5000);
+      await this.page.waitForSelector('.cl-search-result, .gallery-card, a[href*="/apa/"]', { timeout: 10000 }).catch(() => null);
+
       await randomDelay(2000, 4000);
       await this.autoScroll();
 
+      // Try multiple selectors for Craigslist's varying layouts
       const listings = await this.page.evaluate(() => {
-        return Array.from(document.querySelectorAll('.cl-search-result')).map(card => {
+        // Method 1: Gallery cards
+        let cards = Array.from(document.querySelectorAll('.cl-search-result.gallery-card'));
+
+        // Method 2: Fallback to any cl-search-result
+        if (cards.length === 0) {
+          cards = Array.from(document.querySelectorAll('.cl-search-result'));
+        }
+
+        // Method 3: Fallback to links
+        if (cards.length === 0) {
+          const links = Array.from(document.querySelectorAll('a[href*="/apa/"]'));
+          return links.slice(0, 50).map(link => {
+            const container = link.closest('li') || link.parentElement;
+            const img = container?.querySelector('img') as HTMLImageElement;
+            return {
+              address: link.textContent?.trim() || "NYC Apartment",
+              price: container?.querySelector('.priceinfo, .price, [class*="price"]')?.textContent?.trim() || "0",
+              image_url: img?.src || "",
+              original_url: (link as HTMLAnchorElement).href,
+              source: 'craigslist'
+            };
+          }).filter(l => l.original_url);
+        }
+
+        return cards.map(card => {
           const img = card.querySelector('img') as HTMLImageElement;
+          const link = card.querySelector('a') as HTMLAnchorElement;
           return {
-            address: card.querySelector('.titlestring')?.textContent?.trim() || "Apartment",
-            price: card.querySelector('.priceinfo')?.textContent?.trim() || "0",
+            address: card.querySelector('.titlestring, .title, .posting-title')?.textContent?.trim() || "NYC Apartment",
+            price: card.querySelector('.priceinfo, .price, .result-price')?.textContent?.trim() || "0",
             image_url: img?.src || "",
-            original_url: (card.querySelector('a') as HTMLAnchorElement)?.href || "",
+            original_url: link?.href || "",
             source: 'craigslist'
           };
-        }).filter(l => l.image_url && l.image_url.length > 0);
+        }).filter(l => l.original_url);
       });
 
       log.success(`Found ${listings.length} listings from Craigslist`);
@@ -441,10 +464,10 @@ async function save(listings: any[]) {
 
   const { error } = await supabase.from("listings").insert(unique.map(l => ({
     address: l.address,
+    neighborhood: l.address, // Use address as neighborhood fallback
     price: cleanPrice(l.price),
     image_url: l.image_url,
     original_url: l.original_url,
-    source: l.source,
     borough: normalizeBorough(l.address),
     status: 'Active'
   })));
