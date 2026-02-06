@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
@@ -41,13 +36,90 @@ type Listing = {
 
 type Decision = 'applied' | 'wait' | null;
 
+// Calculate match score (0-100)
+function calculateMatchScore(listing: Listing, answers: Answers): number {
+  let score = 0;
+  let maxPoints = 0;
+
+  // Budget (40 points max)
+  maxPoints += 40;
+  if (listing.price <= answers.budget) {
+    const pctUnder = (answers.budget - listing.price) / answers.budget;
+    score += 40; // Full points if under budget
+    if (pctUnder > 0.1) score += 5; // Bonus for being >10% under
+  } else {
+    const pctOver = (listing.price - answers.budget) / answers.budget;
+    score += Math.max(0, 30 - pctOver * 100); // Deduct based on how much over
+  }
+
+  // Bedrooms (25 points)
+  maxPoints += 25;
+  const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
+  const needed = bedroomMap[answers.bedrooms] ?? 1;
+  if (answers.bedrooms === '3+') {
+    if (listing.bedrooms >= 3) score += 25;
+  } else {
+    if (listing.bedrooms === needed) score += 25;
+  }
+
+  // Borough/Location (25 points)
+  maxPoints += 25;
+  if (answers.boroughs.length > 0) {
+    const inPreferred = answers.boroughs.some(
+      b => (listing.borough || '').toLowerCase().includes(b.toLowerCase()) ||
+           (listing.neighborhood || '').toLowerCase().includes(b.toLowerCase())
+    );
+    if (inPreferred) score += 25;
+  } else {
+    score += 25; // No preference = match
+  }
+
+  // Pets (10 points)
+  maxPoints += 10;
+  if (answers.pets === 'none') {
+    score += 10;
+  } else {
+    if (listing.pets?.toLowerCase() === 'yes') score += 10;
+  }
+
+  return Math.min(100, Math.round((score / maxPoints) * 100));
+}
+
+// Determine recommendation
+function getRecommendation(score: number): 'ACT_NOW' | 'WAIT' {
+  return score >= 75 ? 'ACT_NOW' : 'WAIT';
+}
+
 export default function DecisionClient() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Answers | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+  const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
+
+  // Initialize Supabase client safely
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (url && key) {
+      try {
+        const client = createClient(url, key);
+        setSupabaseClient(client);
+      } catch (err) {
+        console.error('Failed to initialize Supabase:', err);
+        setInitError('Failed to connect to database');
+        setLoading(false);
+      }
+    } else {
+      console.error('Supabase env vars missing');
+      setInitError('Database configuration missing');
+      setLoading(false);
+    }
+  }, []);
 
   // Load from localStorage
   useEffect(() => {
@@ -71,13 +143,19 @@ export default function DecisionClient() {
 
   // Fetch listings
   useEffect(() => {
-    if (!answers) return;
+    if (!answers || !supabaseClient) return;
 
     async function fetchData() {
-      const { data } = await supabase
+      const { data, error } = await supabaseClient!
         .from('listings')
         .select('*')
         .eq('status', 'Active');
+
+      if (error) {
+        console.error('Failed to fetch listings:', error);
+        setLoading(false);
+        return;
+      }
 
       if (data) {
         const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
@@ -144,9 +222,12 @@ export default function DecisionClient() {
       setLoading(false);
     }
     fetchData();
-  }, [answers]);
+  }, [answers, supabaseClient]);
 
+  // Calculate current listing and score (moved up for use in handlers)
   const currentListing = listings[currentIndex] || null;
+  const matchScore = currentListing && answers ? calculateMatchScore(currentListing, answers) : 0;
+  const recommendation = getRecommendation(matchScore);
 
   const saveDecision = (id: string, dec: Decision) => {
     const updated = { ...decisions, [id]: dec };
@@ -174,6 +255,12 @@ export default function DecisionClient() {
     }
   };
 
+  const handlePrev = () => {
+    if (listings.length > 0) {
+      setCurrentIndex((prev) => (prev - 1 + listings.length) % listings.length);
+    }
+  };
+
   // Loading
   if (loading) {
     return (
@@ -186,14 +273,32 @@ export default function DecisionClient() {
     );
   }
 
+  // Init error
+  if (initError) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center bg-white p-6">
+        <div className="text-center max-w-sm border-2 border-black p-6">
+          <h1 className="text-xl font-bold mb-2">Connection Error</h1>
+          <p className="text-gray-500 text-sm mb-6">{initError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // No answers
   if (!answers) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-white p-6">
-        <div className="text-center max-w-sm">
-          <h1 className="text-xl font-semibold mb-2">First, tell me what you need</h1>
+        <div className="text-center max-w-sm border-2 border-black p-6">
+          <h1 className="text-xl font-bold mb-2">First, tell me what you need</h1>
           <p className="text-gray-500 text-sm mb-6">Answer a few questions so I can find the right matches.</p>
-          <Link href="/flow" className="inline-block bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg">
+          <Link href="/flow" className="inline-block bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1">
             Start
           </Link>
         </div>
@@ -205,10 +310,10 @@ export default function DecisionClient() {
   if (listings.length === 0) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-white p-6">
-        <div className="text-center max-w-sm">
-          <h1 className="text-xl font-semibold mb-2">No matches right now</h1>
+        <div className="text-center max-w-sm border-2 border-black p-6">
+          <h1 className="text-xl font-bold mb-2">No matches right now</h1>
           <p className="text-gray-500 text-sm mb-6">Try adjusting your criteria.</p>
-          <Link href="/flow" className="inline-block bg-[#00A651] text-white font-medium py-3 px-6 rounded-lg">
+          <Link href="/flow" className="inline-block bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1">
             Adjust criteria
           </Link>
         </div>
@@ -217,49 +322,75 @@ export default function DecisionClient() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#fafafa]">
-      {/* Header */}
-      <header className="shrink-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <Link href="/flow" className="text-sm text-gray-400 hover:text-gray-600">
-          ← Edit criteria
+    <div className="h-[100dvh] flex flex-col bg-[#f5f5f5]">
+      {/* Header - Neobrutalista */}
+      <header className="shrink-0 bg-white border-b-2 border-black px-4 py-3 flex items-center justify-between">
+        <Link href="/flow" className="text-sm font-bold text-black hover:underline">
+          ← EDIT CRITERIA
         </Link>
-        <span className="text-sm text-gray-500">
-          {currentIndex + 1} of {listings.length}
+        <span className="text-sm font-bold text-black">
+          {currentIndex + 1} / {listings.length}
         </span>
       </header>
 
-      {/* Main - centered vertically */}
-      <main className="flex-1 overflow-auto p-4 flex flex-col justify-center min-h-0">
-        <div key={`card-wrapper-${currentListing?.id ?? 'empty'}`} className="max-w-md mx-auto w-full">
-          <DecisionListingCard
-            listing={currentListing}
-            answers={answers}
-          />
-        </div>
+      {/* Main - Fill space, no justify-center */}
+      <main className="flex-1 overflow-auto p-3 pb-32 min-h-0">
+        {currentListing && (
+          <div key={currentListing.id} className="max-w-lg mx-auto w-full h-full flex flex-col">
+            <DecisionListingCard
+              listing={currentListing}
+              answers={answers}
+              matchScore={matchScore}
+              recommendation={recommendation}
+            />
+          </div>
+        )}
       </main>
 
-      {/* Footer - NOT fixed */}
-      <footer className="shrink-0 bg-white border-t border-gray-100 px-4 py-4">
-        <div className="max-w-md mx-auto space-y-3">
-          <div className="flex gap-2">
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-4 py-4 pb-6">
+        <div className="max-w-lg mx-auto">
+          {/* CTA Buttons */}
+          <div className="flex gap-3 mb-3">
             <button
               onClick={handleApply}
-              className="flex-1 py-3 rounded-xl font-semibold bg-[#00A651] text-white active:scale-[0.98] transition-transform"
+              className={`flex-1 py-3 font-bold border-2 border-black shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
+                recommendation === 'ACT_NOW'
+                  ? 'bg-[#00A651] text-white'
+                  : 'bg-white text-black'
+              }`}
             >
-              Apply now
+              APPLY NOW
             </button>
             <button
               onClick={handleWait}
-              className="flex-1 py-3 rounded-xl font-semibold bg-amber-400 text-amber-900 active:scale-[0.98] transition-transform"
+              className={`flex-1 py-3 font-bold border-2 border-black shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
+                recommendation === 'WAIT'
+                  ? 'bg-amber-400 text-black'
+                  : 'bg-white text-black'
+              }`}
             >
-              Wait consciously
+              WAIT
             </button>
           </div>
-          <button onClick={handleNext} className="w-full text-xs text-gray-400 py-1">
-            Skip ({currentIndex + 1} of {listings.length})
-          </button>
+
+          {/* Navigation */}
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={handlePrev}
+              className="py-2 px-4 text-sm font-bold border-2 border-black bg-white hover:bg-gray-100"
+            >
+              ← PREV
+            </button>
+            <button
+              onClick={handleNext}
+              className="py-2 px-6 text-sm font-bold border-2 border-black bg-[#00A651] text-white shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+            >
+              NEXT →
+            </button>
+          </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
