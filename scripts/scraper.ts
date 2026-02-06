@@ -1,16 +1,10 @@
 /**
- * PEPE 2.0 - Enhanced Rental Listings Scraper
- * Run: npx tsx scripts/scraper.ts <url>
- *
- * Features:
- * - Scrapes StreetEasy and Zillow
- * - Detects emotional "vibe" keywords (light, quiet, charm, cozy)
- * - Calculates freshness score based on listing age
- * - Stores data in the clean 'listings' table
+ * PEPE 2.0 - Unified Scraper (StreetEasy + Craigslist)
+ * Features: Proxy Rotation, User-Agent Rotation, Rate Limiting, Anti-Detection
  */
 
 import { config } from "dotenv";
-import { chromium, Browser, Page } from "playwright";
+import { chromium, Browser, Page, BrowserContext } from "playwright";
 import { createClient } from "@supabase/supabase-js";
 
 config({ path: ".env.local" });
@@ -19,166 +13,128 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Proxy config (Bright Data / Oxylabs placeholder)
+const PROXY_HOST = process.env.PROXY_HOST || ""; // e.g., "brd.superproxy.io:22225"
+const PROXY_USER = process.env.PROXY_USER || "";
+const PROXY_PASS = process.env.PROXY_PASS || "";
+
+const BAD_IMAGE_PART = "add7ffb";
+
 // ============================================
-// VIBE / EMOTIONAL KEYWORDS
+// ANTI-DETECTION CONFIG
 // ============================================
 
-const VIBE_KEYWORDS = [
-  "light",
-  "bright",
-  "sunny",
-  "quiet",
-  "peaceful",
-  "charm",
-  "charming",
-  "cozy",
-  "spacious",
-  "modern",
-  "renovated",
-  "exposed brick",
-  "hardwood",
-  "natural light",
-  "tree-lined",
-  "garden",
-  "courtyard",
-  "rooftop",
-  "views",
-  "waterfront",
-  "doorman",
-  "laundry in unit",
-  "dishwasher",
-  "central air",
-  "high ceilings",
-  "original details",
-  "pre-war",
-  "windowed kitchen",
-  "open layout",
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0",
 ];
 
-/**
- * Extract vibe keywords from description text
- */
-function extractVibeKeywords(text: string): string[] {
-  if (!text) return [];
-  const lower = text.toLowerCase();
-  return VIBE_KEYWORDS.filter((keyword) => lower.includes(keyword.toLowerCase()));
-}
+const ACCEPT_LANGUAGES = [
+  "en-US,en;q=0.9",
+  "en-US,en;q=0.9,es;q=0.8",
+  "en-GB,en;q=0.9,en-US;q=0.8",
+  "en-US,en;q=0.8",
+];
 
-/**
- * Calculate freshness score (0-100)
- * Higher = more fresh/recently listed
- */
-function calculateFreshnessScore(dateText: string | null): number {
-  if (!dateText) return 50; // Unknown = neutral
+const REFERERS: Record<string, string[]> = {
+  streeteasy: [
+    "https://www.google.com/",
+    "https://www.bing.com/",
+    "https://www.streeteasy.com/",
+    "https://duckduckgo.com/",
+  ],
+  craigslist: [
+    "https://www.google.com/",
+    "https://www.craigslist.org/",
+    "https://newyork.craigslist.org/",
+  ],
+};
 
-  const lower = dateText.toLowerCase();
-
-  // Very fresh (posted today/yesterday)
-  if (lower.includes("today") || lower.includes("just listed") || lower.includes("new")) {
-    return 100;
-  }
-
-  // Fresh (1-3 days)
-  if (lower.includes("yesterday") || lower.includes("1 day")) {
-    return 90;
-  }
-
-  // Recent (3-7 days)
-  const daysMatch = lower.match(/(\d+)\s*day/);
-  if (daysMatch) {
-    const days = parseInt(daysMatch[1], 10);
-    if (days <= 3) return 85;
-    if (days <= 7) return 70;
-    if (days <= 14) return 50;
-    if (days <= 30) return 30;
-    return 10;
-  }
-
-  // Week-based
-  const weeksMatch = lower.match(/(\d+)\s*week/);
-  if (weeksMatch) {
-    const weeks = parseInt(weeksMatch[1], 10);
-    if (weeks === 1) return 60;
-    if (weeks <= 2) return 40;
-    return 20;
-  }
-
-  // Month-based
-  if (lower.includes("month")) {
-    return 15;
-  }
-
-  return 50; // Default
-}
+// Rate limiting
+const MAX_REQUESTS_PER_HOUR = 60;
+const MIN_DELAY_MS = 5000;  // 5 seconds
+const MAX_DELAY_MS = 15000; // 15 seconds
+const BLOCK_RETRY_DELAY_MS = 60000; // 60 seconds after block
+const MAX_RETRIES = 3;
 
 // ============================================
-// DATA CLEANING UTILITIES
+// UTILITIES
 // ============================================
 
-function cleanPrice(priceStr: string): number {
-  if (!priceStr) return 0;
-  const match = priceStr.match(/[\d,]+/);
-  if (!match) return 0;
-  return parseInt(match[0].replace(/,/g, ""), 10) || 0;
-}
+const cleanPrice = (s: string) => parseInt(s.replace(/[^\d]/g, ""), 10) || 0;
 
-function cleanBedrooms(bedroomStr: string): number {
-  if (!bedroomStr) return 0;
-  const lower = bedroomStr.toLowerCase();
-  if (lower.includes("studio")) return 0;
-  const match = lower.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : 0;
-}
-
-function cleanBathrooms(bathStr: string): number {
-  if (!bathStr) return 1;
-  const match = bathStr.match(/([\d.]+)/);
-  return match ? parseFloat(match[1]) : 1;
-}
-
-function normalizeBorough(text: string): string {
-  const lower = text.toLowerCase();
-  if (lower.includes("manhattan")) return "Manhattan";
-  if (lower.includes("brooklyn")) return "Brooklyn";
-  if (lower.includes("queens")) return "Queens";
-  if (lower.includes("bronx")) return "Bronx";
-  if (lower.includes("staten")) return "Staten Island";
+const normalizeBorough = (t: string) => {
+  const l = t.toLowerCase();
+  if (l.includes("manhattan")) return "Manhattan";
+  if (l.includes("brooklyn")) return "Brooklyn";
+  if (l.includes("queens")) return "Queens";
+  if (l.includes("bronx")) return "Bronx";
+  if (l.includes("staten")) return "Staten Island";
   return "Manhattan";
-}
+};
 
-function normalizePets(petStr: string | undefined): string {
-  if (!petStr) return "Unknown";
-  const lower = petStr.toLowerCase();
+const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-  if (lower.includes("no pet") || lower === "none") return "No pets";
-  if (lower.includes("cat") && lower.includes("dog")) return "Cats & dogs allowed";
-  if (lower.includes("cat")) return "Cats allowed";
-  if (lower.includes("dog")) return "Dogs allowed";
-  if (lower.includes("allowed") || lower.includes("yes") || lower.includes("friendly"))
-    return "Cats & dogs allowed";
-  if (lower.includes("case")) return "Case by case";
+const randomDelay = (min: number = MIN_DELAY_MS, max: number = MAX_DELAY_MS): Promise<void> => {
+  const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+  console.log(`⏳ Waiting ${(delay / 1000).toFixed(1)}s...`);
+  return new Promise(resolve => setTimeout(resolve, delay));
+};
 
-  return "Unknown";
-}
+const log = {
+  info: (msg: string) => console.log(`[${new Date().toISOString()}] ℹ️  ${msg}`),
+  warn: (msg: string) => console.log(`[${new Date().toISOString()}] ⚠️  ${msg}`),
+  error: (msg: string) => console.log(`[${new Date().toISOString()}] ❌ ${msg}`),
+  success: (msg: string) => console.log(`[${new Date().toISOString()}] ✅ ${msg}`),
+  block: (msg: string) => console.log(`[${new Date().toISOString()}] 🚫 BLOCKED: ${msg}`),
+};
 
 // ============================================
-// LISTING TYPE
+// ROBOTS.TXT CHECKER
 // ============================================
 
-interface ScrapedListing {
-  address: string;
-  borough: string;
-  neighborhood?: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  pets: string;
-  image_url?: string;
-  original_url: string;
-  description?: string;
-  vibe_keywords: string[];
-  freshness_score: number;
-  source: string;
+async function checkRobotsTxt(baseUrl: string, path: string): Promise<boolean> {
+  try {
+    const robotsUrl = new URL("/robots.txt", baseUrl).href;
+    const response = await fetch(robotsUrl);
+    if (!response.ok) return true; // No robots.txt = allowed
+
+    const text = await response.text();
+    const lines = text.split("\n");
+    let isUserAgentMatch = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim().toLowerCase();
+      if (trimmed.startsWith("user-agent:")) {
+        const agent = trimmed.replace("user-agent:", "").trim();
+        isUserAgentMatch = agent === "*" || agent.includes("bot");
+      }
+      if (isUserAgentMatch && trimmed.startsWith("disallow:")) {
+        const disallowed = trimmed.replace("disallow:", "").trim();
+        if (disallowed && path.startsWith(disallowed)) {
+          log.warn(`Path ${path} is disallowed by robots.txt`);
+          return false;
+        }
+      }
+    }
+    return true;
+  } catch (error) {
+    log.warn(`Could not fetch robots.txt: ${error}`);
+    return true; // Assume allowed if can't fetch
+  }
 }
 
 // ============================================
@@ -187,440 +143,369 @@ interface ScrapedListing {
 
 class ListingScraper {
   private browser: Browser | null = null;
+  private context: BrowserContext | null = null;
   private page: Page | null = null;
+  private requestCount = 0;
+  private hourStart = Date.now();
 
-  async init() {
-    console.log("Launching browser...");
+  private getProxyConfig() {
+    if (!PROXY_HOST || !PROXY_USER || !PROXY_PASS) {
+      log.warn("No proxy configured - running without proxy (higher block risk)");
+      return undefined;
+    }
+    return {
+      server: `http://${PROXY_HOST}`,
+      username: PROXY_USER,
+      password: PROXY_PASS,
+    };
+  }
+
+  private getRandomHeaders(source: string) {
+    return {
+      "User-Agent": randomItem(USER_AGENTS),
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": randomItem(ACCEPT_LANGUAGES),
+      "Accept-Encoding": "gzip, deflate, br",
+      "DNT": "1",
+      "Connection": "keep-alive",
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-User": "?1",
+      "Referer": randomItem(REFERERS[source] || REFERERS.streeteasy),
+    };
+  }
+
+  private async checkRateLimit(): Promise<boolean> {
+    const now = Date.now();
+    if (now - this.hourStart >= 3600000) {
+      this.requestCount = 0;
+      this.hourStart = now;
+    }
+
+    if (this.requestCount >= MAX_REQUESTS_PER_HOUR) {
+      log.warn(`Rate limit reached (${MAX_REQUESTS_PER_HOUR}/hour). Waiting...`);
+      const waitTime = 3600000 - (now - this.hourStart);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      this.requestCount = 0;
+      this.hourStart = Date.now();
+    }
+
+    this.requestCount++;
+    return true;
+  }
+
+  async init(source: string = "streeteasy") {
+    const proxy = this.getProxyConfig();
+    const headers = this.getRandomHeaders(source);
+
+    log.info(`Launching browser with UA: ${headers["User-Agent"].substring(0, 50)}...`);
+
     this.browser = await chromium.launch({
-      headless: false, // Visible for debugging
+      headless: false,
+      args: [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+      ],
     });
-    this.page = await this.browser.newPage();
 
-    await this.page.setExtraHTTPHeaders({
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    this.context = await this.browser.newContext({
+      proxy,
+      extraHTTPHeaders: headers,
+      viewport: { width: 1366, height: 768 },
+      locale: "en-US",
+      timezoneId: "America/New_York",
+      geolocation: { latitude: 40.7128, longitude: -74.0060 },
+      permissions: ["geolocation"],
     });
+
+    // Stealth: Override navigator properties
+    await this.context.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+      Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
+      Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
+    });
+
+    this.page = await this.context.newPage();
   }
 
   async close() {
-    if (this.browser) {
-      await this.browser.close();
+    if (this.browser) await this.browser.close();
+  }
+
+  private async handleBlock(attempt: number): Promise<boolean> {
+    if (attempt >= MAX_RETRIES) {
+      log.error(`Max retries (${MAX_RETRIES}) reached. Aborting.`);
+      return false;
     }
+
+    log.block(`Detected block/CAPTCHA. Retry ${attempt + 1}/${MAX_RETRIES} after ${BLOCK_RETRY_DELAY_MS / 1000}s...`);
+
+    // Close and recreate with new identity
+    await this.close();
+    await new Promise(resolve => setTimeout(resolve, BLOCK_RETRY_DELAY_MS));
+    await this.init();
+
+    return true;
   }
 
-  /**
-   * Scrape StreetEasy search results
-   */
-  async scrapeStreetEasy(url: string): Promise<ScrapedListing[]> {
-    if (!this.page) throw new Error("Browser not initialized");
+  async autoScroll() {
+    if (!this.page) return;
 
-    console.log(`Navigating to: ${url}`);
-    await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    // Human-like scrolling with random pauses
+    await this.page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let totalHeight = 0;
+        const maxScroll = 10000;
 
-    console.log("Waiting for page to load...");
-    await this.page.waitForTimeout(8000);
+        const scroll = () => {
+          const distance = 100 + Math.floor(Math.random() * 100); // Random 100-200px
+          const delay = 50 + Math.floor(Math.random() * 100); // Random 50-150ms
 
-    await this.page.screenshot({ path: "streeteasy-debug.png", fullPage: true });
-    console.log("Screenshot saved to streeteasy-debug.png");
+          window.scrollBy(0, distance);
+          totalHeight += distance;
 
-    console.log("Extracting listings...");
-
-    const listings = await this.page.evaluate(() => {
-      const results: Array<{
-        address: string;
-        price: string;
-        beds: string;
-        baths: string;
-        url: string;
-        image: string;
-        neighborhood: string;
-        description: string;
-        datePosted: string;
-      }> = [];
-
-      const cards = document.querySelectorAll(
-        '[data-testid="listing-card"], .listingCard, .SearchResultItem, article[data-testid]'
-      );
-
-      cards.forEach((card) => {
-        try {
-          const addressEl = card.querySelector(
-            '[data-testid="listing-address"], .listingCard-address, .details-title a, h2, h3'
-          );
-          const priceEl = card.querySelector(
-            '[data-testid="listing-price"], .listingCard-price, .price, [data-testid="price"]'
-          );
-          const bedsEl = card.querySelector(
-            '[data-testid="listing-beds"], .listingCard-beds, .details_info'
-          );
-          const bathsEl = card.querySelector('[data-testid="listing-baths"], .listingCard-baths');
-          const linkEl = card.querySelector(
-            'a[href*="/building/"], a[href*="/rental/"], a[href*="/for-rent/"]'
-          ) as HTMLAnchorElement;
-          const imgEl = card.querySelector("img") as HTMLImageElement;
-          const neighborhoodEl = card.querySelector(
-            '.listingCard-neighborhood, [data-testid="listing-neighborhood"]'
-          );
-          const descEl = card.querySelector(".listingCard-description, p");
-          const dateEl = card.querySelector(
-            '.listingCard-date, [data-testid="listing-date"], time'
-          );
-
-          if (addressEl && priceEl) {
-            results.push({
-              address: addressEl.textContent?.trim() || "",
-              price: priceEl.textContent?.trim() || "",
-              beds: bedsEl?.textContent?.trim() || "1",
-              baths: bathsEl?.textContent?.trim() || "1",
-              url: linkEl?.href || "",
-              image: imgEl?.src || "",
-              neighborhood: neighborhoodEl?.textContent?.trim() || "",
-              description: descEl?.textContent?.trim() || "",
-              datePosted: dateEl?.textContent?.trim() || "",
-            });
+          if (totalHeight >= document.body.scrollHeight || totalHeight > maxScroll) {
+            resolve();
+          } else {
+            setTimeout(scroll, delay);
           }
-        } catch {
-          // Skip malformed cards
-        }
-      });
+        };
 
-      return results;
+        scroll();
+      });
     });
 
-    console.log(`Found ${listings.length} listings on page`);
-
-    return listings.map((l) => ({
-      address: l.address,
-      borough: normalizeBorough(l.neighborhood || l.address),
-      neighborhood: l.neighborhood,
-      price: cleanPrice(l.price),
-      bedrooms: cleanBedrooms(l.beds),
-      bathrooms: cleanBathrooms(l.baths),
-      pets: "Unknown",
-      image_url: l.image,
-      original_url: l.url,
-      description: l.description,
-      vibe_keywords: extractVibeKeywords(l.description + " " + l.address),
-      freshness_score: calculateFreshnessScore(l.datePosted),
-      source: "streeteasy",
-    }));
+    await this.page.waitForTimeout(1000 + Math.random() * 2000);
   }
 
-  /**
-   * Scrape Zillow search results
-   */
-  async scrapeZillow(url: string): Promise<ScrapedListing[]> {
-    if (!this.page) throw new Error("Browser not initialized");
+  // --- STREETEASY LOGIC ---
+  async scrapeStreetEasy(url: string, attempt: number = 0): Promise<any[]> {
+    if (!this.page) return [];
 
-    console.log(`Navigating to: ${url}`);
-    await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await this.page.waitForTimeout(3000);
+    await this.checkRateLimit();
 
-    console.log("Extracting listings...");
+    // Check robots.txt
+    const urlObj = new URL(url);
+    const allowed = await checkRobotsTxt(urlObj.origin, urlObj.pathname);
+    if (!allowed) {
+      log.warn("Scraping disallowed by robots.txt. Skipping.");
+      return [];
+    }
 
-    const listings = await this.page.evaluate(() => {
-      const results: Array<{
-        address: string;
-        price: string;
-        beds: string;
-        baths: string;
-        url: string;
-        image: string;
-        description: string;
-        datePosted: string;
-      }> = [];
+    log.info(`Navigating to StreetEasy: ${url}`);
 
-      const cards = document.querySelectorAll('[data-test="property-card"], .list-card, article');
-
-      cards.forEach((card) => {
-        try {
-          const addressEl = card.querySelector('address, [data-test="property-card-addr"]');
-          const priceEl = card.querySelector(
-            '[data-test="property-card-price"], .list-card-price'
-          );
-          const bedsEl = card.querySelector(
-            '[data-test="property-card-beds"], .list-card-details li:first-child'
-          );
-          const bathsEl = card.querySelector('[data-test="property-card-baths"]');
-          const linkEl = card.querySelector(
-            'a[href*="/homedetails/"], a[href*="/b/"]'
-          ) as HTMLAnchorElement;
-          const imgEl = card.querySelector("img") as HTMLImageElement;
-          const dateEl = card.querySelector(".list-card-date, time");
-
-          if (addressEl && priceEl) {
-            results.push({
-              address: addressEl.textContent?.trim() || "",
-              price: priceEl.textContent?.trim() || "",
-              beds: bedsEl?.textContent?.trim() || "1",
-              baths: bathsEl?.textContent?.trim() || "1",
-              url: linkEl?.href || "",
-              image: imgEl?.src || "",
-              description: "",
-              datePosted: dateEl?.textContent?.trim() || "",
-            });
-          }
-        } catch {
-          // Skip
-        }
-      });
-
-      return results;
-    });
-
-    console.log(`Found ${listings.length} listings`);
-
-    return listings.map((l) => ({
-      address: l.address,
-      borough: normalizeBorough(l.address),
-      price: cleanPrice(l.price),
-      bedrooms: cleanBedrooms(l.beds),
-      bathrooms: cleanBathrooms(l.baths),
-      pets: "Unknown",
-      image_url: l.image,
-      original_url: l.url,
-      description: l.description,
-      vibe_keywords: extractVibeKeywords(l.description + " " + l.address),
-      freshness_score: calculateFreshnessScore(l.datePosted),
-      source: "zillow",
-    }));
-  }
-
-  /**
-   * Scrape Craigslist search results
-   */
-  async scrapeCraigslist(url: string): Promise<ScrapedListing[]> {
-    if (!this.page) throw new Error("Browser not initialized");
-
-    // Force list view in URL
-    const listUrl = url.includes("?") ? `${url}&view=list` : `${url}#search=1~list~0~0`;
-
-    console.log(`Navigating to: ${listUrl}`);
-    await this.page.goto(listUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-
-    // Wait for page to fully load
-    console.log("Waiting for listings to load...");
-    await this.page.waitForTimeout(5000);
-
-    // Try clicking list view button if gallery is shown
     try {
-      const listBtn = await this.page.$('button[data-mode="list"], .cl-list-view');
-      if (listBtn) {
-        await listBtn.click();
-        await this.page.waitForTimeout(3000);
-      }
-    } catch {
-      // Already in list view or button not found
-    }
-
-    // Scroll to trigger lazy loading
-    await this.page.evaluate(() => window.scrollBy(0, 500));
-    await this.page.waitForTimeout(2000);
-
-    await this.page.screenshot({ path: "craigslist-debug.png" });
-    console.log("Screenshot saved to craigslist-debug.png");
-
-    console.log("Extracting listings...");
-
-    const listings = await this.page.evaluate(() => {
-      const results: Array<{
-        title: string;
-        price: string;
-        url: string;
-        neighborhood: string;
-        bedrooms: string;
-        datePosted: string;
-      }> = [];
-
-      // Craigslist gallery items
-      const cards = document.querySelectorAll(".cl-search-result, .result-row, li.cl-static-search-result");
-
-      cards.forEach((card) => {
-        try {
-          const titleEl = card.querySelector(".titlestring, .result-title, a.posting-title");
-          const priceEl = card.querySelector(".priceinfo, .result-price, .price");
-          const linkEl = card.querySelector("a.posting-title, a.result-title, a[href*='/apa/']") as HTMLAnchorElement;
-          const hoodEl = card.querySelector(".meta .nearby, .result-hood");
-          const bedsEl = card.querySelector(".bedrooms, .housing");
-          const dateEl = card.querySelector("time, .result-date");
-
-          if (titleEl) {
-            results.push({
-              title: titleEl.textContent?.trim() || "",
-              price: priceEl?.textContent?.trim() || "",
-              url: linkEl?.href || "",
-              neighborhood: hoodEl?.textContent?.trim().replace(/[()]/g, "") || "",
-              bedrooms: bedsEl?.textContent?.trim() || "",
-              datePosted: dateEl?.getAttribute("datetime") || dateEl?.textContent?.trim() || "",
-            });
-          }
-        } catch {
-          // Skip
-        }
+      const response = await this.page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
       });
 
-      return results;
-    });
+      // Check for blocks
+      const status = response?.status() || 0;
+      if (status === 403 || status === 429) {
+        log.block(`HTTP ${status} received`);
+        if (await this.handleBlock(attempt)) {
+          return this.scrapeStreetEasy(url, attempt + 1);
+        }
+        return [];
+      }
 
-    console.log(`Found ${listings.length} listings`);
+      // Check for CAPTCHA
+      const pageContent = await this.page.content();
+      const isBlocked = pageContent.includes("Press & Hold") ||
+                        pageContent.includes("captcha") ||
+                        pageContent.includes("blocked");
 
-    return listings.map((l) => ({
-      address: l.title,
-      borough: normalizeBorough(l.neighborhood || l.title),
-      neighborhood: l.neighborhood,
-      price: cleanPrice(l.price),
-      bedrooms: cleanBedrooms(l.bedrooms),
-      bathrooms: 1,
-      pets: "Unknown",
-      original_url: l.url,
-      description: l.title,
-      vibe_keywords: extractVibeKeywords(l.title),
-      freshness_score: calculateFreshnessScore(l.datePosted),
-      source: "craigslist",
-    }));
+      if (isBlocked) {
+        log.warn("⚠️  CAPTCHA DETECTED. Please solve manually in the browser...");
+        try {
+          await this.page.waitForSelector('[data-testid="listing-card"]', { timeout: 120000 });
+          log.success("CAPTCHA solved! Continuing...");
+        } catch {
+          log.error("CAPTCHA timeout. Retrying with new identity...");
+          if (await this.handleBlock(attempt)) {
+            return this.scrapeStreetEasy(url, attempt + 1);
+          }
+          return [];
+        }
+      }
+
+      // Wait for listings
+      await this.page.waitForSelector('[data-testid="listing-card"]', { timeout: 15000 }).catch(() => null);
+      await randomDelay(2000, 4000);
+      await this.autoScroll();
+
+      const listings = await this.page.evaluate((badImg) => {
+        return Array.from(document.querySelectorAll('[data-testid="listing-card"]')).map(card => {
+          const img = card.querySelector('img') as HTMLImageElement;
+          return {
+            address: card.querySelector('[data-testid="listing-address"]')?.textContent?.trim() || "",
+            price: card.querySelector('.price')?.textContent?.trim() || "0",
+            image_url: img?.srcset?.split(',').pop()?.split(' ')[0] || img?.src || "",
+            original_url: (card.querySelector('a') as HTMLAnchorElement)?.href || "",
+            source: 'streeteasy'
+          };
+        }).filter(l => l.image_url && !l.image_url.includes(badImg));
+      }, BAD_IMAGE_PART);
+
+      log.success(`Found ${listings.length} listings from StreetEasy`);
+      return listings;
+
+    } catch (error: any) {
+      log.error(`StreetEasy error: ${error.message}`);
+      if (await this.handleBlock(attempt)) {
+        return this.scrapeStreetEasy(url, attempt + 1);
+      }
+      return [];
+    }
   }
 
-  /**
-   * Generic scraper for unknown sites
-   */
-  async scrapeGeneric(url: string): Promise<ScrapedListing[]> {
-    if (!this.page) throw new Error("Browser not initialized");
+  // --- CRAIGSLIST LOGIC ---
+  async scrapeCraigslist(url: string, attempt: number = 0): Promise<any[]> {
+    if (!this.page) return [];
 
-    console.log(`Navigating to: ${url}`);
-    await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await this.page.waitForTimeout(3000);
+    await this.checkRateLimit();
 
-    await this.page.screenshot({ path: "scraper-debug.png" });
-    console.log("Screenshot saved to scraper-debug.png - check page content");
+    // Check robots.txt
+    const urlObj = new URL(url);
+    const allowed = await checkRobotsTxt(urlObj.origin, urlObj.pathname);
+    if (!allowed) {
+      log.warn("Scraping disallowed by robots.txt. Skipping.");
+      return [];
+    }
 
-    return [];
+    log.info(`Navigating to Craigslist: ${url}`);
+
+    try {
+      const response = await this.page.goto(url, {
+        waitUntil: "networkidle",
+        timeout: 30000,
+      });
+
+      // Check for blocks
+      const status = response?.status() || 0;
+      if (status === 403 || status === 429) {
+        log.block(`HTTP ${status} received`);
+        if (await this.handleBlock(attempt)) {
+          return this.scrapeCraigslist(url, attempt + 1);
+        }
+        return [];
+      }
+
+      await randomDelay(2000, 4000);
+      await this.autoScroll();
+
+      const listings = await this.page.evaluate(() => {
+        return Array.from(document.querySelectorAll('.cl-search-result')).map(card => {
+          const img = card.querySelector('img') as HTMLImageElement;
+          return {
+            address: card.querySelector('.titlestring')?.textContent?.trim() || "Apartment",
+            price: card.querySelector('.priceinfo')?.textContent?.trim() || "0",
+            image_url: img?.src || "",
+            original_url: (card.querySelector('a') as HTMLAnchorElement)?.href || "",
+            source: 'craigslist'
+          };
+        }).filter(l => l.image_url && l.image_url.length > 0);
+      });
+
+      log.success(`Found ${listings.length} listings from Craigslist`);
+      return listings;
+
+    } catch (error: any) {
+      log.error(`Craigslist error: ${error.message}`);
+      if (await this.handleBlock(attempt)) {
+        return this.scrapeCraigslist(url, attempt + 1);
+      }
+      return [];
+    }
   }
 }
 
 // ============================================
-// STORAGE
+// STORAGE & MAIN
 // ============================================
 
-async function saveListings(listings: ScrapedListing[]): Promise<number> {
-  if (listings.length === 0) {
-    console.log("No listings to save.");
-    return 0;
+async function save(listings: any[]) {
+  const valid = listings.filter(l => cleanPrice(l.price) > 0);
+  const unique = Array.from(new Map(valid.map(item => [item.image_url, item])).values());
+
+  if (unique.length === 0) {
+    log.warn("No valid listings to save");
+    return;
   }
 
-  // Filter valid listings with price > 0
-  const valid = listings.filter((l) => l.address && l.price > 0);
-  console.log(`Saving ${valid.length} valid listings...`);
+  log.info(`Saving ${unique.length} unique listings to Supabase...`);
 
-  const { data, error } = await supabase
-    .from("listings")
-    .insert(
-      valid.map((l) => ({
-        address: l.address,
-        borough: l.borough,
-        neighborhood: l.neighborhood,
-        price: l.price,
-        bedrooms: l.bedrooms,
-        bathrooms: l.bathrooms,
-        pets: l.pets,
-        image_url: l.image_url,
-        original_url: l.original_url,
-        description: l.description,
-        vibe_keywords: l.vibe_keywords,
-        freshness_score: l.freshness_score,
-        status: "Active",
-      }))
-    )
-    .select("id");
+  const { error } = await supabase.from("listings").insert(unique.map(l => ({
+    address: l.address,
+    price: cleanPrice(l.price),
+    image_url: l.image_url,
+    original_url: l.original_url,
+    source: l.source,
+    borough: normalizeBorough(l.address),
+    status: 'Active'
+  })));
 
   if (error) {
-    console.error("Failed to save:", error.message);
-    return 0;
+    log.error(`Supabase error: ${error.message}`);
+  } else {
+    log.success(`Saved ${unique.length} listings successfully`);
   }
-
-  return data?.length || 0;
 }
-
-// ============================================
-// MAIN
-// ============================================
 
 async function main() {
   const url = process.argv[2];
-
   if (!url) {
     console.log(`
-PEPE 2.0 Enhanced Scraper
-=========================
-
-Usage:
-  npx tsx scripts/scraper.ts <url>
-
-Examples:
-  npx tsx scripts/scraper.ts "https://streeteasy.com/for-rent/nyc/price:-5000"
-  npx tsx scripts/scraper.ts "https://www.zillow.com/new-york-ny/rentals/"
-
-Features:
-  - Extracts listing data (price, bedrooms, pets, etc.)
-  - Detects emotional keywords (light, quiet, cozy, charm)
-  - Calculates freshness score (prioritizes new listings)
-  - Stores in Supabase 'listings' table
+╔════════════════════════════════════════════════════════════════╗
+║  PEPE SCRAPER v2.0 - Anti-Detection Edition                   ║
+╠════════════════════════════════════════════════════════════════╣
+║  Usage: npx tsx scripts/scraper.ts <url>                       ║
+║                                                                 ║
+║  Examples:                                                      ║
+║    npx tsx scripts/scraper.ts https://streeteasy.com/...       ║
+║    npx tsx scripts/scraper.ts https://newyork.craigslist.org/..║
+║                                                                 ║
+║  Environment Variables (optional):                              ║
+║    PROXY_HOST - Proxy server (e.g., brd.superproxy.io:22225)   ║
+║    PROXY_USER - Proxy username                                  ║
+║    PROXY_PASS - Proxy password                                  ║
+╚════════════════════════════════════════════════════════════════╝
     `);
     return;
   }
 
-  console.log("=".repeat(60));
-  console.log("PEPE 2.0 - Enhanced Scraper");
-  console.log("=".repeat(60));
-  console.log();
+  const source = url.includes("streeteasy") ? "streeteasy" : "craigslist";
+
+  log.info(`Starting PEPE Scraper v2.0`);
+  log.info(`Source: ${source}`);
+  log.info(`Proxy: ${PROXY_HOST ? "Configured" : "Not configured (higher risk)"}`);
 
   const scraper = new ListingScraper();
 
   try {
-    await scraper.init();
+    await scraper.init(source);
 
-    let listings: ScrapedListing[] = [];
+    // Random delay before starting
+    await randomDelay();
 
-    if (url.includes("streeteasy.com")) {
-      listings = await scraper.scrapeStreetEasy(url);
-    } else if (url.includes("zillow.com")) {
-      listings = await scraper.scrapeZillow(url);
-    } else if (url.includes("craigslist.org")) {
-      listings = await scraper.scrapeCraigslist(url);
-    } else {
-      listings = await scraper.scrapeGeneric(url);
+    const data = source === "streeteasy"
+      ? await scraper.scrapeStreetEasy(url)
+      : await scraper.scrapeCraigslist(url);
+
+    if (data.length > 0) {
+      await save(data);
     }
 
-    // Display results
-    console.log("\nScraped Listings:");
-    console.log("-".repeat(40));
-
-    // Sort by freshness (newest first)
-    const sorted = [...listings].sort((a, b) => b.freshness_score - a.freshness_score);
-
-    sorted.slice(0, 10).forEach((l, i) => {
-      console.log(`${i + 1}. ${l.address}`);
-      console.log(`   $${l.price} | ${l.bedrooms}BR | ${l.borough}`);
-      console.log(`   Freshness: ${l.freshness_score}/100`);
-      if (l.vibe_keywords.length > 0) {
-        console.log(`   Vibe: ${l.vibe_keywords.join(", ")}`);
-      }
-      console.log();
-    });
-
-    if (listings.length > 10) {
-      console.log(`... and ${listings.length - 10} more\n`);
-    }
-
-    // Save to database
-    const saved = await saveListings(listings);
-    console.log(`Saved ${saved} listings to database.`);
-  } catch (error) {
-    console.error("Scraper error:", error);
+  } catch (error: any) {
+    log.error(`Fatal error: ${error.message}`);
   } finally {
     await scraper.close();
+    log.info("Scraper finished");
   }
-
-  console.log("\nDone.");
 }
 
 main();
