@@ -2,49 +2,48 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="h-screen flex flex-col justify-between bg-[#fdfcee] bg-[radial-gradient(#00000022_1px,transparent_1px)] bg-[length:20px_20px] text-black font-sans uppercase italic px-6 py-4 overflow-hidden">
-      
-      {/* 1. TOPO: LOGO */}
-      <div className="flex justify-center shrink-0">
-        <div className="w-16 bg-white border-4 border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-           <img src="/brand/icon.png" alt="Logo" className="w-full h-auto" />
-        </div>
-      </div>
+    <main className="min-h-[100dvh] flex flex-col bg-white text-black font-sans">
 
-      {/* 2. BALÃO 1 */}
-      <div className="relative bg-white border-[5px] border-black p-3 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-md mx-auto z-10 shrink-0">
-        <p className="font-black text-[12px] sm:text-sm leading-tight text-center">
-          "NYC rentals don't give you time to think. Pepe helps you weigh trade-offs in seconds."
-        </p>
-        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border-b-[5px] border-r-[5px] border-black rotate-45"></div>
-      </div>
-
-      {/* 3. PEPE (TAMANHO AJUSTADO) */}
-      <div className="flex-1 flex items-center justify-center min-h-0 py-2">
-        <img 
-          src="/brand/pepe-ny.jpeg" 
-          alt="Pepe" 
-          className="max-h-[35vh] w-auto border-[6px] border-black rounded-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] transform -rotate-1"
+      {/* Hero — Logo + Slogan */}
+      <section className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
+        <img
+          src="/brand/steady-one-blue.png"
+          alt="The Steady One"
+          className="w-3/4 sm:w-1/2 max-w-md h-auto"
         />
-      </div>
-
-      {/* 4. BALÃO 2 */}
-      <div className="relative bg-white border-[5px] border-black p-3 rounded-2xl shadow-[-6px_6px_0px_0px_rgba(0,0,0,1)] max-w-md mx-auto z-10 shrink-0">
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border-t-[5px] border-l-[5px] border-black rotate-45"></div>
-        <p className="font-black text-[12px] sm:text-sm leading-tight text-center">
-          "Pepe aligns your non-negotiables with market reality. Move with clarity, not panic."
+        <p className="mt-6 text-lg sm:text-xl text-center font-bold tracking-tight text-gray-800">
+          Find your steady home in NYC.
         </p>
-      </div>
+        <p className="mt-2 text-sm sm:text-base text-center text-gray-500 max-w-sm">
+          NYC rentals move fast. We help you weigh trade-offs in seconds and decide with clarity, not panic.
+        </p>
+      </section>
 
-      {/* 5. BOTÃO FINAL */}
-      <div className="pt-4 pb-2 shrink-0">
-        <Link 
+      {/* Value Props */}
+      <section className="px-6 pb-8 max-w-md mx-auto w-full space-y-4">
+        <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_black]">
+          <p className="text-sm font-bold uppercase tracking-wide mb-1">Know your trade-offs</p>
+          <p className="text-sm text-gray-600">
+            Answer 7 quick questions. We match you with listings that fit your non-negotiables.
+          </p>
+        </div>
+        <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_black]">
+          <p className="text-sm font-bold uppercase tracking-wide mb-1">Decide with confidence</p>
+          <p className="text-sm text-gray-600">
+            Each listing gets a match score and an honest take. Act now or wait consciously.
+          </p>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 pb-10 pt-2">
+        <Link
           href="/flow"
-          className="block w-full max-w-md mx-auto bg-[#00A651] border-[5px] border-black text-white text-center font-black text-xl py-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all"
+          className="block w-full max-w-md mx-auto bg-[#00A651] border-2 border-black text-white text-center font-bold text-lg py-4 shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
         >
-          DECIDE NOW!
+          FIND YOUR HOME
         </Link>
-      </div>
+      </section>
 
     </main>
   );

@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pepe | NYC Apartment Match",
-    template: "%s | Pepe",
+    default: "The Steady One | NYC Apartment Match",
+    template: "%s | The Steady One",
   },
   description:
-    "Find your perfect NYC home with Pepe. Swipe through curated listings and find a place you actually love.",
+    "Find your steady home in NYC. Know your trade-offs, decide with clarity, and move with confidence.",
   icons: {
-    icon: "/brand/icon.png",
-    apple: "/brand/icon.png",
+    icon: "/brand/steady-one-black.png",
+    apple: "/brand/steady-one-black.png",
   },
 };
 

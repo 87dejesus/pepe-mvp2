@@ -237,9 +237,6 @@ async function main() {
     limited.slice(0, 5).forEach((l, i) => {
       console.log(`  ${i + 1}. ${l.address.slice(0, 60)}...`);
       console.log(`     $${l.price} | ${l.bedrooms}BR | ${l.borough}`);
-      if (l.vibe_keywords.length > 0) {
-        console.log(`     Vibe: ${l.vibe_keywords.join(", ")}`);
-      }
     });
     if (limited.length > 5) {
       console.log(`  ... and ${limited.length - 5} more`);
