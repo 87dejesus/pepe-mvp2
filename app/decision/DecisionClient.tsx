@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 
@@ -132,6 +133,7 @@ function generateWarnings(listing: Listing, answers: Answers): string[] {
 }
 
 export default function DecisionClient() {
+  const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [warningsMap, setWarningsMap] = useState<Record<string, string[]>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -307,18 +309,20 @@ export default function DecisionClient() {
           return true;
         });
 
-      stats.final = sanitized.length;
-      console.log(`[Steady Debug] Final listings after dedup: ${sanitized.length}`);
+      // Limit to top 10 listings
+      const top10 = sanitized.slice(0, 10);
+      stats.final = top10.length;
+      console.log(`[Steady Debug] Final listings after dedup: ${sanitized.length}, showing top ${top10.length}`);
 
       // Generate warnings for each listing
       const warnings: Record<string, string[]> = {};
-      sanitized.forEach(l => {
+      top10.forEach(l => {
         warnings[l.id] = generateWarnings(l, answers!);
       });
 
       setWarningsMap(warnings);
       setFilterStats(stats);
-      setListings(sanitized);
+      setListings(top10);
       setLoading(false);
     }
     fetchData();
@@ -345,9 +349,7 @@ export default function DecisionClient() {
   const handleWait = () => {
     if (!currentListing) return;
     saveDecision(currentListing.id, 'wait');
-    if (listings.length > 1) {
-      setCurrentIndex((prev) => (prev + 1) % listings.length);
-    }
+    router.push('/exit');
   };
 
   const handleNext = () => {
