@@ -480,8 +480,8 @@ export default function ExitClient() {
       ) : (
         <div style={{ textAlign: "center", paddingTop: 20 }}>
           <img
-            src="/brand/pepe-ny.jpeg"
-            alt="Pepe"
+            src="/brand/steady-one-blue.png"
+            alt="The Steady One"
             style={{
               width: 80,
               height: 80,

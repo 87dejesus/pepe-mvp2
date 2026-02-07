@@ -16,61 +16,61 @@ type Answers = {
   timing: string;
 };
 
-// Step configurations with unique themes and Pepe moods
+// Step configurations with unique themes and avatar moods
 const stepConfigs = [
   {
     // Step 1: Boroughs - Curious/Explorative
     gradient: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%)",
-    pepeFilter: "brightness(1.05) saturate(1.1)",
-    pepeTransform: "rotate(-2deg)",
+    avatarFilter: "brightness(1.05) saturate(1.1)",
+    avatarTransform: "rotate(-2deg)",
     accent: "#059669",
     shadow: "0 20px 60px rgba(5, 150, 105, 0.15)",
   },
   {
     // Step 2: Budget - Thoughtful/Calculating
     gradient: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%)",
-    pepeFilter: "brightness(1.0) saturate(1.0) contrast(1.05)",
-    pepeTransform: "rotate(2deg)",
+    avatarFilter: "brightness(1.0) saturate(1.0) contrast(1.05)",
+    avatarTransform: "rotate(2deg)",
     accent: "#047857",
     shadow: "0 20px 60px rgba(4, 120, 87, 0.15)",
   },
   {
     // Step 3: Bedrooms - Comfortable/Relaxed
     gradient: "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%)",
-    pepeFilter: "brightness(1.08) saturate(1.15) hue-rotate(-5deg)",
-    pepeTransform: "rotate(-1deg) scale(1.02)",
+    avatarFilter: "brightness(1.08) saturate(1.15) hue-rotate(-5deg)",
+    avatarTransform: "rotate(-1deg) scale(1.02)",
     accent: "#0d9488",
     shadow: "0 20px 60px rgba(13, 148, 136, 0.15)",
   },
   {
     // Step 4: Bathrooms - Practical/Direct
     gradient: "linear-gradient(135deg, #ecfeff 0%, #cffafe 50%, #a5f3fc 100%)",
-    pepeFilter: "brightness(1.02) saturate(0.95)",
-    pepeTransform: "rotate(1deg)",
+    avatarFilter: "brightness(1.02) saturate(0.95)",
+    avatarTransform: "rotate(1deg)",
     accent: "#0891b2",
     shadow: "0 20px 60px rgba(8, 145, 178, 0.15)",
   },
   {
     // Step 5: Pets - Warm/Friendly
     gradient: "linear-gradient(135deg, #fef9c3 0%, #fef08a 30%, #ecfccb 100%)",
-    pepeFilter: "brightness(1.1) saturate(1.2) sepia(0.1)",
-    pepeTransform: "rotate(-3deg) scale(1.03)",
+    avatarFilter: "brightness(1.1) saturate(1.2) sepia(0.1)",
+    avatarTransform: "rotate(-3deg) scale(1.03)",
     accent: "#65a30d",
     shadow: "0 20px 60px rgba(101, 163, 13, 0.2)",
   },
   {
     // Step 6: Amenities - Excited/Eager
     gradient: "linear-gradient(135deg, #fdf4ff 0%, #f5d0fe 50%, #e9d5ff 100%)",
-    pepeFilter: "brightness(1.05) saturate(1.1) hue-rotate(10deg)",
-    pepeTransform: "rotate(2deg) scale(1.01)",
+    avatarFilter: "brightness(1.05) saturate(1.1) hue-rotate(10deg)",
+    avatarTransform: "rotate(2deg) scale(1.01)",
     accent: "#9333ea",
     shadow: "0 20px 60px rgba(147, 51, 234, 0.15)",
   },
   {
     // Step 7: Timing - Confident/Ready
     gradient: "linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 50%, #34d399 100%)",
-    pepeFilter: "brightness(1.12) saturate(1.25) contrast(1.05)",
-    pepeTransform: "rotate(0deg) scale(1.05)",
+    avatarFilter: "brightness(1.12) saturate(1.25) contrast(1.05)",
+    avatarTransform: "rotate(0deg) scale(1.05)",
     accent: "#059669",
     shadow: "0 25px 70px rgba(5, 150, 105, 0.25)",
   },
@@ -186,8 +186,8 @@ export default function FlowPage() {
             }}
           >
             <Image
-              src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
+              src="/brand/steady-one-blue.png"
+              alt="The Steady One"
               width={140}
               height={140}
               style={{
@@ -228,8 +228,8 @@ export default function FlowPage() {
     );
   }
 
-  // Pepe Avatar Component
-  const PepeAvatar = () => (
+  // Brand Avatar Component
+  const SteadyAvatar = () => (
     <div
       style={{
         display: "flex",
@@ -250,17 +250,17 @@ export default function FlowPage() {
           boxShadow: config.shadow,
           border: `4px solid ${config.accent}`,
           transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-          transform: config.pepeTransform,
+          transform: config.avatarTransform,
         }}
       >
         <Image
-          src="/brand/pepe-ny.jpeg"
-          alt="Pepe - Your NYC Guide"
+          src="/brand/steady-one-blue.png"
+          alt="The Steady One - Your NYC Guide"
           width={120}
           height={120}
           style={{
             objectFit: "cover",
-            filter: config.pepeFilter,
+            filter: config.avatarFilter,
             transition: "filter 0.4s ease",
           }}
           unoptimized
@@ -418,7 +418,7 @@ export default function FlowPage() {
         }}
       >
         <ProgressBar />
-        <PepeAvatar />
+        <SteadyAvatar />
 
         {/* STEP 1: Boroughs */}
         {step === 1 && (

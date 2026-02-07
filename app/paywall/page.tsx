@@ -60,7 +60,7 @@ export default function PaywallPage() {
     <main style={{ padding: 24, maxWidth: 720 }}>
       <h1>Before you commit</h1>
       <p style={{ marginTop: 6 }}>
-        Pepe is not a listings site. It helps you make one decision with less regret.
+        The Steady One is not a listings site. It helps you make one decision with less regret.
       </p>
 
       <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 10 }}>
@@ -76,7 +76,7 @@ export default function PaywallPage() {
         <div style={{ marginTop: 14, padding: 12, background: "#f7f7f7", borderRadius: 10 }}>
           <strong>Current pressure:</strong> {pressure.toUpperCase()} <br />
           <span style={{ opacity: 0.8 }}>
-            In NYC, “wait” often means “lose the option.” Pepe makes that trade explicit.
+            In NYC, &quot;wait&quot; often means &quot;lose the option.&quot; The Steady One makes that trade explicit.
           </span>
         </div>
       </div>

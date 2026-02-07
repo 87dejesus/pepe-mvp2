@@ -46,8 +46,8 @@ function formatBathrooms(n: number): string {
   return `${n} BATHS`;
 }
 
-// Generate empathetic Pepe commentary
-function buildPepeTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
+// Generate empathetic commentary
+function buildSteadyTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
@@ -114,7 +114,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
 
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
-  const pepeTake = buildPepeTake(listing, answers, matchScore, warnings);
+  const steadyTake = buildSteadyTake(listing, answers, matchScore, warnings);
 
   return (
     <div
@@ -206,18 +206,18 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         </div>
 
-        {/* Pepe's Take */}
+        {/* The Steady One's Take */}
         <div className="mt-3 p-3 border-2 border-black bg-gray-50 flex-1">
           <div className="flex items-start gap-3">
             <img
-              src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
+              src="/brand/steady-one-blue.png"
+              alt="The Steady One"
               className="w-10 h-10 border-2 border-black object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-bold uppercase mb-1">PEPE&apos;S TAKE</p>
+              <p className="text-xs font-bold uppercase mb-1">THE STEADY TAKE</p>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {pepeTake}
+                {steadyTake}
               </p>
             </div>
           </div>

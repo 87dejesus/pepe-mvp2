@@ -152,12 +152,12 @@ export default function DecisionClient() {
         const client = createClient(url, key);
         setSupabaseClient(client);
       } catch (err) {
-        console.error('[Pepe Debug] Failed to initialize Supabase:', err);
+        console.error('[Steady Debug] Failed to initialize Supabase:', err);
         setInitError('Failed to connect to database');
         setLoading(false);
       }
     } else {
-      console.error('[Pepe Debug] Supabase env vars missing:', { url: !!url, key: !!key });
+      console.error('[Steady Debug] Supabase env vars missing:', { url: !!url, key: !!key });
       setInitError('Database configuration missing');
       setLoading(false);
     }
@@ -169,13 +169,13 @@ export default function DecisionClient() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        console.log('[Pepe Debug] Loaded answers:', parsed);
+        console.log('[Steady Debug] Loaded answers:', parsed);
         setAnswers(parsed);
       } catch {
-        console.error('[Pepe Debug] Failed to parse answers from localStorage');
+        console.error('[Steady Debug] Failed to parse answers from localStorage');
       }
     } else {
-      console.log('[Pepe Debug] No answers found in localStorage');
+      console.log('[Steady Debug] No answers found in localStorage');
     }
     const storedDec = localStorage.getItem(DECISIONS_KEY);
     if (storedDec) {
@@ -192,7 +192,7 @@ export default function DecisionClient() {
     if (!answers || !supabaseClient) return;
 
     async function fetchData() {
-      console.log('[Pepe Debug] Fetching listings with answers:', answers);
+      console.log('[Steady Debug] Fetching listings with answers:', answers);
 
       const { data, error } = await supabaseClient!
         .from('listings')
@@ -200,18 +200,18 @@ export default function DecisionClient() {
         .eq('status', 'Active');
 
       if (error) {
-        console.error('[Pepe Debug] Supabase error:', error);
+        console.error('[Steady Debug] Supabase error:', error);
         setLoading(false);
         return;
       }
 
       if (!data) {
-        console.log('[Pepe Debug] No data returned from Supabase');
+        console.log('[Steady Debug] No data returned from Supabase');
         setLoading(false);
         return;
       }
 
-      console.log(`[Pepe Debug] Raw listings from Supabase: ${data.length}`);
+      console.log(`[Steady Debug] Raw listings from Supabase: ${data.length}`);
 
       const stats: FilterStats = {
         total: data.length,
@@ -249,14 +249,14 @@ export default function DecisionClient() {
         return true;
       });
 
-      console.log(`[Pepe Debug] After strict filters: ${strict.length}`);
-      console.log(`[Pepe Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
+      console.log(`[Steady Debug] After strict filters: ${strict.length}`);
+      console.log(`[Steady Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
 
       let finalList: Listing[] = strict;
 
       // === PASS 2: Relaxed filters (only if strict returned 0) ===
       if (strict.length === 0 && data.length > 0) {
-        console.log('[Pepe Debug] Strict filters returned 0, trying relaxed (budget +10%, bedrooms +/-1, any borough)...');
+        console.log('[Steady Debug] Strict filters returned 0, trying relaxed (budget +10%, bedrooms +/-1, any borough)...');
         stats.relaxedUsed = true;
 
         const relaxed = data.filter((l: Listing) => {
@@ -276,7 +276,7 @@ export default function DecisionClient() {
           return true;
         });
 
-        console.log(`[Pepe Debug] After relaxed filters: ${relaxed.length}`);
+        console.log(`[Steady Debug] After relaxed filters: ${relaxed.length}`);
         finalList = relaxed;
       }
 
@@ -308,7 +308,7 @@ export default function DecisionClient() {
         });
 
       stats.final = sanitized.length;
-      console.log(`[Pepe Debug] Final listings after dedup: ${sanitized.length}`);
+      console.log(`[Steady Debug] Final listings after dedup: ${sanitized.length}`);
 
       // Generate warnings for each listing
       const warnings: Record<string, string[]> = {};
@@ -424,8 +424,8 @@ export default function DecisionClient() {
             <div className="bg-white border-2 border-black p-6 mb-4">
               <div className="flex items-start gap-3 mb-5">
                 <img
-                  src="/brand/pepe-ny.jpeg"
-                  alt="Pepe"
+                  src="/brand/steady-one-blue.png"
+                  alt="The Steady One"
                   className="w-12 h-12 border-2 border-black object-cover shrink-0"
                 />
                 <div>
