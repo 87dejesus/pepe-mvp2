@@ -32,6 +32,7 @@ type Props = {
   answers: Answers;
   matchScore: number;
   recommendation: 'ACT_NOW' | 'WAIT';
+  warnings?: string[];
 };
 
 function formatBedrooms(n: number): string {
@@ -46,7 +47,7 @@ function formatBathrooms(n: number): string {
 }
 
 // Generate empathetic Pepe commentary
-function buildPepeTake(listing: Listing, answers: Answers, score: number): string {
+function buildPepeTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
@@ -60,7 +61,8 @@ function buildPepeTake(listing: Listing, answers: Answers, score: number): strin
     }
   } else {
     const over = listing.price - answers.budget;
-    parts.push(`$${over.toLocaleString()}/mo over budget, but might be worth stretching for`);
+    const pctOver = Math.round((over / answers.budget) * 100);
+    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%), but might be worth stretching for`);
   }
 
   // Bedroom match
@@ -68,6 +70,8 @@ function buildPepeTake(listing: Listing, answers: Answers, score: number): strin
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   if (listing.bedrooms === needed || (answers.bedrooms === '3+' && listing.bedrooms >= 3)) {
     parts.push(`exactly the ${formatBedrooms(listing.bedrooms).toLowerCase()} you wanted`);
+  } else if (Math.abs(listing.bedrooms - needed) === 1) {
+    parts.push(`${formatBedrooms(listing.bedrooms).toLowerCase()} (close to what you wanted)`);
   }
 
   // Location match
@@ -78,6 +82,8 @@ function buildPepeTake(listing: Listing, answers: Answers, score: number): strin
     );
     if (inPreferred) {
       parts.push(`in your preferred ${listing.borough} area`);
+    } else if (warnings.some(w => w.includes('borough'))) {
+      parts.push(`not your usual borough, but worth a look`);
     }
   }
 
@@ -88,16 +94,16 @@ function buildPepeTake(listing: Listing, answers: Answers, score: number): strin
 
   // Build the final message
   if (parts.length === 0) {
-    return score >= 75
+    return score >= 80
       ? `This ${neighborhood} listing hits most of your criteria. Worth a serious look!`
       : `This one doesn't match everything, but ${neighborhood} has its perks. Keep exploring!`;
   }
 
-  const intro = score >= 75 ? 'Great match!' : 'Interesting option.';
+  const intro = score >= 80 ? 'Great match!' : warnings.length > 0 ? 'Close enough?' : 'Interesting option.';
   return `${intro} ${parts.join(', ')}.`;
 }
 
-export default function DecisionListingCard({ listing, answers, matchScore, recommendation }: Props) {
+export default function DecisionListingCard({ listing, answers, matchScore, recommendation, warnings = [] }: Props) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
@@ -108,7 +114,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
 
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
-  const pepeTake = buildPepeTake(listing, answers, matchScore);
+  const pepeTake = buildPepeTake(listing, answers, matchScore, warnings);
 
   return (
     <div
@@ -142,14 +148,14 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             ? 'bg-[#00A651] text-white'
             : 'bg-amber-400 text-black'
         }`}>
-          {recommendation === 'ACT_NOW' ? '⚡ ACT NOW' : '⏳ WAIT'}
+          {recommendation === 'ACT_NOW' ? 'ACT NOW' : 'WAIT CONSCIOUSLY'}
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex-1 flex flex-col">
+      <div className="p-3 sm:p-4 flex-1 flex flex-col">
         {/* Neighborhood - Bold Italic Uppercase */}
-        <h2 className="text-2xl font-bold italic uppercase tracking-tight text-black">
+        <h2 className="text-xl sm:text-2xl font-bold italic uppercase tracking-tight text-black">
           {listing.neighborhood || 'UNKNOWN'}
         </h2>
 
@@ -168,13 +174,24 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </span>
           {listing.pets?.toLowerCase() === 'yes' && (
             <span className="border-2 border-black px-2 py-0.5 text-xs font-bold bg-green-100">
-              🐾 PETS OK
+              PETS OK
             </span>
           )}
         </div>
 
+        {/* Warnings (from relaxed filters) */}
+        {warnings.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-3">
+            {warnings.map((w, i) => (
+              <span key={i} className="text-xs font-bold px-2 py-0.5 bg-amber-100 border border-amber-400 text-amber-800">
+                {w}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Match Score Bar */}
-        <div className="mt-4">
+        <div className="mt-3">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs font-bold uppercase">Match Score</span>
             <span className="text-sm font-bold">{matchScore}%</span>
@@ -182,7 +199,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           <div className="w-full h-3 bg-gray-200 border-2 border-black">
             <div
               className={`h-full transition-all duration-500 ${
-                matchScore >= 75 ? 'bg-[#00A651]' : matchScore >= 50 ? 'bg-amber-400' : 'bg-red-400'
+                matchScore >= 80 ? 'bg-[#00A651]' : matchScore >= 50 ? 'bg-amber-400' : 'bg-red-400'
               }`}
               style={{ width: `${matchScore}%` }}
             />
@@ -190,7 +207,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         </div>
 
         {/* Pepe's Take */}
-        <div className="mt-4 p-3 border-2 border-black bg-gray-50 flex-1">
+        <div className="mt-3 p-3 border-2 border-black bg-gray-50 flex-1">
           <div className="flex items-start gap-3">
             <img
               src="/brand/pepe-ny.jpeg"
@@ -198,7 +215,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
               className="w-10 h-10 border-2 border-black object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-bold uppercase mb-1">PEPE'S TAKE</p>
+              <p className="text-xs font-bold uppercase mb-1">PEPE&apos;S TAKE</p>
               <p className="text-sm text-gray-700 leading-relaxed">
                 {pepeTake}
               </p>
