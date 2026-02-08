@@ -286,7 +286,13 @@ export default function DecisionClient() {
       const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
       const needed = bedroomMap[answers!.bedrooms] ?? 1;
 
-      // === PASS 1: Strict filters ===
+      // Helper: check if image is a known placeholder
+      const isPlaceholder = (l: Listing) => {
+        const img = l.image_url || l.images?.[0] || '';
+        return img.includes('add7ffb');
+      };
+
+      // === PASS 1: Strict filters (budget, bedrooms, borough) ===
       const strict = data.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
         if (l.price > answers!.budget) { stats.overBudget++; return false; }
@@ -301,23 +307,25 @@ export default function DecisionClient() {
             stats.wrongBorough++; return false;
           }
         }
-        const img = l.image_url || l.images?.[0] || '';
-        if (img.includes('add7ffb') || !img) { stats.placeholderImage++; return false; }
+        if (isPlaceholder(l)) { stats.placeholderImage++; return false; }
         return true;
       });
 
-      console.log(`[Steady Debug] After strict filters: ${strict.length}`);
-      console.log(`[Steady Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
+      console.log(`[Pepe Debug] After strict filters: ${strict.length}`);
+      console.log(`[Pepe Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
 
       let finalList: Listing[] = strict;
 
-      // === PASS 2: Relaxed filters (only if strict returned 0) ===
-      if (strict.length === 0 && data.length > 0) {
-        console.log('[Steady Debug] Strict filters returned 0, trying relaxed (budget +10%, bedrooms +/-1, any borough)...');
-        stats.relaxedUsed = true;
+      // === PASS 2: Relaxed filters (when strict < 10) ===
+      if (strict.length < 10 && data.length > 0) {
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +10%, bedrooms ±1, drop borough)...`);
+        stats.relaxedUsed = strict.length === 0;
 
+        const strictIds = new Set(strict.map(l => l.id));
         const relaxed = data.filter((l: Listing) => {
+          if (strictIds.has(l.id)) return false; // already in strict
           if (!l.original_url) return false;
+          if (isPlaceholder(l)) return false;
           // Budget: allow +10%
           if (l.price > answers!.budget * 1.10) return false;
           // Bedrooms: allow +/-1
@@ -327,26 +335,28 @@ export default function DecisionClient() {
             if (Math.abs(l.bedrooms - needed) > 1) return false;
           }
           // Borough: drop filter in relaxed mode
-          // No-photo / placeholder filter
-          const img = l.image_url || l.images?.[0] || '';
-          if (img.includes('add7ffb') || !img) return false;
           return true;
         });
 
-        console.log(`[Steady Debug] After relaxed filters: ${relaxed.length}`);
-        finalList = relaxed;
+        console.log(`[Pepe Debug] Relaxed pass found ${relaxed.length} additional listings`);
+        // Merge: strict first (already high match), then relaxed
+        finalList = [...strict, ...relaxed];
       }
 
-      // Sort by match score (best first)
+      // Sort by match score (best first), with-photo preferred over no-photo
       finalList.sort((a, b) => {
         const scoreA = calculateMatchScore(a as Listing, answers!);
         const scoreB = calculateMatchScore(b as Listing, answers!);
-        return scoreB - scoreA;
+        // Prefer listings with photos (small tiebreaker)
+        const hasImgA = (a.image_url || a.images?.[0]) ? 1 : 0;
+        const hasImgB = (b.image_url || b.images?.[0]) ? 1 : 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return hasImgB - hasImgA;
       });
 
-      // Deduplicate by id and image
+      // Deduplicate by original_url (the actual listing link)
       const seenIds = new Set<string>();
-      const seenImageUrls = new Set<string>();
+      const seenUrls = new Set<string>();
       const sanitized = finalList
         .map((listing, index) => {
           let uniqueId = listing.id;
@@ -357,27 +367,27 @@ export default function DecisionClient() {
           return { ...listing, id: uniqueId };
         })
         .filter((listing) => {
-          const imageUrl = listing.image_url || listing.images?.[0] || '';
-          if (!imageUrl) return true; // Allow listings without images
-          if (seenImageUrls.has(imageUrl)) { stats.duplicates++; return false; }
-          seenImageUrls.add(imageUrl);
+          const url = listing.original_url || '';
+          if (!url) return false; // skip listings without a link
+          if (seenUrls.has(url)) { stats.duplicates++; return false; }
+          seenUrls.add(url);
           return true;
         });
 
-      // Limit to top 10 listings
-      const top10 = sanitized.slice(0, 10);
-      stats.final = top10.length;
-      console.log(`[Steady Debug] Final listings after dedup: ${sanitized.length}, showing top ${top10.length}`);
+      // Show up to 10 listings (or all if fewer)
+      const topN = sanitized.slice(0, 10);
+      stats.final = topN.length;
+      console.log(`[Pepe Debug] Final listings after dedup: ${sanitized.length}, showing ${topN.length}`);
 
       // Generate warnings for each listing
       const warnings: Record<string, string[]> = {};
-      top10.forEach(l => {
+      topN.forEach(l => {
         warnings[l.id] = generateWarnings(l, answers!);
       });
 
       setWarningsMap(warnings);
       setFilterStats(stats);
-      setListings(top10);
+      setListings(topN);
       setLoading(false);
     }
     fetchData();
