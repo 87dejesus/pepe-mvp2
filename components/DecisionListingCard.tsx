@@ -206,16 +206,16 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         </div>
 
-        {/* The Steady One's Take */}
-        <div className="mt-3 p-3 border-2 border-black bg-gray-50 flex-1">
+        {/* Pepe's Take */}
+        <div className="mt-3 p-3 border-2 border-black bg-[#1E3A8A]/5 flex-1">
           <div className="flex items-start gap-3">
             <img
-              src="/brand/steady-one-blue.png"
-              alt="The Steady One"
-              className="w-10 h-10 border-2 border-black object-cover shrink-0"
+              src="/brand/pepe-ny.jpeg"
+              alt="Pepe"
+              className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-bold uppercase mb-1">THE STEADY TAKE</p>
+              <p className="text-xs font-bold uppercase mb-1 text-[#1E3A8A]">PEPE&apos;S TAKE</p>
               <p className="text-sm text-gray-700 leading-relaxed">
                 {steadyTake}
               </p>

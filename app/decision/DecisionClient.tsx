@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
+import Header from '@/components/Header';
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
@@ -367,10 +368,13 @@ export default function DecisionClient() {
   // Loading
   if (loading) {
     return (
-      <div className="h-[100dvh] flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-[#00A651] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-gray-500">Finding matches...</p>
+      <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm text-white/70">Finding matches...</p>
+          </div>
         </div>
       </div>
     );
@@ -379,16 +383,19 @@ export default function DecisionClient() {
   // Init error
   if (initError) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-white p-4 pt-8">
-        <div className="max-w-lg mx-auto w-full border-2 border-black p-6">
-          <h1 className="text-xl font-bold mb-2">Connection Error</h1>
-          <p className="text-gray-500 text-sm mb-6">{initError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
-          >
-            Retry
-          </button>
+      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+        <Header />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-lg w-full bg-white border-2 border-black p-6">
+            <h1 className="text-xl font-bold mb-2">Connection Error</h1>
+            <p className="text-gray-500 text-sm mb-6">{initError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -397,13 +404,16 @@ export default function DecisionClient() {
   // No answers
   if (!answers) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-white p-4 pt-8">
-        <div className="max-w-lg mx-auto w-full border-2 border-black p-6">
-          <h1 className="text-xl font-bold mb-2">First, tell me what you need</h1>
-          <p className="text-gray-500 text-sm mb-6">Answer a few questions so I can find the right matches.</p>
-          <Link href="/flow" className="inline-block bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1">
-            Start
-          </Link>
+      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+        <Header />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-lg w-full bg-white border-2 border-black p-6">
+            <h1 className="text-xl font-bold mb-2">First, tell me what you need</h1>
+            <p className="text-gray-500 text-sm mb-6">Answer a few questions so I can find the right matches.</p>
+            <Link href="/flow" className="inline-block bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1">
+              Start
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -412,23 +422,24 @@ export default function DecisionClient() {
   // No listings — diagnostic empty state
   if (listings.length === 0) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-[#f5f5f5]">
-        {/* Header */}
-        <header className="shrink-0 bg-white border-b-2 border-black px-4 py-3 flex items-center justify-between">
-          <Link href="/flow" className="text-sm font-bold text-black hover:underline">
+      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+        <Header />
+        {/* Sub-header with edit link */}
+        <div className="shrink-0 px-4 py-2">
+          <Link href="/flow" className="text-sm font-bold text-white/80 hover:text-white hover:underline">
             ← EDIT CRITERIA
           </Link>
-        </header>
+        </div>
 
-        <div className="flex-1 p-4 pt-6">
+        <div className="flex-1 p-4 pt-2">
           <div className="max-w-lg mx-auto w-full">
             {/* Main no-matches card */}
             <div className="bg-white border-2 border-black p-6 mb-4">
               <div className="flex items-start gap-3 mb-5">
                 <img
-                  src="/brand/steady-one-blue.png"
-                  alt="The Steady One"
-                  className="w-12 h-12 border-2 border-black object-cover shrink-0"
+                  src="/brand/pepe-ny.jpeg"
+                  alt="Pepe"
+                  className="w-12 h-12 rounded-full border-2 border-black object-cover shrink-0"
                 />
                 <div>
                   <h1 className="text-xl font-bold">No matches right now</h1>
@@ -515,18 +526,23 @@ export default function DecisionClient() {
 
   // Main view with listings
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#f5f5f5]">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       {/* Header */}
-      <header className="shrink-0 bg-white border-b-2 border-black px-4 py-3 flex items-center justify-between">
-        <Link href="/flow" className="text-sm font-bold text-black hover:underline">
-          ← EDIT CRITERIA
+      <header className="shrink-0 px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <img src="/brand/steady-one-white.png" alt="The Steady One" className="w-8 h-8 object-contain" />
         </Link>
-        <span className="text-sm font-bold text-black">
-          {currentIndex + 1} / {listings.length}
-          {filterStats?.relaxedUsed && (
-            <span className="ml-2 text-xs text-amber-600">(relaxed)</span>
-          )}
-        </span>
+        <div className="flex items-center gap-3">
+          <Link href="/flow" className="text-xs font-bold text-white/70 hover:text-white hover:underline">
+            ← EDIT CRITERIA
+          </Link>
+          <span className="text-sm font-bold text-white">
+            {currentIndex + 1} / {listings.length}
+            {filterStats?.relaxedUsed && (
+              <span className="ml-2 text-xs text-amber-300">(relaxed)</span>
+            )}
+          </span>
+        </div>
       </header>
 
       {/* Main card area — no justify-center, top-aligned */}
@@ -545,29 +561,29 @@ export default function DecisionClient() {
       </main>
 
       {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-3 py-3 pb-5">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#1E3A8A] border-t-2 border-white/20 px-3 py-3 pb-5">
         <div className="max-w-lg mx-auto">
           {/* CTA Buttons */}
           <div className="flex gap-2 mb-2">
             <button
               onClick={handleApply}
-              className={`flex-1 py-3 font-bold border-2 border-black shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
+              className={`flex-1 py-3 font-bold border-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
                 recommendation === 'ACT_NOW'
-                  ? 'bg-[#00A651] text-white'
-                  : 'bg-white text-black'
+                  ? 'bg-[#00A651] text-white border-[#00A651]'
+                  : 'bg-white text-black border-white'
               }`}
             >
               APPLY NOW
             </button>
             <button
               onClick={handleWait}
-              className={`flex-1 py-3 font-bold border-2 border-black shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
+              className={`flex-1 py-3 font-bold border-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
                 recommendation === 'WAIT'
-                  ? 'bg-amber-400 text-black'
-                  : 'bg-white text-black'
+                  ? 'bg-amber-400 text-black border-amber-400'
+                  : 'bg-white/20 text-white border-white/30'
               }`}
             >
-              WAIT
+              WAIT CONSCIOUSLY
             </button>
           </div>
 
@@ -575,13 +591,13 @@ export default function DecisionClient() {
           <div className="flex gap-2">
             <button
               onClick={handlePrev}
-              className="py-2 px-4 text-sm font-bold border-2 border-black bg-white hover:bg-gray-100"
+              className="py-2 px-4 text-sm font-bold border-2 border-white/30 bg-white/10 text-white hover:bg-white/20"
             >
               ←
             </button>
             <button
               onClick={handleNext}
-              className="flex-1 py-2 text-sm font-bold border-2 border-black bg-[#00A651] text-white shadow-[3px_3px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+              className="flex-1 py-2 text-sm font-bold border-2 border-black bg-[#00A651] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
             >
               NEXT LISTING →
             </button>
