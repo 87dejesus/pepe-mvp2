@@ -46,8 +46,28 @@ function formatBathrooms(n: number): string {
   return `${n} BATHS`;
 }
 
+// Detect incentives in description
+const INCENTIVE_PATTERNS: { regex: RegExp; message: string }[] = [
+  { regex: /(\d+)\s*months?\s*free/i, message: 'offers free month(s)!' },
+  { regex: /free\s*months?/i, message: 'offers a free month!' },
+  { regex: /no\s*(broker\s*)?fee/i, message: 'no broker fee!' },
+  { regex: /move[- ]?in\s*special/i, message: 'has a move-in special!' },
+  { regex: /concession/i, message: 'has rent concessions!' },
+  { regex: /net\s*effective/i, message: 'advertises net effective rent (look for concessions)!' },
+  { regex: /discount/i, message: 'mentions a discount!' },
+  { regex: /reduced\s*(rent|price)/i, message: 'has reduced rent!' },
+];
+
+function detectIncentives(description: string): string | null {
+  if (!description) return null;
+  for (const { regex, message } of INCENTIVE_PATTERNS) {
+    if (regex.test(description)) return message;
+  }
+  return null;
+}
+
 // Generate empathetic commentary
-function buildSteadyTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
+function buildPepeTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
@@ -76,9 +96,10 @@ function buildSteadyTake(listing: Listing, answers: Answers, score: number, warn
 
   // Location match
   if (answers.boroughs.length > 0) {
+    const boroughLower = (listing.borough || '').toLowerCase();
+    const neighborhoodLower = (listing.neighborhood || '').toLowerCase();
     const inPreferred = answers.boroughs.some(
-      b => (listing.borough || '').toLowerCase().includes(b.toLowerCase()) ||
-           (listing.neighborhood || '').toLowerCase().includes(b.toLowerCase())
+      b => boroughLower.includes(b.toLowerCase()) || neighborhoodLower.includes(b.toLowerCase())
     );
     if (inPreferred) {
       parts.push(`in your preferred ${listing.borough} area`);
@@ -92,6 +113,12 @@ function buildSteadyTake(listing: Listing, answers: Answers, score: number, warn
     parts.push('pets welcome here');
   }
 
+  // Incentive detection from description
+  const incentive = detectIncentives(listing.description);
+  if (incentive) {
+    parts.push(`Plus, ${incentive}`);
+  }
+
   // Build the final message
   if (parts.length === 0) {
     return score >= 80
@@ -99,7 +126,7 @@ function buildSteadyTake(listing: Listing, answers: Answers, score: number, warn
       : `This one doesn't match everything, but ${neighborhood} has its perks. Keep exploring!`;
   }
 
-  const intro = score >= 80 ? 'Great match!' : warnings.length > 0 ? 'Close enough?' : 'Interesting option.';
+  const intro = score >= 80 ? 'Great match!' : score >= 60 ? 'Solid option.' : warnings.length > 0 ? 'Close enough?' : 'Interesting option.';
   return `${intro} ${parts.join(', ')}.`;
 }
 
@@ -114,7 +141,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
 
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
-  const steadyTake = buildSteadyTake(listing, answers, matchScore, warnings);
+  const pepeTake = buildPepeTake(listing, answers, matchScore, warnings);
 
   return (
     <div
@@ -132,8 +159,11 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold">
-            NO PHOTO
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500">
+            <svg className="w-12 h-12 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs font-bold uppercase">No photo — check full listing</span>
           </div>
         )}
 
@@ -217,7 +247,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             <div>
               <p className="text-xs font-bold uppercase mb-1 text-[#1E3A8A]">PEPE&apos;S TAKE</p>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {steadyTake}
+                {pepeTake}
               </p>
             </div>
           </div>

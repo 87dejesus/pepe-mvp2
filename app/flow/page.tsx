@@ -194,13 +194,15 @@ export default function FlowPage() {
 
         {/* Pepe mascot + Question */}
         <div className="flex items-start gap-4 mb-6">
-          <img
-            src="/brand/pepe-ny.jpeg"
-            alt="Pepe"
-            className={`w-16 h-16 rounded-full border-3 border-white/40 object-cover shrink-0 shadow-lg transition-all duration-300 ${
-              isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-            }`}
-          />
+          <div className={`w-16 h-16 rounded-full overflow-hidden border-2 border-white/40 shrink-0 shadow-lg transition-all duration-300 ${
+            isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+          }`}>
+            <img
+              src="/brand/pepe-ny.jpeg"
+              alt="Pepe"
+              className="w-full h-full object-cover"
+            />
+          </div>
           <div className={`bg-white/95 backdrop-blur-sm rounded-2xl rounded-tl-sm p-4 flex-1 shadow-md transition-opacity duration-200 ${
             isTransitioning ? 'opacity-50' : 'opacity-100'
           }`}>
