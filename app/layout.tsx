@@ -14,12 +14,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://thesteadyone.com"),
   title: {
     default: "The Steady One | NYC Apartment Match",
     template: "%s | The Steady One",
   },
   description:
-    "Find your steady home in NYC. Know your trade-offs, decide with clarity, and move with confidence.",
+    "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+  keywords: ["NYC apartments", "apartment search", "NYC rentals", "apartment matcher", "The Steady One"],
+  authors: [{ name: "The Steady One" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://thesteadyone.com",
+    siteName: "The Steady One",
+    title: "The Steady One | NYC Apartment Match",
+    description:
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+    images: [
+      {
+        url: "/brand/steady-one-blue.png",
+        width: 512,
+        height: 512,
+        alt: "The Steady One logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "The Steady One | NYC Apartment Match",
+    description:
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+    images: ["/brand/steady-one-blue.png"],
+  },
   icons: {
     icon: "/brand/steady-one-black.png",
     apple: "/brand/steady-one-black.png",
