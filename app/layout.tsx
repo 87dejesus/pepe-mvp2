@@ -51,6 +51,9 @@ export const metadata: Metadata = {
     icon: "/brand/steady-one-black.png",
     apple: "/brand/steady-one-black.png",
   },
+  other: {
+    "impact-site-verification": "7f1ba217-a484-4912-a99b-6f0b086341a6",
+  },
 };
 
 export default function RootLayout({
@@ -60,10 +63,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        {/* Meta tag de verificação do Impact.com */}
-        <meta name="impact-site-verification" content="7f1ba217-a484-4912-a99b-6f0b086341a6" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
