@@ -60,6 +60,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Meta tag de verificação do Impact.com */}
+        <meta name='impact-site-verification' value='7f1ba217-a484-4912-a99b-6f0b086341a6' />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
