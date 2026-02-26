@@ -205,7 +205,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-1',
     status: 'Active',
   },
   {
@@ -220,7 +220,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'elevator'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-2',
     status: 'Active',
   },
   {
@@ -235,7 +235,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-3',
     status: 'Active',
   },
   {
@@ -250,7 +250,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'dishwasher'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-4',
     status: 'Active',
   },
   {
@@ -265,7 +265,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-5',
     status: 'Active',
   },
   {
@@ -280,7 +280,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'doorman', 'outdoor space'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-6',
     status: 'Active',
   },
   {
@@ -295,7 +295,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-7',
     status: 'Active',
   },
   {
@@ -310,7 +310,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'elevator'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-8',
     status: 'Active',
   },
   {
@@ -325,7 +325,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'air conditioning'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-9',
     status: 'Active',
   },
   {
@@ -340,7 +340,7 @@ const MOCK_LISTINGS: Listing[] = [
     images: [],
     pets: 'yes',
     amenities: ['gym', 'hardwood floors'],
-    original_url: 'https://streeteasy.com',
+    original_url: 'https://streeteasy.com/mock-10',
     status: 'Active',
   },
 ];
