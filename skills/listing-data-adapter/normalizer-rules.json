@@ -1,0 +1,174 @@
+{
+  "fieldMapping": {
+    "price":        ["price", "rent", "monthly_rent", "cost"],
+    "bedrooms":     ["bedrooms", "beds", "bd", "br", "bedroom_count"],
+    "bathrooms":    ["bathrooms", "baths", "ba", "bathroom_count"],
+    "borough":      ["borough", "location", "area", "city", "district"],
+    "neighborhood": ["neighborhood", "neighbourhood", "area", "location", "hood"],
+    "description":  ["description", "desc", "body", "details", "text", "summary"],
+    "image_url":    ["image_url", "photo", "img", "image", "photo_url", "thumbnail"],
+    "original_url": ["original_url", "link", "url", "listing_url", "source_url"],
+    "pets":         ["pets", "pet_friendly", "pets_allowed", "allows_pets"]
+  },
+
+  "boroughAliases": {
+    "manhattan":    "Manhattan",
+    "new york":     "Manhattan",
+    "new york city": "Manhattan",
+    "nyc":          "Manhattan",
+    "ny":           "Manhattan",
+    "midtown":      "Manhattan",
+    "downtown":     "Manhattan",
+    "uptown":       "Manhattan",
+    "harlem":       "Manhattan",
+    "brooklyn":     "Brooklyn",
+    "bk":           "Brooklyn",
+    "bklyn":        "Brooklyn",
+    "queens":       "Queens",
+    "qns":          "Queens",
+    "bronx":        "Bronx",
+    "the bronx":    "Bronx",
+    "bx":           "Bronx",
+    "staten island": "Staten Island",
+    "si":           "Staten Island",
+    "staten isl":   "Staten Island"
+  },
+
+  "incentivePatterns": [
+    {
+      "regex": "free\\s*month",
+      "flags": "i",
+      "label": "free month"
+    },
+    {
+      "regex": "\\d+\\s*months?\\s*free",
+      "flags": "i",
+      "label": "X months free"
+    },
+    {
+      "regex": "no\\s*(broker\\s*)?fee",
+      "flags": "i",
+      "label": "no fee"
+    },
+    {
+      "regex": "owner\\s*pays(\\s*fee)?",
+      "flags": "i",
+      "label": "owner pays fee"
+    },
+    {
+      "regex": "concession",
+      "flags": "i",
+      "label": "concession"
+    },
+    {
+      "regex": "reduced\\s*deposit",
+      "flags": "i",
+      "label": "reduced deposit"
+    },
+    {
+      "regex": "flexible\\s*lease",
+      "flags": "i",
+      "label": "flexible lease"
+    },
+    {
+      "regex": "move.?in\\s*special",
+      "flags": "i",
+      "label": "move-in special"
+    },
+    {
+      "regex": "rent\\s*stabilized",
+      "flags": "i",
+      "label": "rent stabilized"
+    },
+    {
+      "regex": "net\\s*effective",
+      "flags": "i",
+      "label": "net effective rent"
+    },
+    {
+      "regex": "first\\s*(month|mo)\\s*free",
+      "flags": "i",
+      "label": "first month free"
+    },
+    {
+      "regex": "last\\s*(month|mo)\\s*free",
+      "flags": "i",
+      "label": "last month free"
+    }
+  ],
+
+  "amenityKeywords": [
+    {
+      "keywords": ["laundry", "washer", "dryer", "w/d", "laundry in building", "laundry in unit"],
+      "label": "laundry"
+    },
+    {
+      "keywords": ["dishwasher"],
+      "label": "dishwasher"
+    },
+    {
+      "keywords": ["gym", "fitness center", "fitness room"],
+      "label": "gym"
+    },
+    {
+      "keywords": ["doorman", "door man", "concierge"],
+      "label": "doorman"
+    },
+    {
+      "keywords": ["elevator", "lift"],
+      "label": "elevator"
+    },
+    {
+      "keywords": ["parking", "garage", "car space"],
+      "label": "parking"
+    },
+    {
+      "keywords": ["balcony", "terrace", "rooftop", "outdoor space", "backyard", "patio"],
+      "label": "outdoor space"
+    },
+    {
+      "keywords": ["central air", "a/c", "ac", "air conditioning", "air conditioner"],
+      "label": "air conditioning"
+    },
+    {
+      "keywords": ["storage", "storage unit", "storage room"],
+      "label": "storage"
+    },
+    {
+      "keywords": ["hardwood", "hardwood floors"],
+      "label": "hardwood floors"
+    },
+    {
+      "keywords": ["renovated", "newly renovated", "gut renovated"],
+      "label": "renovated"
+    }
+  ],
+
+  "priceCleanupRegex": "[$,\\/a-zA-Z\\s]",
+
+  "bedroomAliases": {
+    "studio": 0,
+    "0br": 0,
+    "0 br": 0,
+    "0 bed": 0,
+    "0 bedroom": 0
+  },
+
+  "petsAliases": {
+    "true_values":  ["yes", "true", "allowed", "ok", "ok!", "pets ok", "pets allowed", "pet friendly", "pet-friendly"],
+    "false_values": ["no", "false", "not allowed", "no pets", "no pet", "pets not allowed"]
+  },
+
+  "imageInvalidValues": ["", "N/A", "n/a", "none", "null", "undefined", "no photo"],
+
+  "defaults": {
+    "bedrooms":   1,
+    "bathrooms":  1,
+    "borough":    "Unknown",
+    "description": "",
+    "image_url":  null,
+    "pets":       null,
+    "incentives": [],
+    "amenities":  []
+  }
+}

@@ -42,7 +42,10 @@ const isTest = args.includes("--test");
 const isHeaded = args.includes("--headed");
 const sourceFlag = args.includes("--source") ? args[args.indexOf("--source") + 1] : null;
 const urlArg = args.find(a => a.startsWith("http"));
-const TEST_LIMIT = 10;
+
+// --limit N: exact listing cap (overrides --test default of 10)
+const limitIdx = args.indexOf("--limit");
+const TEST_LIMIT = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) || 10 : 10;
 
 // ============================================
 // NYC BOROUGH URLS
@@ -678,6 +681,7 @@ async function main() {
 |    npx tsx scripts/scraper.ts --auto                           |
 |    npx tsx scripts/scraper.ts --auto --source craigslist       |
 |    npx tsx scripts/scraper.ts --auto --test                    |
+|    npx tsx scripts/scraper.ts --auto --test --limit 5          |
 |    npx tsx scripts/scraper.ts <url> --headed                   |
 |                                                                |
 |  Env vars:                                                     |
