@@ -3,9 +3,14 @@
  *
  * Helper functions to check subscription state for a given userId.
  * All reads go through Supabase. Use these in middleware and page components.
+ *
+ * In development (NEXT_PUBLIC_DEV_MOCK_ENABLED=true), set localStorage key
+ * `steady_dev_mock` to one of: 'trialing' | 'active' | 'canceled' | 'past_due' | 'none'
+ * to simulate any subscription state without a real Stripe payment.
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getMockSubscription } from './mock-subscriptions';
 
 export type SubscriptionStatus =
   | 'trialing'
@@ -35,9 +40,21 @@ function getSupabase() {
 }
 
 /**
- * Fetch the subscription row for a user. Returns null if not found.
+ * Fetch the subscription row for a user.
+ *
+ * In development with NEXT_PUBLIC_DEV_MOCK_ENABLED=true, checks localStorage
+ * for a `steady_dev_mock` override before hitting Supabase.
+ *
+ * Returns null if no subscription found.
  */
 export async function getSubscription(userId: string): Promise<Subscription | null> {
+  // Dev mock: short-circuit Supabase in development
+  const mock = getMockSubscription();
+  if (mock !== undefined) {
+    console.log(`[Steady Debug] getSubscription: returning dev mock (${mock?.status ?? 'none'})`);
+    return mock;
+  }
+
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('subscriptions')

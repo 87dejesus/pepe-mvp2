@@ -4,6 +4,25 @@
  *
  * Handles: checkout.session.completed, customer.subscription.updated,
  *          customer.subscription.deleted, invoice.payment_failed
+ *
+ * ─── Test Mode Setup ──────────────────────────────────────────────────────────
+ * 1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+ * 2. Login: stripe login
+ * 3. Forward events to local server:
+ *      stripe listen --forward-to localhost:3000/api/stripe/webhook
+ *    This prints a webhook signing secret: whsec_test_...
+ *    Copy it to STRIPE_WEBHOOK_SECRET in .env.local
+ * 4. In a second terminal, trigger test events:
+ *      stripe trigger checkout.session.completed
+ *      stripe trigger customer.subscription.deleted
+ *      stripe trigger invoice.payment_failed
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * Required env vars (test mode values from dashboard.stripe.com):
+ *   STRIPE_SECRET_KEY       = sk_test_51...
+ *   STRIPE_WEBHOOK_SECRET   = whsec_... (from `stripe listen` output)
+ *   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = pk_test_51...
+ *   NEXT_PUBLIC_STRIPE_PRICE_ID        = price_... (weekly $2.49 test price)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -55,9 +74,9 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        // Fetch the subscription to get trial/status details
+        // Fetch full subscription to get trial_end + current_period_end
         const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-        const status = stripeSub.status; // 'trialing' or 'active'
+        const status = stripeSub.status; // 'trialing' (3-day trial) or 'active'
         const trialEnd = stripeSub.trial_end
           ? new Date(stripeSub.trial_end * 1000).toISOString()
           : null;
@@ -81,7 +100,6 @@ export async function POST(req: NextRequest) {
         const userId = sub.metadata?.userId;
 
         if (!userId) {
-          // Fall back to looking up by stripe_subscription_id
           console.warn('[Steady Debug] subscription.updated: no userId in metadata, skipping');
           break;
         }
@@ -114,8 +132,8 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        // On deletion, keep the row but mark canceled.
-        // Access continues until current_period_end (user already paid for that period).
+        // Keep the row — mark as canceled.
+        // Access continues until current_period_end (user paid for that week already).
         const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
 
         await upsertSubscription({
@@ -137,7 +155,6 @@ export async function POST(req: NextRequest) {
 
         if (!subscriptionId) break;
 
-        // Update status to past_due via subscription lookup
         const { error } = await supabase
           .from('subscriptions')
           .update({ status: 'past_due', updated_at: new Date().toISOString() })

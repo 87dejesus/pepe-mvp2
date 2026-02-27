@@ -6,24 +6,49 @@
  * and returns the resolved access level.
  *
  * Usage:
- *   const { access, daysLeft, loading } = useAccessGuard();
+ *   const { access, daysLeft, userId } = useAccessGuard();
  *
  * Then in the render:
  *   - access === 'full'    → show all listings normally
  *   - access === 'preview' → show listing[0] fully, blur listing[1+]
  *   - access === 'blocked' → redirect to /paywall
+ *   - access === 'loading' → show spinner
+ *
+ * ─── Dev Mock (no Stripe required) ───────────────────────────────────────────
+ * When NEXT_PUBLIC_DEV_MOCK_ENABLED=true, set steady_dev_mock in localStorage:
+ *
+ *   localStorage.setItem('steady_dev_mock', 'trialing');  // 2 days left
+ *   localStorage.setItem('steady_dev_mock', 'active');    // paid
+ *   localStorage.setItem('steady_dev_mock', 'canceled'); // hard block
+ *   localStorage.setItem('steady_dev_mock', 'past_due'); // payment failed
+ *   localStorage.setItem('steady_dev_mock', 'none');      // preview only
+ *   localStorage.removeItem('steady_dev_mock');           // real Supabase
+ *
+ * Then reload the page. The hook resolves instantly — no API call.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  getMockSubscription,
+  getDevMockScenario,
+} from '../subscription-engine/mock-subscriptions';
+import {
+  hasActiveAccess,
+  isOnTrial,
+  isCanceled,
+  isPastDue,
+  trialDaysRemaining,
+} from '../subscription-engine/subscription-utils';
 
 export type AccessLevel = 'full' | 'preview' | 'blocked' | 'loading';
 
 type AccessGuardResult = {
   access: AccessLevel;
-  daysLeft?: number;   // set when on trial
+  daysLeft?: number;
   userId: string | null;
 };
 
@@ -52,12 +77,39 @@ export function useAccessGuard(): AccessGuardResult {
     const id = getOrCreateUserId();
     setUserId(id);
 
+    // ── Dev mock: resolve without any API call ──────────────────────────────
+    const mockScenario = getDevMockScenario();
+    if (mockScenario !== null) {
+      const mockSub = getMockSubscription();
+      console.log(`[Steady Debug] useAccessGuard: using dev mock "${mockScenario}"`);
+
+      if (mockSub === null || mockSub === undefined) {
+        // 'none' scenario or mock disabled
+        setAccess('preview');
+        return;
+      }
+
+      if (hasActiveAccess(mockSub)) {
+        setAccess('full');
+        if (isOnTrial(mockSub)) {
+          setDaysLeft(trialDaysRemaining(mockSub));
+        }
+      } else if (isCanceled(mockSub) || isPastDue(mockSub)) {
+        const reason = isCanceled(mockSub) ? 'canceled' : 'payment_failed';
+        router.push(`/paywall?reason=${reason}`);
+      } else {
+        setAccess('preview');
+      }
+      return;
+    }
+
+    // ── Real check via API ──────────────────────────────────────────────────
     async function checkAccess() {
       try {
         const res = await fetch(`/api/auth/check-access?userId=${encodeURIComponent(id)}`);
         if (!res.ok) {
           console.error('[Steady Debug] check-access HTTP error:', res.status);
-          setAccess('preview'); // fail open — show preview
+          setAccess('preview'); // fail open
           return;
         }
 
@@ -65,8 +117,7 @@ export function useAccessGuard(): AccessGuardResult {
         console.log('[Steady Debug] useAccessGuard result:', data);
 
         if (data.access === 'blocked') {
-          const reason = data.reason ?? 'blocked';
-          router.push(`/paywall?reason=${reason}`);
+          router.push(`/paywall?reason=${data.reason ?? 'blocked'}`);
           return;
         }
 
