@@ -1,0 +1,30 @@
+{
+  "name": "The Steady One — Weekly Access",
+  "description": "Full access to The Steady One NYC apartment matching platform. 3-day free trial, then $2.49/week.",
+  "currency": "usd",
+  "amount_cents": 249,
+  "interval": "week",
+  "interval_count": 1,
+  "trial_period_days": 3,
+  "metadata": {
+    "product": "steady-one-weekly",
+    "phase": "2"
+  },
+  "stripe_checkout_params": {
+    "mode": "subscription",
+    "payment_method_types": ["card"],
+    "subscription_data": {
+      "trial_period_days": 3,
+      "metadata": {
+        "product": "steady-one-weekly"
+      }
+    },
+    "allow_promotion_codes": true
+  },
+  "notes": [
+    "Create the Stripe Price in the dashboard: Recurring, USD $2.49, weekly.",
+    "Set NEXT_PUBLIC_STRIPE_PRICE_ID to the resulting price_xxx ID.",
+    "Trial is collected at checkout — card required upfront, not charged for 3 days.",
+    "After cancellation, access continues until current_period_end."
+  ]
+}
