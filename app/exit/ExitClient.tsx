@@ -19,15 +19,11 @@ export default function ExitClient() {
 
           {/* Main message */}
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 leading-tight">
-            Tudo bem esperar conscientemente!
+            It&apos;s okay to wait consciously!
           </h1>
 
-          <p className="text-base text-white/80 leading-relaxed mb-3">
-            O mercado de NYC muda rápido, mas volte quando estiver pronto &mdash; estamos aqui pra te ajudar com clareza e sem pânico.
-          </p>
-
-          <p className="text-sm text-white/60 leading-relaxed mb-8">
-            It&apos;s okay to wait. The NYC market moves fast, but rushing into a decision you&apos;re not sure about is worse than waiting. Come back when you&apos;re ready.
+          <p className="text-base text-white/80 leading-relaxed mb-8">
+            The NYC market moves fast, but rushing into a decision you&apos;re not sure about is worse than waiting. Come back when you&apos;re ready.
           </p>
 
           {/* Actions */}
@@ -36,7 +32,7 @@ export default function ExitClient() {
               href="/flow"
               className="block w-full bg-[#00A651] hover:bg-[#00913f] text-white font-bold text-base py-4 rounded-xl shadow-lg shadow-black/20 active:scale-[0.98] transition-all border-2 border-white/20"
             >
-              Voltar pra Flow
+              Back to Flow
             </Link>
 
             <Link

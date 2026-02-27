@@ -448,10 +448,13 @@ export default function DecisionClient() {
       const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
       const needed = bedroomMap[answers!.bedrooms] ?? 1;
 
-      // Helper: check if image is a known placeholder
+      // Helper: check if image is missing or a known placeholder
       const isPlaceholder = (l: Listing) => {
-        const img = l.image_url || l.images?.[0] || '';
-        return img.includes('add7ffb');
+        const img = (l.image_url || l.images?.[0] || '').trim();
+        if (!img) return true; // empty or null
+        if (img.includes('add7ffb')) return true; // known placeholder hash
+        if (!img.startsWith('http://') && !img.startsWith('https://')) return true; // not a valid URL
+        return false;
       };
 
       // === PASS 1: Strict filters (budget, bedrooms, borough) ===
