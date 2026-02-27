@@ -1,111 +1,167 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import Link from 'next/link';
+import Header from '@/components/Header';
 
-const LS_ANSWERS = "pepe_answers_v1";
-const LS_SUB = "pepe_subscription_v1";
-
-type SubState = {
-  paywall_seen: boolean;
-  subscribed: boolean;
-  trial_started_at?: string; // ISO
-};
+const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
 export default function PaywallPage() {
-  const router = useRouter();
-  const [answers, setAnswers] = useState<any>(null);
-  const [sub, setSub] = useState<SubState>({ paywall_seen: true, subscribed: false });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const a = localStorage.getItem(LS_ANSWERS);
-    if (!a) {
-      router.push("/flow");
-      return;
+  async function handleStartTrial() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/stripe/create-checkout', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? 'Could not start checkout. Try again.');
+      }
+
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong.';
+      setError(message);
+      setLoading(false);
     }
-    setAnswers(JSON.parse(a));
-
-    const raw = localStorage.getItem(LS_SUB);
-    if (raw) setSub(JSON.parse(raw));
-    else localStorage.setItem(LS_SUB, JSON.stringify({ paywall_seen: true, subscribed: false }));
-  }, [router]);
-
-  const pressure = useMemo(() => {
-    if (!answers) return "unknown";
-    if (answers.moveWhen === "now") return "high";
-    if (answers.moveWhen === "2-4w") return "medium";
-    return "lower";
-  }, [answers]);
-
-  function startTrial() {
-    const next: SubState = {
-      paywall_seen: true,
-      subscribed: true,
-      trial_started_at: new Date().toISOString(),
-    };
-    localStorage.setItem(LS_SUB, JSON.stringify(next));
-    setSub(next);
-    router.push("/decision");
   }
-
-  function notNow() {
-    const next: SubState = { ...sub, paywall_seen: true };
-    localStorage.setItem(LS_SUB, JSON.stringify(next));
-    router.push("/exit");
-  }
-
-  if (!answers) return <main style={{ padding: 24 }}>Loading…</main>;
 
   return (
-    <main style={{ padding: 24, maxWidth: 720 }}>
-      <h1>Before you commit</h1>
-      <p style={{ marginTop: 6 }}>
-        The Steady One is not a listings site. It helps you make one decision with less regret.
-      </p>
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <Header />
 
-      <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 10 }}>
-        <h2 style={{ marginTop: 0 }}>What you get</h2>
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="max-w-sm w-full">
 
-        <ul style={{ marginTop: 10, lineHeight: 1.6 }}>
-          <li>Clear tradeoffs based on your constraints</li>
-          <li>Pressure-aware guidance (NYC behavior, not generic scoring)</li>
-          <li>Why now signals, so hesitation is conscious</li>
-          <li>Support sections (guarantors, moving tools) when relevant</li>
-        </ul>
+          {/* Mascot + Headline */}
+          <div className="text-center mb-6">
+            <img
+              src="/brand/pepe-ny.jpeg"
+              alt="Pepe"
+              className="w-20 h-20 mx-auto mb-4 rounded-full border-4 border-white/30 object-cover"
+            />
+            <h1 className="text-2xl font-extrabold text-white leading-tight">
+              Make one clear decision.
+            </h1>
+            <p className="text-white/70 text-sm mt-2">
+              Stop scrolling. The Steady One helps you commit — or consciously wait.
+            </p>
+          </div>
 
-        <div style={{ marginTop: 14, padding: 12, background: "#f7f7f7", borderRadius: 10 }}>
-          <strong>Current pressure:</strong> {pressure.toUpperCase()} <br />
-          <span style={{ opacity: 0.8 }}>
-            In NYC, &quot;wait&quot; often means &quot;lose the option.&quot; The Steady One makes that trade explicit.
-          </span>
-        </div>
-      </div>
+          {/* Value card */}
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
+              What you get
+            </p>
+            <ul className="space-y-2.5">
+              {[
+                'Match score based on your real constraints',
+                'ACT NOW vs WAIT CONSCIOUSLY — no false urgency',
+                'Incentive detection: free months, no-fee deals',
+                "Pepe's take on every listing",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-gray-800">
+                  <span className="text-[#00A651] font-bold mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 10 }}>
-        <h2 style={{ marginTop: 0 }}>Trial</h2>
-        <p style={{ marginTop: 8 }}>
-          3 days free, then $2.49/week. Cancel anytime.
-        </p>
+          {/* Pricing card */}
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 mb-4">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-3xl font-extrabold text-black">$2.49</span>
+              <span className="text-gray-500 text-sm">/ week</span>
+            </div>
+            <p className="text-[#00A651] font-bold text-sm mb-4">
+              3 days free — no charge during trial
+            </p>
 
-        <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button onClick={startTrial} style={{ padding: "10px 14px" }}>
-            Start free trial
-          </button>
-          <button onClick={notNow} style={{ padding: "10px 14px" }}>
-            Not now
-          </button>
-        </div>
+            {/* CTA */}
+            <button
+              onClick={handleStartTrial}
+              disabled={loading}
+              className="w-full bg-[#00A651] text-white font-extrabold text-base py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Opening Stripe…
+                </span>
+              ) : (
+                'Start 3-day free trial →'
+              )}
+            </button>
 
-        <p style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
-          MVP note: payment is simulated for now. We are validating decision quality first.
-        </p>
+            {error && (
+              <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 p-2">
+                {error}
+              </p>
+            )}
 
-        {sub.subscribed && (
-          <p style={{ marginTop: 10, fontSize: 13 }}>
-            Status: <strong>Trial started</strong> ({sub.trial_started_at})
+            <p className="mt-3 text-xs text-gray-400 text-center">
+              Cancel anytime. No charge for 3 days.
+            </p>
+          </div>
+
+          {/* Dev mock helper — only visible when DEV_MOCK_ENABLED=true */}
+          {IS_DEV_MOCK && (
+            <div className="bg-amber-50 border-2 border-amber-400 p-4 mb-4">
+              <p className="text-xs font-bold uppercase text-amber-700 mb-2">
+                Dev mode — test without Stripe
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <DevMockButton scenario="trialing" label="Simulate trial (full access)" />
+                <DevMockButton scenario="active" label="Simulate paid subscription" />
+                <DevMockButton scenario="canceled" label="Simulate canceled (paywall)" />
+                <DevMockButton scenario={null} label="Clear mock (real state)" />
+              </div>
+            </div>
+          )}
+
+          <p className="text-center text-xs text-white/40 mt-2">
+            Using Stripe test mode — no real charges.
           </p>
-        )}
+
+          <div className="text-center mt-4">
+            <Link href="/" className="text-xs text-white/50 hover:text-white underline">
+              ← Back to home
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
+  );
+}
+
+function DevMockButton({
+  scenario,
+  label,
+}: {
+  scenario: 'trialing' | 'active' | 'canceled' | null;
+  label: string;
+}) {
+  function apply() {
+    if (scenario === null) {
+      localStorage.removeItem('steady_dev_mock');
+    } else {
+      localStorage.setItem('steady_dev_mock', scenario);
+    }
+    // Navigate to /decision so the effect is immediately visible
+    window.location.href = '/decision';
+  }
+
+  return (
+    <button
+      onClick={apply}
+      className="w-full text-left text-xs font-semibold px-3 py-2 border border-amber-400 bg-white text-amber-800 hover:bg-amber-50 active:bg-amber-100"
+    >
+      {label}
+    </button>
   );
 }
