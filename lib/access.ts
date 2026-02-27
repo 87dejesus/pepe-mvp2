@@ -26,25 +26,24 @@ const VALID_STATUSES: AccessStatus[] = ['trialing', 'active', 'canceled', 'none'
 
 /**
  * Read the current access state.
- * Dev mock takes priority over real state when NEXT_PUBLIC_DEV_MOCK_ENABLED=true.
+ * If 'steady_dev_mock' is set in localStorage, it always takes priority —
+ * no environment variable required.
  */
 export function readAccess(): AccessState {
   if (typeof window === 'undefined') {
     return { status: 'none', set_at: new Date().toISOString() };
   }
 
-  // ── Dev mock (localStorage override) ──────────────────────────────────────
-  if (process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true') {
-    const mock = localStorage.getItem(DEV_MOCK_KEY);
-    if (mock && VALID_STATUSES.includes(mock as AccessStatus)) {
-      const status = mock as AccessStatus;
-      const trial_end =
-        status === 'trialing'
-          ? new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days left
-          : undefined;
-      console.log(`[Steady Debug] readAccess: dev mock="${status}"`);
-      return { status, trial_end, set_at: new Date().toISOString() };
-    }
+  // ── Dev mock (localStorage override — always checked) ─────────────────────
+  const mock = localStorage.getItem(DEV_MOCK_KEY);
+  if (mock && VALID_STATUSES.includes(mock as AccessStatus)) {
+    const status = mock as AccessStatus;
+    const trial_end =
+      status === 'trialing'
+        ? new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days left
+        : undefined;
+    console.log(`[Steady Debug] readAccess: mock="${status}"`);
+    return { status, trial_end, set_at: new Date().toISOString() };
   }
 
   // ── Real access state (written after Stripe checkout) ─────────────────────

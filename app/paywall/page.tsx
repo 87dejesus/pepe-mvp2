@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
-const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
+// Mock panel always visible — steady_dev_mock works on any environment
+const IS_DEV_MOCK = true;
 
 export default function PaywallPage() {
   const [loading, setLoading] = useState(false);
