@@ -92,6 +92,11 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
   return false;
 }
 
+// Robust price parser — handles number OR string like "$2,500/mo" or "245000"
+function parsePrice(p: unknown): number {
+  return Number(String(p || 0).replace(/[^0-9.]/g, '')) || 0;
+}
+
 // Detect incentives in description
 const INCENTIVE_REGEX = /free\s*month|months?\s*free|no\s*fee|no\s*broker|discount|concession|reduced|special\s*offer|move[- ]?in\s*special|net\s*effective|gross\s*rent/i;
 
@@ -485,6 +490,9 @@ export default function DecisionClient() {
       }
       console.log(`[Steady Debug] Raw listings: ${rawData.length} (source: ${source})`);
       console.log(`Found ${rawData.length} active listings`);
+      console.log(`[DEBUG] Raw Apify listings: ${rawData.length}`);
+      console.log(`[DEBUG] First 5 prices:`, rawData.slice(0, 5).map(l => parsePrice(l.price)));
+      console.log(`[DEBUG] Boroughs found:`, rawData.slice(0, 5).map(l => l.borough || l.neighborhood));
 
       const stats: FilterStats = {
         total: rawData.length,
@@ -513,7 +521,7 @@ export default function DecisionClient() {
       // === PASS 1: Strict filters (budget, bedrooms, borough) ===
       const strict = rawData.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
-        if (l.price > answers!.budget) { stats.overBudget++; return false; }
+        if (parsePrice(l.price) > answers!.budget) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
           if (l.bedrooms < 3) { stats.wrongBedrooms++; return false; }
         } else {
@@ -536,7 +544,7 @@ export default function DecisionClient() {
 
       // === PASS 2: Relaxed filters (when strict < 10) ===
       if (strict.length < 10 && rawData.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +25%, bedrooms ±1, drop borough)...`);
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +50%, bedrooms flexible, borough ignored)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
@@ -544,21 +552,34 @@ export default function DecisionClient() {
           if (strictIds.has(l.id)) return false; // already in strict
           if (!l.original_url) return false;
           if (isPlaceholder(l)) return false;
-          // Budget: allow +25%
-          if (l.price > answers!.budget * 1.25) return false;
-          // Bedrooms: allow +/-1
+          // Budget: allow +50%
+          if (parsePrice(l.price) > answers!.budget * 1.50) return false;
+          // Bedrooms: flexible — Studio accepts 0 or 1; others allow ±1
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
+          } else if (answers!.bedrooms === '0') {
+            // Studio: accept studio (0) or 1-bed
+            if (l.bedrooms > 1) return false;
           } else {
             if (Math.abs(l.bedrooms - needed) > 1) return false;
           }
-          // Borough: drop filter in relaxed mode
+          // Borough: completely ignored in relaxed mode
           return true;
         });
 
         console.log(`After relaxed filter: ${relaxed.length}`);
         // Merge: strict first (already high match), then relaxed
         finalList = [...strict, ...relaxed];
+
+        // === PASS 3: Last-resort — 10 cheapest listings with a URL and photo ===
+        if (finalList.length === 0 && rawData.length > 0) {
+          console.log('[DEBUG] All passes returned 0 — showing 10 cheapest as last resort');
+          finalList = rawData
+            .filter(l => l.original_url && !isPlaceholder(l))
+            .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+            .slice(0, 10);
+          stats.relaxedUsed = true;
+        }
       }
 
       // Sort by match score (best first), with-photo preferred over no-photo
