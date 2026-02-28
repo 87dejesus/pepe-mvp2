@@ -57,18 +57,36 @@ type FilterStats = {
   relaxedUsed: boolean;
 };
 
-// Fuzzy borough matching — bidirectional includes + common aliases
+// Non-NYC locations that are hard-rejected for NYC borough preferences
+const NON_NYC_LOCATIONS = new Set([
+  'jersey city', 'hoboken', 'newark', 'union city', 'weehawken', 'bayonne',
+  'secaucus', 'kearny', 'harrison', 'east orange', 'irvington', 'elizabeth',
+  'yonkers', 'mount vernon', 'new rochelle', 'white plains',
+]);
+
+function isNonNYC(listing: Listing): boolean {
+  const borough = (listing.borough || '').toLowerCase().trim();
+  const neighborhood = (listing.neighborhood || '').toLowerCase().trim();
+  return NON_NYC_LOCATIONS.has(borough) || NON_NYC_LOCATIONS.has(neighborhood);
+}
+
+// Borough matching — only checks listing→alias direction to avoid empty-string false positives
 function matchesBorough(listing: Listing, boroughs: string[]): boolean {
+  // Non-NYC locations never match a NYC borough preference
+  if (isNonNYC(listing)) return false;
+
   const listingBorough = (listing.borough || '').toLowerCase().trim();
   const listingNeighborhood = (listing.neighborhood || '').toLowerCase().trim();
 
-  // Common aliases: Manhattan is sometimes listed as "New York"
+  // No location data — can't confirm a match
+  if (!listingBorough && !listingNeighborhood) return false;
+
   const boroughAliases: Record<string, string[]> = {
-    'manhattan': ['manhattan', 'new york', 'nyc', 'midtown', 'upper east', 'upper west', 'lower east', 'lower manhattan', 'harlem', 'east village', 'west village', 'soho', 'tribeca', 'chelsea', 'gramercy', 'murray hill', 'hells kitchen', "hell's kitchen", 'financial district', 'battery park', 'inwood', 'washington heights'],
-    'brooklyn': ['brooklyn', 'williamsburg', 'bushwick', 'bed-stuy', 'bedford stuyvesant', 'park slope', 'crown heights', 'greenpoint', 'dumbo', 'prospect heights', 'flatbush', 'bay ridge', 'sunset park', 'cobble hill', 'boerum hill', 'carroll gardens', 'fort greene', 'clinton hill', 'brooklyn heights', 'bensonhurst', 'dyker heights'],
-    'queens': ['queens', 'astoria', 'long island city', 'lic', 'flushing', 'jackson heights', 'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst', 'jamaica', 'ridgewood', 'bayside', 'kew gardens'],
-    'bronx': ['bronx', 'the bronx', 'riverdale', 'fordham', 'pelham', 'mott haven', 'hunts point', 'kingsbridge', 'morris park', 'throgs neck'],
-    'staten island': ['staten island', 'st. george', 'tottenville'],
+    'manhattan': ['manhattan', 'new york', 'nyc', 'midtown', 'upper east side', 'upper west side', 'lower east side', 'lower manhattan', 'harlem', 'east harlem', 'east village', 'west village', 'soho', 'tribeca', 'chelsea', 'gramercy', 'murray hill', "hell's kitchen", 'hells kitchen', 'financial district', 'battery park', 'inwood', 'washington heights', 'morningside heights'],
+    'brooklyn': ['brooklyn', 'williamsburg', 'bushwick', 'bed-stuy', 'bedford stuyvesant', 'park slope', 'crown heights', 'greenpoint', 'dumbo', 'prospect heights', 'flatbush', 'bay ridge', 'sunset park', 'cobble hill', 'boerum hill', 'carroll gardens', 'fort greene', 'clinton hill', 'brooklyn heights', 'bensonhurst', 'dyker heights', 'red hook', 'gowanus', 'borough park'],
+    'queens': ['queens', 'astoria', 'long island city', 'lic', 'flushing', 'jackson heights', 'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst', 'jamaica', 'ridgewood', 'bayside', 'kew gardens', 'queens village', 'ozone park', 'howard beach', 'corona', 'maspeth', 'middle village', 'richmond hill'],
+    'bronx': ['bronx', 'the bronx', 'riverdale', 'fordham', 'pelham', 'mott haven', 'hunts point', 'kingsbridge', 'morris park', 'throgs neck', 'soundview', 'parkchester', 'tremont', 'concourse'],
+    'staten island': ['staten island', 'st. george', 'tottenville', 'stapleton', 'richmond', 'new springville'],
   };
 
   for (const userBorough of boroughs) {
@@ -76,17 +94,11 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
     const aliases = boroughAliases[key] || [key];
 
     for (const alias of aliases) {
-      // Check if listing borough/neighborhood contains alias or vice versa
-      if (listingBorough.includes(alias) || alias.includes(listingBorough) ||
-          listingNeighborhood.includes(alias) || alias.includes(listingNeighborhood)) {
+      if (alias.length < 3) continue; // skip too-short tokens
+      // Check only listing→alias direction to prevent short/empty string false positives
+      if (listingBorough.includes(alias) || listingNeighborhood.includes(alias)) {
         return true;
       }
-    }
-
-    // Also direct partial match: "Brooklyn" in "Brooklyn Heights"
-    if (listingBorough.includes(key) || listingNeighborhood.includes(key) ||
-        key.includes(listingBorough) || key.includes(listingNeighborhood)) {
-      return true;
     }
   }
   return false;
@@ -144,9 +156,12 @@ function calculateMatchScore(listing: Listing, answers: Answers): number {
   // Pets (10 points)
   if (answers.pets === 'none') {
     score += 10;
+  } else if (listing.pets?.toLowerCase() === 'yes') {
+    score += 10;
+  } else if (listing.pets?.toLowerCase() === 'no') {
+    score += 0; // explicit mismatch
   } else {
-    if (listing.pets?.toLowerCase() === 'yes') score += 10;
-    else score += 3; // partial — unknown pet policy
+    score += 5; // unknown policy — moderate
   }
 
   // Bathroom match (5 points)
@@ -466,7 +481,7 @@ export default function DecisionClient() {
 
   // Load from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(LS_KEY);
+    const stored = localStorage.getItem(LS_KEY) || localStorage.getItem('steady_answers');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -550,10 +565,10 @@ export default function DecisionClient() {
         return false;
       };
 
-      // === PASS 1: Strict filters (budget, bedrooms, borough) ===
+      // === PASS 1: Strict filters (budget +10%, bedrooms, borough, pets) ===
       const strict = rawData.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
-        if (parsePrice(l.price) > answers!.budget) { stats.overBudget++; return false; }
+        if (parsePrice(l.price) > answers!.budget * 1.10) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
           if (l.bedrooms < 3) { stats.wrongBedrooms++; return false; }
         } else {
@@ -565,6 +580,8 @@ export default function DecisionClient() {
             stats.wrongBorough++; return false;
           }
         }
+        // Hard reject if listing explicitly says no pets when user has pets
+        if (answers!.pets !== 'none' && l.pets?.toLowerCase() === 'no') { return false; }
         if (isPlaceholder(l)) { stats.placeholderImage++; return false; }
         return true;
       });
@@ -574,9 +591,9 @@ export default function DecisionClient() {
 
       let finalList: Listing[] = strict;
 
-      // === PASS 2: Relaxed filters (when strict < 10) ===
-      if (strict.length < 10 && rawData.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +50%, bedrooms flexible, borough ignored)...`);
+      // === PASS 2: Relaxed filters (when strict < 5) ===
+      if (strict.length < 5 && rawData.length > 0) {
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 5), adding relaxed results (budget +30%, bedrooms ±1, pets optional, non-NYC excluded)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
@@ -584,8 +601,10 @@ export default function DecisionClient() {
           if (strictIds.has(l.id)) return false; // already in strict
           if (!l.original_url) return false;
           if (isPlaceholder(l)) return false;
-          // Budget: allow +50%
-          if (parsePrice(l.price) > answers!.budget * 1.50) return false;
+          // Non-NYC locations never qualify even in relaxed mode
+          if (isNonNYC(l)) return false;
+          // Budget: allow +30%
+          if (parsePrice(l.price) > answers!.budget * 1.30) return false;
           // Bedrooms: flexible — Studio accepts 0 or 1; others allow ±1
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
@@ -595,7 +614,8 @@ export default function DecisionClient() {
           } else {
             if (Math.abs(l.bedrooms - needed) > 1) return false;
           }
-          // Borough: completely ignored in relaxed mode
+          // Pets: optional in relaxed — affects score only, not inclusion
+          // Borough: any NYC borough shown; mismatch penalised in score
           return true;
         });
 
