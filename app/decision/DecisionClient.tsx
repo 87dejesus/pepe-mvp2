@@ -358,9 +358,24 @@ const MOCK_LISTINGS: Listing[] = [
 ];
 
 // ─── Apify data source ────────────────────────────────────────────────────────
+
+// Client-side rental guard — secondary filter after the server already strips
+// for-sale items. Catches anything the server-side check misses.
+function isValidRental(listing: Listing): boolean {
+  const price = parsePrice(listing.price);
+  if (price > 8500) return false; // sale price threshold
+  const desc = (
+    (listing.description ?? '') + ' ' +
+    (listing.original_url ?? '')
+  ).toLowerCase();
+  if (/for\s*sale|sale\s*price|sold/.test(desc)) return false;
+  if (/rent|monthly|lease/.test(desc)) return true;
+  return price <= 6500; // default safety: anything ≤ $6,500 treated as rent
+}
+
 // Calls the server-side /api/apify/sync route which fetches from the Apify
 // Zillow dataset, normalizes each item, upserts to Supabase, and returns
-// the normalized listings for immediate display.
+// the normalized listings to the client.
 async function fetchListingsFromApify(): Promise<Listing[]> {
   try {
     const res = await fetch('/api/apify/sync', {
@@ -368,16 +383,33 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error(`/api/apify/sync responded ${res.status}`);
-    const { listings, synced, dbError } = (await res.json()) as {
+    const { listings: raw, synced, dbError } = (await res.json()) as {
       listings: Listing[];
       synced: number;
       dbError: string | null;
     };
-    console.log(
-      `[Steady Debug] fetchListingsFromApify: ${listings?.length ?? 0} returned,` +
-        ` ${synced} upserted to DB${dbError ? ` (DB err: ${dbError})` : ''}`
-    );
-    return listings ?? [];
+    const all = raw ?? [];
+
+    console.log(`[Steady Debug] fetchListingsFromApify: ${all.length} returned, ${synced} saved to DB${dbError ? ` (DB err: ${dbError})` : ''}`);
+    console.log(`[DEBUG] First 5 prices from API:`, all.slice(0, 5).map(l => parsePrice(l.price)));
+    console.log(`[DEBUG] First 5 descriptions:`, all.slice(0, 5).map(l => (l.description ?? '').slice(0, 60)));
+
+    // Client-side rental filter
+    const validRentals = all.filter(isValidRental);
+    console.log(`[DEBUG] Valid rentals after isValidRental: ${validRentals.length}/${all.length}`);
+
+    if (validRentals.length > 0) return validRentals;
+
+    // Fallback: if all listings failed rental check, show 10 cheapest with a photo
+    if (all.length > 0) {
+      console.log('[DEBUG] isValidRental returned 0 — falling back to 10 cheapest with image');
+      return all
+        .filter(l => l.image_url && l.original_url)
+        .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+        .slice(0, 10);
+    }
+
+    return [];
   } catch (err) {
     console.error('[Steady Debug] fetchListingsFromApify failed:', err);
     return [];

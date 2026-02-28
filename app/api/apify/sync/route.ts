@@ -83,6 +83,8 @@ type ApifyItem = {
   addressCity?: string;
   addressState?: string;
   statusText?: string;
+  statusType?: string;        // "FOR_SALE" | "FOR_RENT"
+  rawHomeStatusCd?: string;   // "ForSale" | "ForRent"
   flexFieldText?: string;
   hdpData?: {
     homeInfo?: {
@@ -90,9 +92,34 @@ type ApifyItem = {
       bathrooms?: number;
       livingArea?: number;
       priceReduction?: string;
+      homeType?: string;
     };
   };
 };
+
+// ─── Rental detection ─────────────────────────────────────────────────────────
+// Zillow datasets can mix for-sale and for-rent listings.
+// Prefer explicit status fields; fall back to price + text heuristics.
+
+function isRentalItem(item: ApifyItem): boolean {
+  // 1. Explicit Zillow status — most reliable signal
+  const statusType = (item.statusType ?? '').toUpperCase();
+  const rawStatus  = (item.rawHomeStatusCd ?? '').toLowerCase();
+  if (statusType === 'FOR_RENT' || rawStatus === 'forrent') return true;
+  if (statusType === 'FOR_SALE' || rawStatus === 'forsale') return false;
+
+  // 2. Text signals in statusText / flexFieldText
+  const text = [(item.statusText ?? ''), (item.flexFieldText ?? '')].join(' ').toLowerCase();
+  if (/for\s*sale|sold|sale\s*price|condo\s*for\s*sale|house\s*for\s*sale/i.test(text)) return false;
+  if (/for\s*rent|rent|lease|monthly|per\s*month/i.test(text)) return true;
+
+  // 3. Price heuristic — sale prices are typically 5–6 figures
+  const price = toNumber(item.unformattedPrice ?? item.price);
+  if (price > 15000) return false;  // almost certainly a sale price
+  if (price >= 500 && price <= 15000) return true;  // plausible monthly rent
+
+  return false; // unknown — exclude
+}
 
 // Fields safe to INSERT into Supabase listings table
 type DbRow = {
@@ -203,13 +230,24 @@ export async function POST() {
     return NextResponse.json({ error: msg, listings: [], synced: 0 }, { status: 200 });
   }
 
-  // 2. Normalize — filter out items missing price, URL, or image
-  const normalized: ApifyListing[] = raw
+  // 2. Rental detection — drop for-sale listings before any further processing
+  const rentalItems = raw.filter(isRentalItem);
+  console.log(`[Steady Debug] Apify: ${rentalItems.length}/${raw.length} are rentals (${raw.length - rentalItems.length} for-sale dropped)`);
+  // Debug: log statusType breakdown so we can diagnose scraper config
+  const statusCounts = raw.reduce<Record<string, number>>((acc, item) => {
+    const key = item.statusType ?? item.rawHomeStatusCd ?? 'unknown';
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  console.log('[Steady Debug] Apify statusType breakdown:', JSON.stringify(statusCounts));
+
+  // 3. Normalize — filter out items missing price, URL, or image
+  const normalized: ApifyListing[] = rentalItems
     .map(normalizeItem)
     .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
+  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${rentalItems.length} rental items`);
 
-  // 3. Upsert to Supabase (DB-safe fields only — no id/amenities/images)
+  // 4. Upsert to Supabase (DB-safe fields only — no id/amenities/images)
   let synced = 0;
   let dbError: string | null = null;
 
