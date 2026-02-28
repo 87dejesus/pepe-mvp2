@@ -484,6 +484,7 @@ export default function DecisionClient() {
         console.log('[Steady Debug] All sources empty — using 10 mock listings as fallback');
       }
       console.log(`[Steady Debug] Raw listings: ${rawData.length} (source: ${source})`);
+      console.log(`Found ${rawData.length} active listings`);
 
       const stats: FilterStats = {
         total: rawData.length,
@@ -528,14 +529,14 @@ export default function DecisionClient() {
         return true;
       });
 
-      console.log(`[Pepe Debug] After strict filters: ${strict.length}`);
+      console.log(`After strict filter: ${strict.length}`);
       console.log(`[Pepe Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
 
       let finalList: Listing[] = strict;
 
       // === PASS 2: Relaxed filters (when strict < 10) ===
       if (strict.length < 10 && rawData.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +10%, bedrooms ±1, drop borough)...`);
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 10), adding relaxed results (budget +25%, bedrooms ±1, drop borough)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
@@ -543,8 +544,8 @@ export default function DecisionClient() {
           if (strictIds.has(l.id)) return false; // already in strict
           if (!l.original_url) return false;
           if (isPlaceholder(l)) return false;
-          // Budget: allow +10%
-          if (l.price > answers!.budget * 1.10) return false;
+          // Budget: allow +25%
+          if (l.price > answers!.budget * 1.25) return false;
           // Bedrooms: allow +/-1
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
@@ -555,7 +556,7 @@ export default function DecisionClient() {
           return true;
         });
 
-        console.log(`[Pepe Debug] Relaxed pass found ${relaxed.length} additional listings`);
+        console.log(`After relaxed filter: ${relaxed.length}`);
         // Merge: strict first (already high match), then relaxed
         finalList = [...strict, ...relaxed];
       }
