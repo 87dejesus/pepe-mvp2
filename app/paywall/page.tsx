@@ -35,17 +35,17 @@ export default function PaywallPage() {
     <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       <Header />
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
         <div className="max-w-sm w-full">
 
           {/* Mascot + Headline */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Pepe"
-              className="w-20 h-20 mx-auto mb-4 rounded-full border-4 border-white/30 object-cover"
+              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full border-4 border-white/30 object-cover"
             />
-            <h1 className="text-2xl font-extrabold text-white leading-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">
               Make one clear decision.
             </h1>
             <p className="text-white/70 text-sm mt-2">
@@ -54,7 +54,7 @@ export default function PaywallPage() {
           </div>
 
           {/* Value card */}
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 mb-4">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-4 sm:p-5 mb-4">
             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
               What you get
             </p>
@@ -74,7 +74,7 @@ export default function PaywallPage() {
           </div>
 
           {/* Pricing card */}
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 mb-4">
+          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-4 sm:p-5 mb-4">
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-3xl font-extrabold text-black">$2.49</span>
               <span className="text-gray-500 text-sm">/ week</span>
@@ -87,7 +87,7 @@ export default function PaywallPage() {
             <button
               onClick={handleStartTrial}
               disabled={loading}
-              className="w-full bg-[#00A651] text-white font-extrabold text-base py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full bg-[#00A651] text-white font-extrabold text-base py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all select-none"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -129,7 +129,7 @@ export default function PaywallPage() {
             Using Stripe test mode — no real charges.
           </p>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 pb-safe">
             <Link href="/" className="text-xs text-white/50 hover:text-white underline">
               ← Back to home
             </Link>

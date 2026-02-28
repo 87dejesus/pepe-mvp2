@@ -620,34 +620,34 @@ export default function DecisionClient() {
   if (accessState !== null && !hasAccess(accessState)) {
     const isCanceled = accessState.status === 'canceled';
     return (
-      <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-sm w-full bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-6 text-center">
+        <div className="flex-1 flex items-center justify-center px-4 py-8">
+          <div className="max-w-sm w-full bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 sm:p-6 text-center">
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Pepe"
-              className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-black object-cover"
+              className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-black object-cover"
             />
             {isCanceled ? (
               <>
-                <h2 className="text-xl font-extrabold mb-2">Your access has ended</h2>
-                <p className="text-sm text-gray-500 mb-6">
+                <h2 className="text-lg sm:text-xl font-extrabold mb-2">Your access has ended</h2>
+                <p className="text-sm text-gray-500 mb-5">
                   Resubscribe to get back to your listings.
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-xl font-extrabold mb-2">Unlock your matches</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  Start a 3-day free trial to see your scored listings.
-                  <br />$2.49/week after. Cancel anytime.
+                <h2 className="text-lg sm:text-xl font-extrabold mb-2">Unlock your matches</h2>
+                <p className="text-sm text-gray-500 mb-5">
+                  Start a 3-day free trial to see your scored listings.{' '}
+                  $2.49/week after. Cancel anytime.
                 </p>
               </>
             )}
             <Link
               href="/paywall"
-              className="block w-full bg-[#00A651] text-white font-extrabold py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+              className="block w-full bg-[#00A651] text-white font-extrabold py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-base"
             >
               {isCanceled ? 'Resubscribe →' : 'Start 3-day free trial →'}
             </Link>
@@ -826,9 +826,9 @@ export default function DecisionClient() {
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       {/* Trial banner */}
       {accessState?.status === 'trialing' && (
-        <div className="shrink-0 bg-amber-400 border-b-2 border-black px-4 py-1.5 text-center">
-          <p className="text-xs font-bold text-black">
-            🎉 Free trial — {daysLeft} day{daysLeft !== 1 ? 's' : ''} left · then $2.49/week
+        <div className="shrink-0 bg-amber-400 border-b-2 border-black px-3 py-1.5 text-center">
+          <p className="text-xs font-bold text-black leading-tight">
+            🎉 Trial — {daysLeft}d left · $2.49/wk after
           </p>
         </div>
       )}
@@ -852,7 +852,7 @@ export default function DecisionClient() {
       </header>
 
       {/* Main card area — no justify-center, top-aligned */}
-      <main className="flex-1 overflow-auto p-2 sm:p-3 pb-36 min-h-0">
+      <main className="flex-1 overflow-auto p-2 sm:p-3 min-h-0" style={{ paddingBottom: 'calc(160px + env(safe-area-inset-bottom))' }}>
         {currentListing && (
           <div key={currentListing.id} className="max-w-lg mx-auto w-full min-h-[50vh] flex flex-col">
             <DecisionListingCard
@@ -867,7 +867,7 @@ export default function DecisionClient() {
       </main>
 
       {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#1E3A8A] border-t-2 border-white/20 px-3 py-3 pb-5">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#1E3A8A] border-t-2 border-white/20 px-3 pt-3" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
         <div className="max-w-lg mx-auto">
           {/* CTA Buttons */}
           <div className="flex gap-2 mb-2">

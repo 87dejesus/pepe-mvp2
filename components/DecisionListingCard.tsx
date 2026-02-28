@@ -168,17 +168,17 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         )}
 
         {/* Price Tag - Top Right */}
-        <div className="absolute top-2 right-2 bg-[#00A651] text-white font-bold text-lg px-3 py-1 border-2 border-black">
+        <div className="absolute top-2 right-2 bg-[#00A651] text-white font-bold text-sm sm:text-lg px-2 sm:px-3 py-1 border-2 border-black whitespace-nowrap">
           ${listing.price?.toLocaleString()}/MO
         </div>
 
         {/* Recommendation Badge - Top Left */}
-        <div className={`absolute top-2 left-2 font-bold text-sm px-3 py-1 border-2 border-black ${
+        <div className={`absolute top-2 left-2 font-bold text-xs sm:text-sm px-2 sm:px-3 py-1 border-2 border-black max-w-[50%] leading-tight ${
           recommendation === 'ACT_NOW'
             ? 'bg-[#00A651] text-white'
             : 'bg-amber-400 text-black'
         }`}>
-          {recommendation === 'ACT_NOW' ? 'ACT NOW' : 'WAIT CONSCIOUSLY'}
+          {recommendation === 'ACT_NOW' ? 'ACT NOW' : 'WAIT'}
         </div>
       </div>
 
