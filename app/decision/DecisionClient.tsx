@@ -352,6 +352,33 @@ const MOCK_LISTINGS: Listing[] = [
   },
 ];
 
+// ─── Apify data source ────────────────────────────────────────────────────────
+// Calls the server-side /api/apify/sync route which fetches from the Apify
+// Zillow dataset, normalizes each item, upserts to Supabase, and returns
+// the normalized listings for immediate display.
+async function fetchListingsFromApify(): Promise<Listing[]> {
+  try {
+    const res = await fetch('/api/apify/sync', {
+      method: 'POST',
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`/api/apify/sync responded ${res.status}`);
+    const { listings, synced, dbError } = (await res.json()) as {
+      listings: Listing[];
+      synced: number;
+      dbError: string | null;
+    };
+    console.log(
+      `[Steady Debug] fetchListingsFromApify: ${listings?.length ?? 0} returned,` +
+        ` ${synced} upserted to DB${dbError ? ` (DB err: ${dbError})` : ''}`
+    );
+    return listings ?? [];
+  } catch (err) {
+    console.error('[Steady Debug] fetchListingsFromApify failed:', err);
+    return [];
+  }
+}
+
 export default function DecisionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -426,34 +453,37 @@ export default function DecisionClient() {
 
   // Fetch listings
   useEffect(() => {
-    if (!answers || !supabaseClient) return;
+    if (!answers) return;
 
     async function fetchData() {
       console.log('[Steady Debug] Fetching listings with answers:', answers);
 
-      const { data, error } = await supabaseClient!
-        .from('listings')
-        .select('*')
-        .eq('status', 'Active');
+      // === SOURCE 1: Apify live data (also syncs to Supabase as side-effect) ===
+      let rawData: Listing[] = await fetchListingsFromApify();
+      let source = 'apify';
 
-      if (error) {
-        console.error('[Steady Debug] Supabase error:', error);
-        setLoading(false);
-        return;
+      // === SOURCE 2: Supabase fallback (previously synced or scraped data) ===
+      if (rawData.length === 0 && supabaseClient) {
+        console.log('[Steady Debug] Apify returned 0 — querying Supabase...');
+        const { data, error } = await supabaseClient
+          .from('listings')
+          .select('*')
+          .eq('status', 'Active');
+        if (error) {
+          console.error('[Steady Debug] Supabase error:', error);
+        } else if (data && data.length > 0) {
+          rawData = data as Listing[];
+          source = 'supabase';
+        }
       }
 
-      if (!data) {
-        console.log('[Steady Debug] No data returned from Supabase');
-        setLoading(false);
-        return;
+      // === SOURCE 3: Mock fallback ===
+      if (rawData.length === 0) {
+        rawData = MOCK_LISTINGS;
+        source = 'mock';
+        console.log('[Steady Debug] All sources empty — using 10 mock listings as fallback');
       }
-
-      // Fallback to mock listings when DB is empty
-      const rawData: Listing[] = data.length > 0 ? data : MOCK_LISTINGS;
-      if (data.length === 0) {
-        console.log('[Steady Debug] Supabase empty — using 10 mock listings as fallback');
-      }
-      console.log(`[Steady Debug] Raw listings: ${rawData.length} (${data.length === 0 ? 'mock' : 'Supabase'})`);
+      console.log(`[Steady Debug] Raw listings: ${rawData.length} (source: ${source})`);
 
       const stats: FilterStats = {
         total: rawData.length,
@@ -578,6 +608,7 @@ export default function DecisionClient() {
       setLoading(false);
     }
     fetchData();
+  // supabaseClient kept in deps so Supabase fallback re-runs if client initializes late
   }, [answers, supabaseClient]);
 
   // Current listing data
