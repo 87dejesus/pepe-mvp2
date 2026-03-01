@@ -41,6 +41,7 @@ type Listing = {
   amenities: string[];
   original_url: string | null;
   status: string;
+  boroughMatch?: boolean;
 };
 
 type Decision = 'applied' | 'wait' | null;
@@ -116,67 +117,66 @@ function hasIncentives(description: string): boolean {
   return INCENTIVE_REGEX.test(description || '');
 }
 
-// Calculate match score (0-100) — balanced scoring
+// Calculate match score (0-100)
+// Weights: Borough 40 | Budget 30 | Bedrooms 20 | Pets 5 | Bathroom 3 | Incentive 2
 function calculateMatchScore(listing: Listing, answers: Answers): number {
   let score = 0;
 
-  // Budget (35 points base + 5 bonus for under budget)
-  if (listing.price <= answers.budget) {
-    score += 35;
-    const pctUnder = (answers.budget - listing.price) / answers.budget;
-    if (pctUnder > 0.05) score += 3;
-    if (pctUnder > 0.15) score += 2; // total +5 for >15% under
-  } else {
-    const pctOver = (listing.price - answers.budget) / answers.budget;
-    score += Math.max(0, Math.round(30 - pctOver * 150));
+  // Borough/Location (40 points) — highest priority
+  // Uses precomputed boroughMatch when available, falls back to live check
+  const boroughOk = listing.boroughMatch ?? (
+    answers.boroughs.length === 0 ? true : matchesBorough(listing, answers.boroughs)
+  );
+  if (answers.boroughs.length === 0) {
+    score += 40; // no preference = full points
+  } else if (boroughOk) {
+    score += 40;
   }
 
-  // Bedrooms (25 points)
+  // Budget (30 points base + 2 bonus for well under budget)
+  const price = parsePrice(listing.price);
+  if (price <= answers.budget) {
+    score += 30;
+    const pctUnder = (answers.budget - price) / answers.budget;
+    if (pctUnder > 0.15) score += 2;
+  } else {
+    const pctOver = (price - answers.budget) / answers.budget;
+    score += Math.max(0, Math.round(25 - pctOver * 125));
+  }
+
+  // Bedrooms (20 points)
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   if (answers.bedrooms === '3+') {
-    if (listing.bedrooms >= 3) score += 25;
-    else if (listing.bedrooms === 2) score += 15;
+    if (listing.bedrooms >= 3) score += 20;
+    else if (listing.bedrooms === 2) score += 12;
   } else {
-    if (listing.bedrooms === needed) score += 25;
-    else if (Math.abs(listing.bedrooms - needed) === 1) score += 15;
+    if (listing.bedrooms === needed) score += 20;
+    else if (Math.abs(listing.bedrooms - needed) === 1) score += 12;
   }
 
-  // Borough/Location (20 points) — fuzzy matching
-  if (answers.boroughs.length > 0) {
-    if (matchesBorough(listing, answers.boroughs)) {
-      score += 20;
-    } else {
-      console.log(`[Pepe Debug] Borough mismatch: listing="${listing.borough}/${listing.neighborhood}" vs wanted=[${answers.boroughs.join(',')}]`);
-    }
-  } else {
-    score += 20; // no preference = full points
-  }
-
-  // Pets (10 points)
+  // Pets (5 points)
   if (answers.pets === 'none') {
-    score += 10;
+    score += 5;
   } else if (listing.pets?.toLowerCase() === 'yes') {
-    score += 10;
-  } else if (listing.pets?.toLowerCase() === 'no') {
-    score += 0; // explicit mismatch
-  } else {
-    score += 5; // unknown policy — moderate
+    score += 5;
+  } else if (listing.pets?.toLowerCase() !== 'no') {
+    score += 2; // unknown policy — moderate
   }
 
-  // Bathroom match (5 points)
+  // Bathroom match (3 points)
   const bathMap: Record<string, number> = { '1': 1, '1.5': 1.5, '2+': 2 };
   const neededBath = bathMap[answers.bathrooms] ?? 1;
   if (answers.bathrooms === '2+') {
-    if (listing.bathrooms >= 2) score += 5;
-    else if (listing.bathrooms >= 1.5) score += 3;
+    if (listing.bathrooms >= 2) score += 3;
+    else if (listing.bathrooms >= 1.5) score += 2;
   } else {
-    if (listing.bathrooms >= neededBath) score += 5;
+    if (listing.bathrooms >= neededBath) score += 3;
   }
 
-  // Incentive bonus (up to 5 points)
+  // Incentive bonus (2 points)
   if (hasIncentives(listing.description)) {
-    score += 5;
+    score += 2;
   }
 
   return Math.min(100, Math.round(score));
@@ -207,7 +207,8 @@ function generateWarnings(listing: Listing, answers: Answers): string[] {
   }
 
   if (answers.boroughs.length > 0) {
-    if (!matchesBorough(listing, answers.boroughs)) {
+    const boroughOk = listing.boroughMatch ?? matchesBorough(listing, answers.boroughs);
+    if (!boroughOk) {
       warnings.push(`Not in your preferred boroughs`);
     }
   }
@@ -559,14 +560,22 @@ export default function DecisionClient() {
       // Helper: check if image is missing or a known placeholder
       const isPlaceholder = (l: Listing) => {
         const img = (l.image_url || l.images?.[0] || '').trim();
-        if (!img) return true; // empty or null
-        if (img.includes('add7ffb')) return true; // known placeholder hash
-        if (!img.startsWith('http://') && !img.startsWith('https://')) return true; // not a valid URL
+        if (!img) return true;
+        if (img.includes('add7ffb')) return true;
+        if (!img.startsWith('http://') && !img.startsWith('https://')) return true;
         return false;
       };
 
-      // === PASS 1: Strict filters (budget +35%, bedrooms, borough, pets) ===
-      const strict = rawData.filter((l: Listing) => {
+      // Precompute boroughMatch for every listing once — avoids repeated alias lookups
+      const rawWithMatch: Listing[] = rawData.map((l: Listing) => ({
+        ...l,
+        boroughMatch: answers!.boroughs.length === 0
+          ? true
+          : matchesBorough(l, answers!.boroughs),
+      }));
+
+      // === PASS 1: Strict filters (budget +35%, exact bedrooms, borough required, pets) ===
+      const strict = rawWithMatch.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
         if (parsePrice(l.price) > answers!.budget * 1.35) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
@@ -574,11 +583,9 @@ export default function DecisionClient() {
         } else {
           if (l.bedrooms !== needed) { stats.wrongBedrooms++; return false; }
         }
-        if (answers!.boroughs.length > 0) {
-          if (!matchesBorough(l, answers!.boroughs)) {
-            console.log(`[Pepe Debug] Strict filter rejected borough: "${l.borough}" / "${l.neighborhood}" not in [${answers!.boroughs.join(', ')}]`);
-            stats.wrongBorough++; return false;
-          }
+        if (answers!.boroughs.length > 0 && !l.boroughMatch) {
+          console.log(`[Pepe Debug] Strict rejected borough: "${l.borough}" / "${l.neighborhood}" not in [${answers!.boroughs.join(', ')}]`);
+          stats.wrongBorough++; return false;
         }
         // Hard reject if listing explicitly says no pets when user has pets
         if (answers!.pets !== 'none' && l.pets?.toLowerCase() === 'no') { return false; }
@@ -592,18 +599,19 @@ export default function DecisionClient() {
       let finalList: Listing[] = strict;
       let relaxed: Listing[] = [];
 
-      if (strict.length >= 8) {
+      if (strict.length >= 6) {
         console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: 0 | Showing: ${strict.length}`);
       }
 
-      // === PASS 2: Relaxed filters (when strict < 8) ===
-      if (strict.length < 8 && rawData.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 8), adding relaxed results (budget +60%, bedrooms ±1, pets optional, non-NYC excluded)...`);
+      // === PASS 2: Relaxed filters (when strict < 6) ===
+      // Borough becomes optional — but +40pts score bonus keeps borough matches on top
+      if (strict.length < 6 && rawWithMatch.length > 0) {
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 6), adding relaxed results (budget +60%, bedrooms ±1, borough optional, non-NYC excluded)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
-        relaxed = rawData.filter((l: Listing) => {
-          if (strictIds.has(l.id)) return false; // already in strict
+        relaxed = rawWithMatch.filter((l: Listing) => {
+          if (strictIds.has(l.id)) return false;
           if (!l.original_url) return false;
           if (isPlaceholder(l)) return false;
           // Non-NYC locations never qualify even in relaxed mode
@@ -614,26 +622,24 @@ export default function DecisionClient() {
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
           } else if (answers!.bedrooms === '0') {
-            // Studio: accept studio (0) or 1-bed
             if (l.bedrooms > 1) return false;
           } else {
             if (Math.abs(l.bedrooms - needed) > 1) return false;
           }
-          // Pets: optional in relaxed — affects score only, not inclusion
-          // Borough: any NYC borough shown; mismatch penalised in score
+          // Borough: optional in relaxed — affects score only, not inclusion
+          // Pets: optional in relaxed — affects score only
           return true;
         });
 
         console.log(`After relaxed filter: ${relaxed.length}`);
-        // Merge: strict first (already high match), then relaxed
         finalList = [...strict, ...relaxed];
 
         console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: ${relaxed.length} | Showing: ${finalList.length}`);
 
         // === PASS 3: Last-resort — 10 cheapest listings with a URL and photo ===
-        if (finalList.length === 0 && rawData.length > 0) {
+        if (finalList.length === 0 && rawWithMatch.length > 0) {
           console.log('[DEBUG] All passes returned 0 — showing 10 cheapest as last resort');
-          finalList = rawData
+          finalList = rawWithMatch
             .filter(l => l.original_url && !isPlaceholder(l))
             .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
             .slice(0, 10);
@@ -641,16 +647,11 @@ export default function DecisionClient() {
         }
       }
 
-      // Sort by match score (best first), with-photo preferred over no-photo
-      finalList.sort((a, b) => {
-        const scoreA = calculateMatchScore(a as Listing, answers!);
-        const scoreB = calculateMatchScore(b as Listing, answers!);
-        // Prefer listings with photos (small tiebreaker)
-        const hasImgA = (a.image_url || a.images?.[0]) ? 1 : 0;
-        const hasImgB = (b.image_url || b.images?.[0]) ? 1 : 0;
-        if (scoreB !== scoreA) return scoreB - scoreA;
-        return hasImgB - hasImgA;
-      });
+      // Sort by match score DESCENDING
+      // Borough is 40pts in score — borough-matched listings naturally float to top
+      finalList.sort((a, b) =>
+        calculateMatchScore(b, answers!) - calculateMatchScore(a, answers!)
+      );
 
       // Deduplicate by original_url (the actual listing link)
       const seenIds = new Set<string>();
@@ -676,6 +677,7 @@ export default function DecisionClient() {
       const topN = sanitized.slice(0, 10);
       stats.final = topN.length;
       console.log(`[Pepe Debug] Final listings after dedup: ${sanitized.length}, showing ${topN.length}`);
+      console.log(`[BOROUGH DEBUG] User chose: ${answers!.boroughs} | Strict borough matches: ${strict.length} | Showing first: ${topN[0]?.borough}`);
 
       // Generate warnings for each listing
       const warnings: Record<string, string[]> = {};
