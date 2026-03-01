@@ -2,17 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 import Header from '@/components/Header';
-import {
-  readAccess,
-  activateTrialLocally,
-  hasAccess,
-  trialDaysLeft,
-  type AccessState,
-} from '@/lib/access';
+import { trialDaysLeft, type AccessState } from '@/lib/access';
 
 const LS_KEY = 'pepe_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
@@ -430,9 +424,13 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
   }
 }
 
-export default function DecisionClient() {
+type DecisionClientProps = {
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+};
+
+export default function DecisionClient({ subscriptionStatus, trialEndsAt }: DecisionClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
   const [warningsMap, setWarningsMap] = useState<Record<string, string[]>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -442,20 +440,13 @@ export default function DecisionClient() {
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [filterStats, setFilterStats] = useState<FilterStats | null>(null);
-  const [accessState, setAccessState] = useState<AccessState | null>(null);
 
-  // Access gate — check subscription / trial / mock state
-  useEffect(() => {
-    // If returning from Stripe checkout, activate local trial
-    if (searchParams.get('checkout_success') === '1') {
-      activateTrialLocally();
-      // Clean the URL param without re-render
-      window.history.replaceState({}, '', '/decision');
-    }
-    const state = readAccess();
-    setAccessState(state);
-    console.log('[Steady Debug] Access state:', state);
-  }, [searchParams]);
+  // Derive accessState from server-provided props (no localStorage needed)
+  const accessState: AccessState = {
+    status: (subscriptionStatus as AccessState['status']) ?? 'none',
+    trial_end: trialEndsAt ?? undefined,
+    set_at: new Date().toISOString(),
+  };
 
   // Initialize Supabase client safely
   useEffect(() => {
@@ -730,50 +721,6 @@ export default function DecisionClient() {
     }
   };
 
-  // Access gate — show paywall screen if not subscribed / trialing
-  if (accessState !== null && !hasAccess(accessState)) {
-    const isCanceled = accessState.status === 'canceled';
-    return (
-      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
-        <Header />
-        <div className="flex-1 flex items-center justify-center px-4 py-8">
-          <div className="max-w-sm w-full bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-5 sm:p-6 text-center">
-            <img
-              src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
-              className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-black object-cover"
-            />
-            {isCanceled ? (
-              <>
-                <h2 className="text-lg sm:text-xl font-extrabold mb-2">Your access has ended</h2>
-                <p className="text-sm text-gray-500 mb-5">
-                  Resubscribe to get back to your listings.
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg sm:text-xl font-extrabold mb-2">Unlock your matches</h2>
-                <p className="text-sm text-gray-500 mb-5">
-                  Start a 3-day free trial to see your scored listings.{' '}
-                  $2.49/week after. Cancel anytime.
-                </p>
-              </>
-            )}
-            <Link
-              href="/paywall"
-              className="block w-full bg-[#00A651] text-white font-extrabold py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-base"
-            >
-              {isCanceled ? 'Resubscribe →' : 'Start 3-day free trial →'}
-            </Link>
-            <Link href="/flow" className="block mt-3 text-xs text-gray-400 hover:underline">
-              ← Edit my criteria
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Loading
   if (loading) {
     return (
@@ -934,12 +881,12 @@ export default function DecisionClient() {
   }
 
   // Main view with listings
-  const daysLeft = accessState ? trialDaysLeft(accessState) : 0;
+  const daysLeft = trialDaysLeft(accessState);
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       {/* Trial banner */}
-      {accessState?.status === 'trialing' && (
+      {accessState.status === 'trialing' && (
         <div className="shrink-0 bg-amber-400 border-b-2 border-black px-3 py-1.5 text-center">
           <p className="text-xs font-bold text-black leading-tight">
             🎉 Trial — {daysLeft}d left · $2.49/wk after
