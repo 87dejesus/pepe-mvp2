@@ -376,16 +376,14 @@ const MOCK_LISTINGS: Listing[] = [
 
 // Client-side rental guard — secondary filter after the server already strips
 // for-sale items. Catches anything the server-side check misses.
-function isValidRental(listing: Listing): boolean {
+function isRental(listing: Listing): boolean {
   const price = parsePrice(listing.price);
-  if (price > 8500) return false; // sale price threshold
-  const desc = (
+  if (price > 7500) return false;
+  const text = (
     (listing.description ?? '') + ' ' +
     (listing.original_url ?? '')
   ).toLowerCase();
-  if (/for\s*sale|sale\s*price|sold/.test(desc)) return false;
-  if (/rent|monthly|lease/.test(desc)) return true;
-  return price <= 6500; // default safety: anything ≤ $6,500 treated as rent
+  return !text.includes('for sale') && !text.includes('sold') && !text.includes('sale price');
 }
 
 // Calls the server-side /api/apify/sync route which fetches from the Apify
@@ -410,14 +408,14 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
     console.log(`[DEBUG] First 5 descriptions:`, all.slice(0, 5).map(l => (l.description ?? '').slice(0, 60)));
 
     // Client-side rental filter
-    const validRentals = all.filter(isValidRental);
-    console.log(`[DEBUG] Valid rentals after isValidRental: ${validRentals.length}/${all.length}`);
+    const validRentals = all.filter(isRental);
+    console.log(`[DEBUG] Valid rentals after isRental: ${validRentals.length}/${all.length}`);
 
     if (validRentals.length > 0) return validRentals;
 
     // Fallback: if all listings failed rental check, show 10 cheapest with a photo
     if (all.length > 0) {
-      console.log('[DEBUG] isValidRental returned 0 — falling back to 10 cheapest with image');
+      console.log('[DEBUG] isRental returned 0 — falling back to 10 cheapest with image');
       return all
         .filter(l => l.image_url && l.original_url)
         .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
@@ -556,6 +554,8 @@ export default function DecisionClient() {
       const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
       const needed = bedroomMap[answers!.bedrooms] ?? 1;
 
+      console.log(`[FINAL FILTER] User: budget ${answers!.budget}, boroughs ${answers!.boroughs}, pets ${answers!.pets}`);
+
       // Helper: check if image is missing or a known placeholder
       const isPlaceholder = (l: Listing) => {
         const img = (l.image_url || l.images?.[0] || '').trim();
@@ -565,10 +565,10 @@ export default function DecisionClient() {
         return false;
       };
 
-      // === PASS 1: Strict filters (budget +10%, bedrooms, borough, pets) ===
+      // === PASS 1: Strict filters (budget +35%, bedrooms, borough, pets) ===
       const strict = rawData.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
-        if (parsePrice(l.price) > answers!.budget * 1.10) { stats.overBudget++; return false; }
+        if (parsePrice(l.price) > answers!.budget * 1.35) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
           if (l.bedrooms < 3) { stats.wrongBedrooms++; return false; }
         } else {
@@ -590,21 +590,26 @@ export default function DecisionClient() {
       console.log(`[Pepe Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
 
       let finalList: Listing[] = strict;
+      let relaxed: Listing[] = [];
 
-      // === PASS 2: Relaxed filters (when strict < 5) ===
-      if (strict.length < 5 && rawData.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 5), adding relaxed results (budget +30%, bedrooms ±1, pets optional, non-NYC excluded)...`);
+      if (strict.length >= 8) {
+        console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: 0 | Showing: ${strict.length}`);
+      }
+
+      // === PASS 2: Relaxed filters (when strict < 8) ===
+      if (strict.length < 8 && rawData.length > 0) {
+        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 8), adding relaxed results (budget +60%, bedrooms ±1, pets optional, non-NYC excluded)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
-        const relaxed = rawData.filter((l: Listing) => {
+        relaxed = rawData.filter((l: Listing) => {
           if (strictIds.has(l.id)) return false; // already in strict
           if (!l.original_url) return false;
           if (isPlaceholder(l)) return false;
           // Non-NYC locations never qualify even in relaxed mode
           if (isNonNYC(l)) return false;
-          // Budget: allow +30%
-          if (parsePrice(l.price) > answers!.budget * 1.30) return false;
+          // Budget: allow +60%
+          if (parsePrice(l.price) > answers!.budget * 1.60) return false;
           // Bedrooms: flexible — Studio accepts 0 or 1; others allow ±1
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
@@ -622,6 +627,8 @@ export default function DecisionClient() {
         console.log(`After relaxed filter: ${relaxed.length}`);
         // Merge: strict first (already high match), then relaxed
         finalList = [...strict, ...relaxed];
+
+        console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: ${relaxed.length} | Showing: ${finalList.length}`);
 
         // === PASS 3: Last-resort — 10 cheapest listings with a URL and photo ===
         if (finalList.length === 0 && rawData.length > 0) {
