@@ -21,11 +21,7 @@ import Stripe from 'stripe';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
-
-// Stripe requires the raw body to verify the signature
-export const config = {
-  api: { bodyParser: false },
-};
+// Raw body is read via req.text() — no bodyParser config needed in App Router
 
 // Stripe v20 API type helpers — some fields changed shape in newer API versions
 type SubData = {
