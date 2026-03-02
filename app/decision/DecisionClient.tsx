@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 import AffiliateOffers from '@/components/AffiliateOffers';
+import AdminBypassBanner from '@/components/AdminBypassBanner';
 import Header from '@/components/Header';
 import { trialDaysLeft, type AccessState } from '@/lib/access';
 
@@ -886,6 +887,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <AdminBypassBanner />
       {/* Trial banner */}
       {accessState.status === 'trialing' && (
         <div className="shrink-0 bg-amber-400 border-b-2 border-black px-3 py-1.5 text-center">

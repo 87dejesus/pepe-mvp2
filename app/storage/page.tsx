@@ -1,4 +1,5 @@
 import Header from '@/components/Header';
+import AdminBypassBanner from '@/components/AdminBypassBanner';
 import StorageOfferCard from './components/StorageOfferCard';
 import { STORAGE_PARTNERS } from './lib/storage-partners';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ const FINANCIAL_PARTNERS_LIST = STORAGE_PARTNERS.filter((p) => p.category === 'f
 export default function StoragePage() {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#1E3A8A] to-[#0F2460]">
+      <AdminBypassBanner />
       <Header />
 
       <main className="flex-1 px-4 py-6 sm:py-10 max-w-2xl mx-auto w-full">
