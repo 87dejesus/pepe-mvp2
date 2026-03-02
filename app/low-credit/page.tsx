@@ -62,7 +62,7 @@ export default function LowCreditPage() {
         {/* Tip box */}
         <div className="bg-[#00A651]/20 border-2 border-[#00A651]/40 px-4 py-4 mb-6">
           <p className="text-white font-black text-xs uppercase tracking-widest mb-1">
-            Pepe's tip
+            Heed's Tip
           </p>
           <p className="text-white/80 text-sm leading-relaxed">
             Apply to a guarantor <span className="text-white font-bold">before</span> you

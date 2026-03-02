@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/Header";
 
-const LS_KEY = "pepe_answers_v2";
+const LS_KEY = "heed_answers_v2";
 
 type Answers = {
   boroughs: string[];
@@ -100,7 +100,7 @@ export default function FlowPage() {
             >
               <Image
                 src="/brand/pepe-ny.jpeg"
-                alt="Pepe analyzing..."
+                alt="Heed analyzing..."
                 width={112}
                 height={112}
                 style={{ objectFit: "cover" }}
@@ -192,14 +192,14 @@ export default function FlowPage() {
           </div>
         </div>
 
-        {/* Pepe mascot + Question */}
+        {/* Heed mascot + Question */}
         <div className="flex items-start gap-4 mb-6">
           <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/40 shrink-0 shadow-lg bg-[#1E3A8A] transition-all duration-300 ${
             isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           }`}>
             <img
               src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
+              alt="Heed"
               className="w-full h-full object-contain"
             />
           </div>

@@ -67,7 +67,7 @@ function detectIncentives(description: string): string | null {
 }
 
 // Generate empathetic commentary
-function buildPepeTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
+function buildHeedTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
@@ -141,7 +141,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
 
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
-  const pepeTake = buildPepeTake(listing, answers, matchScore, warnings);
+  const heedTake = buildHeedTake(listing, answers, matchScore, warnings);
 
   return (
     <div
@@ -236,18 +236,18 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         </div>
 
-        {/* Pepe's Take */}
+        {/* Heed's Take */}
         <div className="mt-3 p-3 border-2 border-black bg-[#1E3A8A]/5 flex-1">
           <div className="flex items-start gap-3">
             <img
               src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
+              alt="Heed"
               className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-bold uppercase mb-1 text-[#1E3A8A]">PEPE&apos;S TAKE</p>
+              <p className="text-xs font-bold uppercase mb-1 text-[#1E3A8A]">HEED&apos;S TAKE</p>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {pepeTake}
+                {heedTake}
               </p>
             </div>
           </div>

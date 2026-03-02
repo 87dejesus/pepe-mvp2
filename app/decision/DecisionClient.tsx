@@ -5,10 +5,11 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
+import AffiliateOffers from '@/components/AffiliateOffers';
 import Header from '@/components/Header';
 import { trialDaysLeft, type AccessState } from '@/lib/access';
 
-const LS_KEY = 'pepe_answers_v2';
+const LS_KEY = 'heed_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
 
 type Answers = {
@@ -575,7 +576,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
           if (l.bedrooms !== needed) { stats.wrongBedrooms++; return false; }
         }
         if (answers!.boroughs.length > 0 && !l.boroughMatch) {
-          console.log(`[Pepe Debug] Strict rejected borough: "${l.borough}" / "${l.neighborhood}" not in [${answers!.boroughs.join(', ')}]`);
+          console.log(`[Heed Debug] Strict rejected borough: "${l.borough}" / "${l.neighborhood}" not in [${answers!.boroughs.join(', ')}]`);
           stats.wrongBorough++; return false;
         }
         // Hard reject if listing explicitly says no pets when user has pets
@@ -585,7 +586,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
       });
 
       console.log(`After strict filter: ${strict.length}`);
-      console.log(`[Pepe Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
+      console.log(`[Heed Debug] Filter breakdown - noUrl: ${stats.noUrl}, overBudget: ${stats.overBudget}, wrongBedrooms: ${stats.wrongBedrooms}, wrongBorough: ${stats.wrongBorough}, placeholder: ${stats.placeholderImage}`);
 
       let finalList: Listing[] = strict;
       let relaxed: Listing[] = [];
@@ -597,7 +598,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
       // === PASS 2: Relaxed filters (when strict < 6) ===
       // Borough becomes optional — but +40pts score bonus keeps borough matches on top
       if (strict.length < 6 && rawWithMatch.length > 0) {
-        console.log(`[Pepe Debug] Strict returned ${strict.length} (< 6), adding relaxed results (budget +60%, bedrooms ±1, borough optional, non-NYC excluded)...`);
+        console.log(`[Heed Debug] Strict returned ${strict.length} (< 6), adding relaxed results (budget +60%, bedrooms ±1, borough optional, non-NYC excluded)...`);
         stats.relaxedUsed = strict.length === 0;
 
         const strictIds = new Set(strict.map(l => l.id));
@@ -667,7 +668,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
       // Show up to 10 listings (or all if fewer)
       const topN = sanitized.slice(0, 10);
       stats.final = topN.length;
-      console.log(`[Pepe Debug] Final listings after dedup: ${sanitized.length}, showing ${topN.length}`);
+      console.log(`[Heed Debug] Final listings after dedup: ${sanitized.length}, showing ${topN.length}`);
       console.log(`[BOROUGH DEBUG] User chose: ${answers!.boroughs} | Strict borough matches: ${strict.length} | Showing first: ${topN[0]?.borough}`);
 
       // Generate warnings for each listing
@@ -794,7 +795,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
               <div className="flex items-start gap-3 mb-5">
                 <img
                   src="/brand/pepe-ny.jpeg"
-                  alt="Pepe"
+                  alt="Heed"
                   className="w-12 h-12 rounded-full border-2 border-black object-cover shrink-0"
                 />
                 <div>
@@ -923,6 +924,7 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
               recommendation={recommendation}
               warnings={currentWarnings}
             />
+            <AffiliateOffers budget={answers.budget} matchScore={matchScore} />
           </div>
         )}
       </main>

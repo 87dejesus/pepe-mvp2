@@ -29,10 +29,10 @@ export default function PaywallPage() {
         body: JSON.stringify({ email: email.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao enviar código.');
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send code.');
       setStep('otp');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Algo deu errado.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -50,11 +50,11 @@ export default function PaywallPage() {
         body: JSON.stringify({ email: email.trim(), token: otp.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Código inválido.');
+      if (!res.ok) throw new Error(data.error ?? 'Invalid code.');
       setUserId(data.userId);
       setStep('stripe');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Algo deu errado.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -71,10 +71,10 @@ export default function PaywallPage() {
         body: JSON.stringify({ email: email.trim(), userId }),
       });
       const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Erro ao iniciar checkout.');
+      if (!res.ok || !data.url) throw new Error(data.error ?? 'Failed to start checkout.');
       window.location.href = data.url;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Algo deu errado.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
       setLoading(false);
     }
   }
@@ -92,7 +92,7 @@ export default function PaywallPage() {
           <div className="text-center mb-5">
             <img
               src="/brand/pepe-ny.jpeg"
-              alt="Pepe"
+              alt="Heed"
               className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full border-4 border-white/30 object-cover"
             />
             <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">
@@ -113,7 +113,7 @@ export default function PaywallPage() {
                 'Match score based on your real constraints',
                 'ACT NOW vs WAIT CONSCIOUSLY — no false urgency',
                 'Incentive detection: free months, no-fee deals',
-                "Pepe's take on every listing",
+                "Heed's take on every listing",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-gray-800">
                   <span className="text-[#00A651] font-bold mt-0.5">✓</span>
@@ -156,7 +156,7 @@ export default function PaywallPage() {
                 );
               })}
               <span className="text-xs text-gray-500 ml-2 shrink-0">
-                {step === 'email' ? 'Seu email' : step === 'otp' ? 'Código' : 'Iniciar trial'}
+                {step === 'email' ? 'Your email' : step === 'otp' ? 'Code' : 'Start trial'}
               </span>
             </div>
 
@@ -165,13 +165,13 @@ export default function PaywallPage() {
               <form onSubmit={handleRequestOtp} className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
-                    Seu email
+                    Email address
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="voce@email.com"
+                    placeholder="you@email.com"
                     required
                     autoFocus
                     className="w-full border-2 border-black px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
@@ -182,10 +182,10 @@ export default function PaywallPage() {
                   disabled={loading || !email.trim()}
                   className="w-full bg-[#1E3A8A] text-white font-extrabold text-base py-3.5 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner /> : 'Continuar →'}
+                  {loading ? <Spinner /> : 'Continue →'}
                 </button>
                 <p className="text-xs text-gray-400 text-center">
-                  Vamos enviar um código de 6 dígitos para o seu email.
+                  We'll send a 6-digit verification code to your email.
                 </p>
               </form>
             )}
@@ -195,7 +195,7 @@ export default function PaywallPage() {
               <form onSubmit={handleVerifyOtp} className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
-                    Código enviado para {email}
+                    Code sent to {email}
                   </label>
                   <input
                     type="text"
@@ -215,14 +215,14 @@ export default function PaywallPage() {
                   disabled={loading || otp.length !== 6}
                   className="w-full bg-[#1E3A8A] text-white font-extrabold text-base py-3.5 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner /> : 'Verificar →'}
+                  {loading ? <Spinner /> : 'Verify →'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setStep('email'); setOtp(''); setError(null); }}
                   className="w-full text-xs text-gray-400 hover:text-gray-600 underline"
                 >
-                  ← Mudar email
+                  ← Change email
                 </button>
               </form>
             )}
@@ -231,8 +231,8 @@ export default function PaywallPage() {
             {step === 'stripe' && (
               <div className="space-y-3">
                 <p className="text-sm text-gray-700">
-                  Conta criada para <span className="font-bold">{email}</span>.
-                  Agora inicia o trial gratuito:
+                  Account created for <span className="font-bold">{email}</span>.
+                  Start your free trial:
                 </p>
                 <button
                   onClick={handleStartTrial}
@@ -284,7 +284,7 @@ function Spinner() {
   return (
     <span className="flex items-center justify-center gap-2">
       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-      Aguardando…
+      Loading…
     </span>
   );
 }
