@@ -42,15 +42,12 @@ export default async function DecisionPage({
   const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
-  // 0. Admin bypass — heed_admin_bypass cookie skips both auth and subscription gates
-  const isAdminBypass = cookieStore.get('heed_admin_bypass')?.value === 'true';
-
   // 1. Auth check — middleware handles this but we double-check here
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isAdminBypass) {
+  if (!user) {
     redirect('/paywall?reason=auth');
   }
 
@@ -83,29 +80,23 @@ export default async function DecisionPage({
     }
   }
 
-  // 3. Subscription check from DB (skip if admin bypass — user may be null)
-  const { data: userRow } = user
-    ? await supabase
-        .from('users')
-        .select('subscription_status, trial_ends_at, current_period_end')
-        .eq('id', user.id)
-        .single<UserRow>()
-    : { data: null };
+  // 3. Subscription check from DB
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('subscription_status, trial_ends_at, current_period_end')
+    .eq('id', user.id)
+    .single<UserRow>();
 
   // 4. Dev mock: steady_dev_mock cookie allows bypass (set by paywall dev buttons)
   // localStorage is not accessible server-side, so we read from cookie instead.
-  // The paywall DevMockButton now also sets a cookie for this to work.
   const devMock = cookieStore.get('steady_dev_mock')?.value;
   const isDevMock = devMock === 'trialing' || devMock === 'active';
 
-  if (!hasActiveAccess(userRow) && !isDevMock && !isAdminBypass) {
-    redirect('/paywall?reason=subscription');
-  }
-
+  // Subscription gate is handled client-side in DecisionClient so the admin bypass
+  // (?admin=heed / localStorage) can intercept before any navigation fires.
+  // DecisionClient redirects to /paywall if subscriptionStatus='none' and no bypass.
   const subscriptionStatus = isDevMock
     ? (devMock as string)
-    : isAdminBypass && !hasActiveAccess(userRow)
-    ? 'active'
     : (userRow?.subscription_status ?? 'none');
 
   const trialEndsAt = userRow?.trial_ends_at ?? null;

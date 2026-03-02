@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 import AffiliateOffers from '@/components/AffiliateOffers';
-import AdminBypassBanner from '@/components/AdminBypassBanner';
 import Header from '@/components/Header';
 import { trialDaysLeft, type AccessState } from '@/lib/access';
+
+const ADMIN_BYPASS_KEY = 'heed_admin_bypass';
 
 const LS_KEY = 'heed_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
@@ -443,9 +444,39 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
   const [initError, setInitError] = useState<string | null>(null);
   const [filterStats, setFilterStats] = useState<FilterStats | null>(null);
 
-  // Derive accessState from server-provided props (no localStorage needed)
+  // ── Admin bypass ───────────────────────────────────────────────────────────
+  // Purely client-side: no cookies, no middleware. ?admin=heed OR localStorage.
+  const [adminBypass, setAdminBypass] = useState(false);
+  const [bypassChecked, setBypassChecked] = useState(false);
+  const [adminBannerDismissed, setAdminBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === 'heed') {
+      localStorage.setItem(ADMIN_BYPASS_KEY, 'true');
+      console.log('[Heed Debug] Admin bypass activated via URL param');
+    }
+    const bypass = localStorage.getItem(ADMIN_BYPASS_KEY) === 'true';
+    setAdminBypass(bypass);
+    setAdminBannerDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
+    setBypassChecked(true);
+  }, []);
+
+  // Client-side paywall redirect — fires only after bypass is confirmed absent
+  useEffect(() => {
+    if (!bypassChecked) return; // wait for localStorage check to complete
+    if (!adminBypass && subscriptionStatus === 'none') {
+      console.log('[Heed Debug] No access, no bypass — redirecting to /paywall');
+      router.replace('/paywall?reason=subscription');
+    }
+  }, [bypassChecked, adminBypass, subscriptionStatus, router]);
+
+  // Effective subscription status — admin bypass forces 'active'
+  const effectiveStatus = adminBypass ? 'active' : subscriptionStatus;
+
+  // Derive accessState from effective status
   const accessState: AccessState = {
-    status: (subscriptionStatus as AccessState['status']) ?? 'none',
+    status: (effectiveStatus as AccessState['status']) ?? 'none',
     trial_end: trialEndsAt ?? undefined,
     set_at: new Date().toISOString(),
   };
@@ -887,7 +918,24 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
-      <AdminBypassBanner />
+      {/* Admin bypass banner */}
+      {adminBypass && !adminBannerDismissed && (
+        <div className="shrink-0 bg-[#00A651] border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
+          <p className="text-sm font-bold text-white leading-tight">
+            🔧 ADMIN MODE — Full Access (Heed)
+          </p>
+          <button
+            onClick={() => {
+              sessionStorage.setItem('heed_banner_dismissed', 'true');
+              setAdminBannerDismissed(true);
+            }}
+            className="shrink-0 text-white/80 hover:text-white font-black text-xl leading-none w-6 h-6 flex items-center justify-center"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Trial banner */}
       {accessState.status === 'trialing' && (
         <div className="shrink-0 bg-amber-400 border-b-2 border-black px-3 py-1.5 text-center">
