@@ -464,8 +464,11 @@ export default function DecisionClient({
     }
   }, [forceFullAccess]);
 
-  // Effective subscription status — forceFullAccess forces 'active'
-  const effectiveStatus = forceFullAccess ? 'active' : subscriptionStatus;
+  // TEMPORARY — owner bypass, full access without payment
+  const IS_OWNER_BYPASS = true;
+
+  // Effective subscription status
+  const effectiveStatus = IS_OWNER_BYPASS || forceFullAccess ? 'active' : subscriptionStatus;
 
   // Derive accessState from effective status
   const accessState: AccessState = {
@@ -750,9 +753,8 @@ export default function DecisionClient({
     }
   };
 
-  // Paywall gate — synchronous, no effects, no race conditions
-  // forceFullAccess=true (from ?admin=heed) bypasses this unconditionally
-  if (!forceFullAccess && subscriptionStatus === 'none') {
+  // Paywall gate — bypassed by IS_OWNER_BYPASS or forceFullAccess
+  if (!IS_OWNER_BYPASS && !forceFullAccess && subscriptionStatus === 'none') {
     router.replace('/paywall?reason=subscription');
     return null;
   }
@@ -921,11 +923,11 @@ export default function DecisionClient({
 
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
-      {/* Admin bypass banner */}
-      {forceFullAccess && !adminBannerDismissed && (
-        <div className="shrink-0 bg-[#00A651] border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
+      {/* Owner bypass banner */}
+      {(IS_OWNER_BYPASS || forceFullAccess) && !adminBannerDismissed && (
+        <div className="shrink-0 bg-green-600 border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-white leading-tight">
-            🔧 ADMIN MODE — Full Access (Heed Bypass)
+            🔧 TEMPORARY OWNER BYPASS — Full access active (no payment required)
           </p>
           <button
             onClick={() => {
