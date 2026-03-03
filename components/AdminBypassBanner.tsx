@@ -4,11 +4,11 @@
  * AdminBypassBanner
  *
  * Two jobs:
- *  1. On mount: if URL has ?admin=heed → write localStorage so the banner
- *     persists across page navigations (the cookie is set server-side in
- *     proxy.ts, so the gate is already open by the time this runs).
+ *  1. On mount: if URL has ?admin=heed → write localStorage so the bypass
+ *     persists across page navigations within the same browser.
  *  2. If heed_admin_bypass is active → show a dismissible green banner.
  *
+ * Entirely client-side — no cookies, no middleware, no server reads.
  * Dismissal is stored in sessionStorage so it resets on a new browser session
  * but stays hidden while navigating within the same tab.
  *
@@ -33,7 +33,7 @@ export default function AdminBypassBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Activate from URL param (cookie already set by middleware)
+    // Activate from URL param — purely client-side, no server involvement
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'heed') {
       localStorage.setItem(ADMIN_BYPASS_KEY, 'true');

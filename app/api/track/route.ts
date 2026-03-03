@@ -29,6 +29,7 @@ const ALLOWED_HOSTS = new Set([
   'clutter.com',
   'theguarantee.com',
   'theguarantors.com',
+  'app.theguarantors.com',
   'rhino.com',
   'leaselock.com',
   'storagelock.com',

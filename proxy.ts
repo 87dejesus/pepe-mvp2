@@ -3,18 +3,19 @@
  *
  * Responsibilities:
  * 1. Refresh the Supabase session cookie on every request (prevents expiry)
- * 2. Redirect unauthenticated users away from /decision → /paywall
  *
- * NOTE: Subscription status is NOT checked here (requires a DB call that
- * would slow every request). That check is done in DecisionClient (client-side)
- * so the admin bypass can intercept before any redirect.
+ * Auth/subscription gating for /decision is done entirely in DecisionClient
+ * (client-side) so the admin bypass (localStorage heed_admin_bypass) can
+ * intercept before any redirect fires. PROTECTED_ROUTES is intentionally empty.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseMiddlewareClient } from '@/lib/supabase-server';
 
-// Routes that require a Supabase auth session
-const PROTECTED_ROUTES = ['/decision'];
+// Auth-gated routes — subscription/access is handled client-side in DecisionClient
+// so the admin bypass (localStorage) can intercept before any redirect fires.
+// /decision is intentionally NOT listed here.
+const PROTECTED_ROUTES: string[] = [];
 
 export async function proxy(req: NextRequest) {
   const res = NextResponse.next({ request: req });

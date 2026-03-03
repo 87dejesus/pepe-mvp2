@@ -25,7 +25,7 @@ export const LOW_CREDIT_PARTNERS: LowCreditPartner[] = [
     benefit: 'International & low-income applicants welcome',
     description:
       'No US credit history? Self-employed? New to the country? The Guarantors covers you so you can rent without a US co-signer or proof of 40x income.',
-    url: 'https://theguarantors.com',
+    url: 'https://app.theguarantors.com/referral/sign-up/8c62f080b7ee819d3cd5fa2575ba3211a1aed489072fbd467bae4e8760f41c8f',
     badge: 'NO CO-SIGNER',
     accentColor: '#7C3AED',
   },
