@@ -84,7 +84,6 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
     'brooklyn': ['brooklyn', 'williamsburg', 'bushwick', 'bed-stuy', 'bedford stuyvesant', 'park slope', 'crown heights', 'greenpoint', 'dumbo', 'prospect heights', 'flatbush', 'bay ridge', 'sunset park', 'cobble hill', 'boerum hill', 'carroll gardens', 'fort greene', 'clinton hill', 'brooklyn heights', 'bensonhurst', 'dyker heights', 'red hook', 'gowanus', 'borough park'],
     'queens': ['queens', 'astoria', 'long island city', 'lic', 'flushing', 'jackson heights', 'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst', 'jamaica', 'ridgewood', 'bayside', 'kew gardens', 'queens village', 'ozone park', 'howard beach', 'corona', 'maspeth', 'middle village', 'richmond hill'],
     'bronx': ['bronx', 'the bronx', 'riverdale', 'fordham', 'pelham', 'mott haven', 'hunts point', 'kingsbridge', 'morris park', 'throgs neck', 'soundview', 'parkchester', 'tremont', 'concourse'],
-    'staten island': ['staten island', 'staten is', 'staten island, ny', 'staten island ny', 'st. george', 'st george', 'tottenville', 'stapleton', 'richmond', 'new springville', 'great kills', 'princes bay', 'annadale'],
   };
 
   for (const userBorough of boroughs) {
@@ -97,18 +96,6 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
       if (listingBorough.includes(alias) || listingNeighborhood.includes(alias)) {
         return true;
       }
-    }
-  }
-
-  // Special short-form check for Staten Island abbreviations (SI / S.I. / Staten...)
-  if (boroughs.some(b => b.toLowerCase().trim() === 'staten island')) {
-    if (
-      listingBorough === 'si' ||
-      listingBorough === 's.i.' ||
-      listingBorough.startsWith('staten') ||
-      listingNeighborhood.startsWith('staten')
-    ) {
-      return true;
     }
   }
 
@@ -576,78 +563,6 @@ export default function DecisionClient({
       console.log(`[DEBUG] First 5 prices:`, rawData.slice(0, 5).map(l => parsePrice(l.price)));
       console.log(`[DEBUG] Boroughs found:`, rawData.slice(0, 5).map(l => l.borough || l.neighborhood));
 
-      // === STATEN ISLAND FORCE MODE ===
-      if (answers!.boroughs.some(b => b.toLowerCase().includes('staten'))) {
-        console.log('[STATEN ISLAND FORCE MODE] User selected Staten Island — ignoring all other filters');
-
-        const siListings = rawData.filter(listing => {
-          const text = [
-            listing.borough || '',
-            listing.neighborhood || '',
-            (listing as any).addressCity || '',
-            listing.description || '',
-          ].join(' ').toLowerCase();
-
-          return text.includes('staten') ||
-                 text.includes('si ') ||
-                 text.includes(' st ') ||
-                 text.includes('st george') ||
-                 text.includes('great kills') ||
-                 text.includes('annadale') ||
-                 text.includes('princes bay') ||
-                 text.includes('tottenville') ||
-                 text.includes('dongan hills');
-        });
-
-        console.log(`[STATEN ISLAND FORCE] Found ${siListings.length} listings containing "Staten"`);
-
-        if (siListings.length > 0) {
-          const budgetFiltered = siListings
-            .filter(l => parsePrice(l.price) <= answers!.budget * 3.0)
-            .sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-
-          console.log(`[STATEN ISLAND FORCE] Showing ${budgetFiltered.length} Staten Island listings`);
-
-          const toShow = budgetFiltered.length > 0 ? budgetFiltered : siListings.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-          const warnings: Record<string, string[]> = {};
-          toShow.forEach(l => { warnings[l.id] = generateWarnings(l, answers!); });
-          setWarningsMap(warnings);
-          setFilterStats({ total: rawData.length, noUrl: 0, overBudget: 0, wrongBedrooms: 0, wrongBorough: 0, placeholderImage: 0, duplicates: 0, final: toShow.length, relaxedUsed: false });
-          setListings(toShow);
-          setLoading(false);
-          return;
-        }
-
-        // Fallback: 15 cheapest listings with "staten" anywhere in the data
-        const fallbackSi = rawData
-          .filter(l => {
-            const text = [
-              l.borough || '',
-              l.neighborhood || '',
-              (l as any).addressCity || '',
-              l.description || '',
-            ].join(' ').toLowerCase();
-            return text.includes('staten') || text.includes('st george') || text.includes('great kills') ||
-                   text.includes('annadale') || text.includes('tottenville');
-          })
-          .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
-          .slice(0, 15);
-
-        if (fallbackSi.length > 0) {
-          console.log(`[STATEN ISLAND FORCE] Fallback: showing ${fallbackSi.length} cheapest SI listings`);
-          const warnings: Record<string, string[]> = {};
-          fallbackSi.forEach(l => { warnings[l.id] = generateWarnings(l, answers!); });
-          setWarningsMap(warnings);
-          setFilterStats({ total: rawData.length, noUrl: 0, overBudget: 0, wrongBedrooms: 0, wrongBorough: 0, placeholderImage: 0, duplicates: 0, final: fallbackSi.length, relaxedUsed: true });
-          setListings(fallbackSi);
-          setLoading(false);
-          return;
-        }
-
-        console.log('[STATEN ISLAND FORCE] No SI listings found in dataset at all — falling through to normal filter');
-      }
-      // === END FORCE MODE ===
-
       const stats: FilterStats = {
         total: rawData.length,
         noUrl: 0,
@@ -683,8 +598,7 @@ export default function DecisionClient({
       }));
 
       // === PASS 1: Strict filters (budget +35%, exact bedrooms, borough required, pets) ===
-      // Staten Island gets +60% budget cap (sparse inventory, fewer listings to spare)
-      const strictBudgetCap = wantsStatenIsland ? 1.60 : 1.35;
+      const strictBudgetCap = 1.35;
       const strict = rawWithMatch.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
         if (parsePrice(l.price) > answers!.budget * strictBudgetCap) { stats.overBudget++; return false; }
@@ -745,9 +659,6 @@ export default function DecisionClient({
         finalList = [...strict, ...relaxed];
 
         console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: ${relaxed.length} | Showing: ${finalList.length}`);
-        if (wantsStatenIsland) {
-          console.log(`[STATEN ISLAND DEBUG] User chose Staten Island | Strict matches: ${strict.length} | Relaxed matches: ${relaxed.length}`);
-        }
 
         // === PASS 3: Last-resort — 10 cheapest listings with a URL and photo ===
         if (finalList.length === 0 && rawWithMatch.length > 0) {

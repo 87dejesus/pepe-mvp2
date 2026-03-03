@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/Header";
 
@@ -18,12 +17,10 @@ type Answers = {
 };
 
 export default function FlowPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [showDiagnosis, setShowDiagnosis] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Form state
   const [boroughs, setBoroughs] = useState<string[]>([]);
   const [budget, setBudget] = useState<number>(3500);
   const [bedrooms, setBedrooms] = useState<string>("");
@@ -53,17 +50,9 @@ export default function FlowPage() {
       setTimeout(() => {
         setStep(step + 1);
         setIsTransitioning(false);
-      }, 200);
+      }, 180);
     } else {
-      const answers: Answers = {
-        boroughs,
-        budget,
-        bedrooms,
-        bathrooms,
-        pets,
-        amenities,
-        timing,
-      };
+      const answers: Answers = { boroughs, budget, bedrooms, bathrooms, pets, amenities, timing };
       localStorage.setItem(LS_KEY, JSON.stringify(answers));
       setShowDiagnosis(true);
     }
@@ -75,63 +64,58 @@ export default function FlowPage() {
       setTimeout(() => {
         setStep(step - 1);
         setIsTransitioning(false);
-      }, 200);
+      }, 180);
     }
   }
 
   useEffect(() => {
     if (showDiagnosis) {
-      const timer = setTimeout(() => {
-        window.location.href = "/decision";
-      }, 3000);
+      const timer = setTimeout(() => { window.location.href = "/decision"; }, 3000);
       return () => clearTimeout(timer);
     }
   }, [showDiagnosis]);
 
-  // DIAGNOSIS SCREEN
+  // ── Diagnosis screen ────────────────────────────────────────────────────────
   if (showDiagnosis) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-10 max-w-sm w-full text-center shadow-2xl">
-            <div className="w-28 h-28 rounded-full overflow-hidden mx-auto mb-6 border-4 border-[#00A651] shadow-lg"
-              style={{ animation: "pulse 2s ease-in-out infinite" }}
+          <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-10 max-w-sm w-full text-center">
+            <div
+              className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border border-white/20"
+              style={{ animation: "heedPulse 2s ease-in-out infinite" }}
             >
               <Image
                 src="/brand/pepe-ny.jpeg"
-                alt="Heed analyzing..."
-                width={112}
-                height={112}
+                alt="Heed analyzing…"
+                width={80}
+                height={80}
                 style={{ objectFit: "cover" }}
                 unoptimized
               />
             </div>
-            <div className="w-10 h-10 border-4 border-[#1E3A8A] border-t-transparent rounded-full mx-auto mb-6"
-              style={{ animation: "spin 1s linear infinite" }}
+            <div
+              className="w-7 h-7 border-2 border-white/60 border-t-transparent rounded-full mx-auto mb-5"
+              style={{ animation: "heedSpin 1s linear infinite" }}
             />
-            <h1 className="text-2xl font-extrabold text-[#1E3A8A] mb-3">
-              Gathering the facts...
+            <h1 className="text-lg font-semibold text-white mb-2">
+              Gathering the facts…
             </h1>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              I'm finding paths that minimize the usual NYC frustrations based on what you told me.
+            <p className="text-sm text-white/55 leading-relaxed">
+              Finding the paths that minimize the usual NYC frustrations based on what you told me.
             </p>
           </div>
           <style>{`
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-            @keyframes pulse {
-              0%, 100% { transform: scale(1); }
-              50% { transform: scale(1.05); }
-            }
+            @keyframes heedSpin  { to { transform: rotate(360deg); } }
+            @keyframes heedPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
           `}</style>
         </div>
       </div>
     );
   }
 
-  // Option Card Component
+  // ── Option card ─────────────────────────────────────────────────────────────
   const OptionCard = ({
     selected,
     onClick,
@@ -145,88 +129,82 @@ export default function FlowPage() {
   }) => (
     <div
       onClick={onClick}
-      className={`flex items-center p-4 mb-2 rounded-xl cursor-pointer transition-all border-2 ${
+      className={`flex items-center px-4 py-3.5 mb-2 rounded-xl cursor-pointer transition-all border ${
         selected
-          ? 'border-[#00A651] bg-[#00A651]/10 shadow-md'
-          : 'border-white/30 bg-white/90 hover:bg-white'
+          ? "border-[#00A651]/60 bg-[#00A651]/[0.12]"
+          : "border-white/20 bg-white/[0.05] hover:bg-white/[0.09]"
       }`}
     >
       <div
-        className={`w-6 h-6 flex-shrink-0 flex items-center justify-center border-2 mr-3 transition-all ${
-          type === "radio" ? "rounded-full" : "rounded-md"
-        } ${
-          selected
-            ? "border-[#00A651] bg-[#00A651]"
-            : "border-gray-300 bg-white"
-        }`}
+        className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 mr-3 transition-all ${
+          type === "radio" ? "rounded-full" : "rounded"
+        } ${selected ? "border-[#00A651] bg-[#00A651]" : "border-white/30"}`}
       >
         {selected && (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
             <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </div>
-      <span className={`text-base ${selected ? "font-bold text-[#1E3A8A]" : "font-medium text-gray-700"}`}>
+      <span className={`text-sm ${selected ? "font-medium text-white" : "text-white/70"}`}>
         {children}
       </span>
     </div>
   );
 
-  // QUESTIONNAIRE
+  // ── Questions ───────────────────────────────────────────────────────────────
+  const questions: Record<number, string> = {
+    1: "Which boroughs work for your daily life?",
+    2: "What's your monthly budget?",
+    3: "How many bedrooms do you need?",
+    4: "How many bathrooms do you need?",
+    5: "Any pets coming along?",
+    6: "Which amenities matter most to you?",
+    7: "When are you planning to move?",
+  };
+
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+    <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 flex flex-col px-6 pb-8 max-w-lg mx-auto w-full">
-        {/* Progress Bar */}
-        <div className="mb-6">
+      <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
+
+        {/* Progress bar */}
+        <div className="mb-7 pt-3">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-bold text-white/80">Step {step} of 7</span>
-            <span className="text-xs text-white/60 font-medium">{Math.round((step / 7) * 100)}%</span>
+            <span className="text-xs text-white/50 font-medium">Step {step} of 7</span>
+            <span className="text-xs text-white/35">{Math.round((step / 7) * 100)}%</span>
           </div>
-          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-px bg-white/20 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#00A651] rounded-full transition-all duration-400"
+              className="h-full bg-[#00A651] rounded-full transition-all duration-300"
               style={{ width: `${(step / 7) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* Heed mascot + Question */}
-        <div className="flex items-start gap-4 mb-6">
-          <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/40 shrink-0 shadow-lg bg-[#1E3A8A] transition-all duration-300 ${
-            isTransitioning ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-          }`}>
-            <img
-              src="/brand/pepe-ny.jpeg"
-              alt="Heed"
-              className="w-full h-full object-contain"
-            />
+        {/* Heed bubble + question */}
+        <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shrink-0 mt-0.5">
+            <img src="/brand/pepe-ny.jpeg" alt="Heed" className="w-full h-full object-cover" />
           </div>
-          <div className={`bg-white/95 backdrop-blur-sm rounded-2xl rounded-tl-sm p-4 flex-1 shadow-md transition-opacity duration-200 ${
-            isTransitioning ? 'opacity-50' : 'opacity-100'
-          }`}>
-            <p className="text-lg font-bold text-[#1E3A8A] leading-snug">
-              {step === 1 && "NYC is intense. In which boroughs would your daily life flow better?"}
-              {step === 2 && "How much are you comfortable investing monthly for a peaceful home?"}
-              {step === 3 && "How many bedrooms do you need to feel comfortable?"}
-              {step === 4 && "How many bathrooms are essential for smooth mornings?"}
-              {step === 5 && "Any furry friends coming along for the NYC adventure?"}
-              {step === 6 && "Which amenities would make your daily life easier?"}
-              {step === 7 && "When are you looking to make this move happen?"}
+          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
+            <p className="text-sm font-semibold text-[#0A2540] leading-snug">
+              {questions[step]}
             </p>
             {step === 6 && (
-              <p className="text-xs text-gray-500 mt-1">Select all that apply (optional)</p>
+              <p className="text-[11px] text-[#0A2540]/50 mt-0.5">Select all that apply — optional</p>
             )}
           </div>
         </div>
 
-        {/* Options */}
-        <div className="flex-1">
-          {/* STEP 1: Boroughs */}
+        {/* Options area */}
+        <div className={`flex-1 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+
+          {/* Step 1 — Boroughs */}
           {step === 1 && (
             <div>
-              {["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"].map((b) => (
+              {["Manhattan", "Brooklyn", "Queens", "Bronx"].map((b) => (
                 <OptionCard key={b} selected={boroughs.includes(b)} onClick={() => setBoroughs(toggleArray(boroughs, b))} type="checkbox">
                   {b}
                 </OptionCard>
@@ -234,12 +212,12 @@ export default function FlowPage() {
             </div>
           )}
 
-          {/* STEP 2: Budget */}
+          {/* Step 2 — Budget */}
           {step === 2 && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-md">
-              <div className="text-4xl font-extrabold text-[#1E3A8A] text-center mb-6">
+            <div className="bg-white/[0.07] border border-white/20 rounded-xl p-5">
+              <div className="text-4xl font-bold text-white text-center mb-5 tabular-nums">
                 ${budget.toLocaleString()}
-                <span className="text-lg font-medium text-gray-400">/mo</span>
+                <span className="text-base font-normal text-white/40 ml-1">/mo</span>
               </div>
               <input
                 type="range"
@@ -248,16 +226,16 @@ export default function FlowPage() {
                 step={100}
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                className="w-full h-2 cursor-pointer accent-[#00A651]"
+                className="w-full cursor-pointer accent-[#00A651]"
               />
-              <div className="flex justify-between text-xs text-gray-400 mt-3 font-medium">
+              <div className="flex justify-between text-xs text-white/35 mt-3 font-medium">
                 <span>$1,000</span>
                 <span>$15,000</span>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Bedrooms */}
+          {/* Step 3 — Bedrooms */}
           {step === 3 && (
             <div>
               {[
@@ -273,7 +251,7 @@ export default function FlowPage() {
             </div>
           )}
 
-          {/* STEP 4: Bathrooms */}
+          {/* Step 4 — Bathrooms */}
           {step === 4 && (
             <div>
               {[
@@ -288,14 +266,14 @@ export default function FlowPage() {
             </div>
           )}
 
-          {/* STEP 5: Pets */}
+          {/* Step 5 — Pets */}
           {step === 5 && (
             <div>
               {[
                 { value: "none", label: "No pets" },
                 { value: "cats", label: "Cats" },
                 { value: "dogs", label: "Dogs" },
-                { value: "both", label: "Both cats and dogs" },
+                { value: "both", label: "Cats and dogs" },
               ].map((opt) => (
                 <OptionCard key={opt.value} selected={pets === opt.value} onClick={() => setPets(opt.value)}>
                   {opt.label}
@@ -304,11 +282,11 @@ export default function FlowPage() {
             </div>
           )}
 
-          {/* STEP 6: Amenities */}
+          {/* Step 6 — Amenities */}
           {step === 6 && (
             <div>
               {[
-                { value: "washer_dryer", label: "W/D in unit" },
+                { value: "washer_dryer", label: "Washer/dryer in unit" },
                 { value: "elevator", label: "Elevator" },
                 { value: "doorman", label: "Doorman" },
                 { value: "gym", label: "Gym" },
@@ -320,11 +298,11 @@ export default function FlowPage() {
             </div>
           )}
 
-          {/* STEP 7: Timing */}
+          {/* Step 7 — Timing */}
           {step === 7 && (
             <div>
               {[
-                { value: "asap", label: "ASAP - I need to move soon" },
+                { value: "asap", label: "ASAP — I need to move soon" },
                 { value: "30days", label: "Within 30 days" },
                 { value: "researching", label: "Just researching for now" },
               ].map((opt) => (
@@ -341,7 +319,7 @@ export default function FlowPage() {
           {step > 1 && (
             <button
               onClick={handleBack}
-              className="py-4 px-6 rounded-xl bg-white/20 backdrop-blur-sm text-white font-bold border border-white/30 hover:bg-white/30 transition-all"
+              className="h-14 px-5 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-medium hover:bg-white/[0.11] transition-all"
             >
               Back
             </button>
@@ -349,15 +327,16 @@ export default function FlowPage() {
           <button
             onClick={handleNext}
             disabled={!canContinue()}
-            className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg transition-all ${
+            className={`flex-1 h-14 rounded-xl font-semibold text-base transition-all ${
               canContinue()
-                ? 'bg-[#00A651] text-white shadow-lg shadow-black/20 hover:bg-[#00913f] active:scale-[0.98]'
-                : 'bg-white/20 text-white/40 cursor-not-allowed'
+                ? "bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]"
+                : "bg-white/[0.07] text-white/25 cursor-not-allowed"
             }`}
           >
-            {step === 7 ? "Find My Perfect Match" : "Continue"}
+            {step === 7 ? "Find My Match" : "Continue"}
           </button>
         </div>
+
       </div>
     </div>
   );
