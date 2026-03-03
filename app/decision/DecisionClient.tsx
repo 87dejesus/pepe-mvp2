@@ -84,7 +84,7 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
     'brooklyn': ['brooklyn', 'williamsburg', 'bushwick', 'bed-stuy', 'bedford stuyvesant', 'park slope', 'crown heights', 'greenpoint', 'dumbo', 'prospect heights', 'flatbush', 'bay ridge', 'sunset park', 'cobble hill', 'boerum hill', 'carroll gardens', 'fort greene', 'clinton hill', 'brooklyn heights', 'bensonhurst', 'dyker heights', 'red hook', 'gowanus', 'borough park'],
     'queens': ['queens', 'astoria', 'long island city', 'lic', 'flushing', 'jackson heights', 'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst', 'jamaica', 'ridgewood', 'bayside', 'kew gardens', 'queens village', 'ozone park', 'howard beach', 'corona', 'maspeth', 'middle village', 'richmond hill'],
     'bronx': ['bronx', 'the bronx', 'riverdale', 'fordham', 'pelham', 'mott haven', 'hunts point', 'kingsbridge', 'morris park', 'throgs neck', 'soundview', 'parkchester', 'tremont', 'concourse'],
-    'staten island': ['staten island', 'st. george', 'tottenville', 'stapleton', 'richmond', 'new springville'],
+    'staten island': ['staten island', 'staten is', 'staten island, ny', 'staten island ny', 'st. george', 'st george', 'tottenville', 'stapleton', 'richmond', 'new springville', 'great kills', 'princes bay', 'annadale'],
   };
 
   for (const userBorough of boroughs) {
@@ -93,12 +93,25 @@ function matchesBorough(listing: Listing, boroughs: string[]): boolean {
 
     for (const alias of aliases) {
       if (alias.length < 3) continue; // skip too-short tokens
-      // Check only listing→alias direction to prevent short/empty string false positives
+      // Check listing→alias direction to prevent short/empty string false positives
       if (listingBorough.includes(alias) || listingNeighborhood.includes(alias)) {
         return true;
       }
     }
   }
+
+  // Special short-form check for Staten Island abbreviations (SI / S.I. / Staten...)
+  if (boroughs.some(b => b.toLowerCase().trim() === 'staten island')) {
+    if (
+      listingBorough === 'si' ||
+      listingBorough === 's.i.' ||
+      listingBorough.startsWith('staten') ||
+      listingNeighborhood.startsWith('staten')
+    ) {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -580,6 +593,9 @@ export default function DecisionClient({
 
       console.log(`[FINAL FILTER] User: budget ${answers!.budget}, boroughs ${answers!.boroughs}, pets ${answers!.pets}`);
 
+      // Staten Island has sparse inventory — give it more budget headroom in strict pass
+      const wantsStatenIsland = answers!.boroughs.some(b => b.toLowerCase().trim() === 'staten island');
+
       // Helper: check if image is missing or a known placeholder
       const isPlaceholder = (l: Listing) => {
         const img = (l.image_url || l.images?.[0] || '').trim();
@@ -598,9 +614,11 @@ export default function DecisionClient({
       }));
 
       // === PASS 1: Strict filters (budget +35%, exact bedrooms, borough required, pets) ===
+      // Staten Island gets +60% budget cap (sparse inventory, fewer listings to spare)
+      const strictBudgetCap = wantsStatenIsland ? 1.60 : 1.35;
       const strict = rawWithMatch.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
-        if (parsePrice(l.price) > answers!.budget * 1.35) { stats.overBudget++; return false; }
+        if (parsePrice(l.price) > answers!.budget * strictBudgetCap) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
           if (l.bedrooms < 3) { stats.wrongBedrooms++; return false; }
         } else {
@@ -658,6 +676,9 @@ export default function DecisionClient({
         finalList = [...strict, ...relaxed];
 
         console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: ${relaxed.length} | Showing: ${finalList.length}`);
+        if (wantsStatenIsland) {
+          console.log(`[STATEN ISLAND DEBUG] User chose Staten Island | Strict matches: ${strict.length} | Relaxed matches: ${relaxed.length}`);
+        }
 
         // === PASS 3: Last-resort — 10 cheapest listings with a URL and photo ===
         if (finalList.length === 0 && rawWithMatch.length > 0) {
@@ -777,12 +798,12 @@ export default function DecisionClient({
   // Loading
   if (loading) {
     return (
-      <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm text-white/70">Finding matches...</p>
+            <div className="w-8 h-8 border-2 border-white/60 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm text-white/50">Finding matches…</p>
           </div>
         </div>
       </div>
@@ -792,15 +813,15 @@ export default function DecisionClient({
   // Init error
   if (initError) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-lg w-full bg-white border-2 border-black p-6">
-            <h1 className="text-xl font-bold mb-2">Connection Error</h1>
-            <p className="text-gray-500 text-sm mb-6">{initError}</p>
+        <div className="flex-1 flex items-center justify-center px-5">
+          <div className="max-w-sm w-full bg-white/[0.07] border border-white/20 rounded-2xl p-6">
+            <h1 className="text-lg font-semibold text-white mb-2">Connection error</h1>
+            <p className="text-white/55 text-sm mb-6 leading-relaxed">{initError}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+              className="h-12 px-6 rounded-xl bg-[#00A651] text-white font-semibold hover:bg-[#00913f] transition-all"
             >
               Retry
             </button>
@@ -813,13 +834,13 @@ export default function DecisionClient({
   // No answers
   if (!answers) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-lg w-full bg-white border-2 border-black p-6">
-            <h1 className="text-xl font-bold mb-2">First, tell me what you need</h1>
-            <p className="text-gray-500 text-sm mb-6">Answer a few questions so I can find the right matches.</p>
-            <Link href="/flow" className="inline-block bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1">
+        <div className="flex-1 flex items-center justify-center px-5">
+          <div className="max-w-sm w-full bg-white/[0.07] border border-white/20 rounded-2xl p-6">
+            <h1 className="text-lg font-semibold text-white mb-2">First, tell me what you need</h1>
+            <p className="text-white/55 text-sm mb-6 leading-relaxed">Answer a few questions so I can find the right matches.</p>
+            <Link href="/flow" className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-[#00A651] text-white font-semibold hover:bg-[#00913f] transition-all">
               Start
             </Link>
           </div>
@@ -831,28 +852,26 @@ export default function DecisionClient({
   // No listings — diagnostic empty state
   if (listings.length === 0) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
-        {/* Sub-header with edit link */}
-        <div className="shrink-0 px-4 py-2">
-          <Link href="/flow" className="text-sm font-bold text-white/80 hover:text-white hover:underline">
-            ← EDIT CRITERIA
+        <div className="shrink-0 px-5 py-2.5 border-b border-white/10">
+          <Link href="/flow" className="text-xs font-medium text-white/50 hover:text-white/80 hover:underline transition-colors">
+            ← Edit criteria
           </Link>
         </div>
 
-        <div className="flex-1 p-4 pt-2">
+        <div className="flex-1 p-5">
           <div className="max-w-lg mx-auto w-full">
-            {/* Main no-matches card */}
-            <div className="bg-white border-2 border-black p-6 mb-4">
+            <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-6 mb-4">
               <div className="flex items-start gap-3 mb-5">
                 <img
                   src="/brand/pepe-ny.jpeg"
                   alt="Heed"
-                  className="w-12 h-12 rounded-full border-2 border-black object-cover shrink-0"
+                  className="w-10 h-10 rounded-full border border-white/20 object-cover shrink-0"
                 />
                 <div>
-                  <h1 className="text-xl font-bold">No matches right now</h1>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h1 className="text-lg font-semibold text-white">No matches right now</h1>
+                  <p className="text-sm text-white/55 mt-1 leading-relaxed">
                     {filterStats?.total === 0
                       ? "The database is empty — listings will appear as they're scraped."
                       : "I couldn't find listings that fit your criteria. Let's figure out why."}
@@ -861,67 +880,66 @@ export default function DecisionClient({
               </div>
 
               {/* Criteria summary */}
-              <div className="border-2 border-black p-4 mb-4 bg-gray-50">
-                <p className="text-xs font-bold uppercase mb-3">Your criteria</p>
+              <div className="bg-white/[0.05] border border-white/15 rounded-xl p-4 mb-4">
+                <p className="text-[10px] font-medium uppercase tracking-widest text-white/40 mb-3">Your criteria</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="border border-gray-300 p-2">
-                    <span className="text-xs text-gray-500 block">Budget</span>
-                    <span className="font-bold">${answers.budget.toLocaleString()}/mo</span>
+                  <div className="bg-white/[0.06] rounded-lg p-2.5">
+                    <span className="text-[10px] text-white/40 block mb-0.5">Budget</span>
+                    <span className="font-semibold text-white">${answers.budget.toLocaleString()}/mo</span>
                   </div>
-                  <div className="border border-gray-300 p-2">
-                    <span className="text-xs text-gray-500 block">Bedrooms</span>
-                    <span className="font-bold">{answers.bedrooms === '0' ? 'Studio' : answers.bedrooms}</span>
+                  <div className="bg-white/[0.06] rounded-lg p-2.5">
+                    <span className="text-[10px] text-white/40 block mb-0.5">Bedrooms</span>
+                    <span className="font-semibold text-white">{answers.bedrooms === '0' ? 'Studio' : answers.bedrooms}</span>
                   </div>
-                  <div className="border border-gray-300 p-2 col-span-2">
-                    <span className="text-xs text-gray-500 block">Boroughs</span>
-                    <span className="font-bold">{answers.boroughs.length > 0 ? answers.boroughs.join(', ') : 'Any'}</span>
+                  <div className="bg-white/[0.06] rounded-lg p-2.5 col-span-2">
+                    <span className="text-[10px] text-white/40 block mb-0.5">Boroughs</span>
+                    <span className="font-semibold text-white">{answers.boroughs.length > 0 ? answers.boroughs.join(', ') : 'Any'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Filter diagnostic */}
               {filterStats && filterStats.total > 0 && (
-                <div className="border-2 border-dashed border-gray-400 p-4 mb-4 text-sm">
-                  <p className="text-xs font-bold uppercase mb-2">What happened</p>
-                  <p className="text-gray-600">
-                    Found <span className="font-bold">{filterStats.total}</span> active listing{filterStats.total !== 1 ? 's' : ''}, but:
+                <div className="bg-white/[0.05] border border-white/15 rounded-xl p-4 mb-4 text-sm">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-white/40 mb-2">What happened</p>
+                  <p className="text-white/60">
+                    Found <span className="font-semibold text-white">{filterStats.total}</span> active listing{filterStats.total !== 1 ? 's' : ''}, but:
                   </p>
-                  <ul className="mt-2 space-y-1 text-gray-600 list-disc list-inside">
+                  <ul className="mt-2 space-y-1 text-white/55 list-disc list-inside">
                     {filterStats.overBudget > 0 && (
-                      <li><span className="font-semibold">{filterStats.overBudget}</span> over your ${answers.budget.toLocaleString()} budget</li>
+                      <li><span className="font-medium text-white/80">{filterStats.overBudget}</span> over your ${answers.budget.toLocaleString()} budget</li>
                     )}
                     {filterStats.wrongBedrooms > 0 && (
-                      <li><span className="font-semibold">{filterStats.wrongBedrooms}</span> wrong bedroom count</li>
+                      <li><span className="font-medium text-white/80">{filterStats.wrongBedrooms}</span> wrong bedroom count</li>
                     )}
                     {filterStats.wrongBorough > 0 && (
-                      <li><span className="font-semibold">{filterStats.wrongBorough}</span> not in {answers.boroughs.join('/')}</li>
+                      <li><span className="font-medium text-white/80">{filterStats.wrongBorough}</span> not in {answers.boroughs.join('/')}</li>
                     )}
                     {filterStats.noUrl > 0 && (
-                      <li><span className="font-semibold">{filterStats.noUrl}</span> had no listing link</li>
+                      <li><span className="font-medium text-white/80">{filterStats.noUrl}</span> had no listing link</li>
                     )}
                     {filterStats.placeholderImage > 0 && (
-                      <li><span className="font-semibold">{filterStats.placeholderImage}</span> had no real photos</li>
+                      <li><span className="font-medium text-white/80">{filterStats.placeholderImage}</span> had no real photos</li>
                     )}
                   </ul>
                   {filterStats.relaxedUsed && (
-                    <p className="mt-3 text-xs text-amber-700 font-semibold">
-                      Even with relaxed criteria (budget +10%, bedrooms +/-1) — still no matches.
+                    <p className="mt-3 text-xs text-amber-400/80 font-medium">
+                      Even with relaxed criteria (budget +60%, bedrooms ±1) — still no matches.
                     </p>
                   )}
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex flex-col gap-3">
                 <Link
                   href="/flow"
-                  className="block text-center bg-[#00A651] text-white font-bold py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+                  className="flex items-center justify-center h-12 rounded-xl bg-[#00A651] text-white font-semibold hover:bg-[#00913f] transition-all"
                 >
                   Adjust criteria
                 </Link>
                 <button
                   onClick={() => window.location.reload()}
-                  className="text-center font-bold py-3 px-6 border-2 border-black bg-white shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1"
+                  className="flex items-center justify-center h-12 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-semibold hover:bg-white/[0.11] transition-all"
                 >
                   Check again
                 </button>
@@ -937,19 +955,19 @@ export default function DecisionClient({
   const daysLeft = trialDaysLeft(accessState);
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+    <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
       {/* Owner bypass banner */}
       {(IS_OWNER_BYPASS || forceFullAccess) && !adminBannerDismissed && (
-        <div className="shrink-0 bg-green-600 border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
-          <p className="text-sm font-bold text-white leading-tight">
-            🔧 TEMPORARY OWNER BYPASS — Full access active (no payment required)
+        <div className="shrink-0 bg-[#00A651]/90 border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-medium text-white/90 leading-tight">
+            Dev bypass active — full access, no payment required
           </p>
           <button
             onClick={() => {
               sessionStorage.setItem('heed_banner_dismissed', 'true');
               setAdminBannerDismissed(true);
             }}
-            className="shrink-0 text-white/80 hover:text-white font-black text-xl leading-none w-6 h-6 flex items-center justify-center"
+            className="shrink-0 text-white/60 hover:text-white text-lg leading-none w-5 h-5 flex items-center justify-center"
             aria-label="Dismiss"
           >
             ×
@@ -958,35 +976,35 @@ export default function DecisionClient({
       )}
       {/* Trial banner */}
       {accessState.status === 'trialing' && (
-        <div className="shrink-0 bg-amber-400 border-b-2 border-black px-3 py-1.5 text-center">
-          <p className="text-xs font-bold text-black leading-tight">
-            🎉 Trial — {daysLeft}d left · $2.49/wk after
+        <div className="shrink-0 bg-amber-500/20 border-b border-amber-500/20 px-3 py-1.5 text-center">
+          <p className="text-xs font-medium text-amber-300 leading-tight">
+            Trial — {daysLeft} days left · $2.49/wk after
           </p>
         </div>
       )}
 
       {/* Header */}
-      <header className="shrink-0 px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <header className="shrink-0 border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
           <img src="/brand/steady-one-white.png" alt="The Steady One" className="w-8 h-8 object-contain" />
         </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/flow" className="text-xs font-bold text-white/70 hover:text-white hover:underline">
-            ← EDIT CRITERIA
+        <div className="flex items-center gap-4">
+          <Link href="/flow" className="text-xs font-medium text-white/45 hover:text-white/80 hover:underline transition-colors">
+            ← Edit criteria
           </Link>
-          <span className="text-sm font-bold text-white">
+          <span className="text-sm font-medium text-white/70 tabular-nums">
             {currentIndex + 1} / {listings.length}
             {filterStats?.relaxedUsed && (
-              <span className="ml-2 text-xs text-amber-300">(relaxed)</span>
+              <span className="ml-2 text-xs text-white/35">(relaxed)</span>
             )}
           </span>
         </div>
       </header>
 
-      {/* Main card area — no justify-center, top-aligned */}
-      <main className="flex-1 overflow-auto p-2 sm:p-3 min-h-0" style={{ paddingBottom: 'calc(160px + env(safe-area-inset-bottom))' }}>
+      {/* Main card area */}
+      <main className="flex-1 overflow-auto p-3 sm:p-4 min-h-0" style={{ paddingBottom: 'calc(156px + env(safe-area-inset-bottom))' }}>
         {currentListing && (
-          <div key={currentListing.id} className="max-w-lg mx-auto w-full min-h-[50vh] flex flex-col">
+          <div key={currentListing.id} className="max-w-lg mx-auto w-full flex flex-col">
             <DecisionListingCard
               listing={currentListing}
               answers={answers}
@@ -1004,46 +1022,45 @@ export default function DecisionClient({
         )}
       </main>
 
-      {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#1E3A8A] border-t-2 border-white/20 px-3 pt-3" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+      {/* Fixed bottom navigation */}
+      <div
+        className="fixed bottom-0 left-0 right-0 bg-[#071b30] border-t border-white/10 px-3 pt-3"
+        style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+      >
         <div className="max-w-lg mx-auto">
-          {/* CTA Buttons */}
+          {/* Primary CTA row */}
           <div className="flex gap-2 mb-2">
             <button
               onClick={handleApply}
-              className={`flex-1 py-3 font-bold border-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
+              className={`flex-1 h-12 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
                 recommendation === 'ACT_NOW'
-                  ? 'bg-[#00A651] text-white border-[#00A651]'
-                  : 'bg-white text-black border-white'
+                  ? 'bg-[#00A651] text-white hover:bg-[#00913f]'
+                  : 'bg-white/[0.12] border border-white/20 text-white hover:bg-white/[0.18]'
               }`}
             >
-              VIEW FULL LISTING
+              View Full Listing
             </button>
             <button
               onClick={handleWait}
-              className={`flex-1 py-3 font-bold border-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all ${
-                recommendation === 'WAIT'
-                  ? 'bg-amber-400 text-black border-amber-400'
-                  : 'bg-white/20 text-white border-white/30'
-              }`}
+              className="flex-1 h-12 rounded-xl font-semibold text-sm bg-white/[0.07] border border-white/15 text-white/65 hover:bg-white/[0.11] hover:text-white/85 transition-all active:scale-[0.98]"
             >
-              WAIT CONSCIOUSLY
+              Wait Consciously
             </button>
           </div>
 
-          {/* Navigation — NEXT is big green primary */}
+          {/* Prev / Next row */}
           <div className="flex gap-2">
             <button
               onClick={handlePrev}
-              className="py-2 px-4 text-sm font-bold border-2 border-white/30 bg-white/10 text-white hover:bg-white/20"
+              className="h-10 w-12 text-sm font-medium border border-white/15 bg-white/[0.06] text-white/60 rounded-xl hover:bg-white/[0.10] transition-all"
             >
               ←
             </button>
             <button
               onClick={handleNext}
-              className="flex-1 py-2 text-sm font-bold border-2 border-black bg-[#00A651] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+              className="flex-1 h-10 text-sm font-medium bg-[#00A651] text-white rounded-xl hover:bg-[#00913f] transition-all active:scale-[0.98]"
             >
-              NEXT LISTING →
+              Next Listing →
             </button>
           </div>
         </div>
