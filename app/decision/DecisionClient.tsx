@@ -702,6 +702,15 @@ export default function DecisionClient({
       console.log(`[Heed Debug] Final listings after dedup: ${sanitized.length}, showing ${topN.length}`);
       console.log(`[BOROUGH DEBUG] User chose: ${answers!.boroughs} | Strict borough matches: ${strict.length} | Showing first: ${topN[0]?.borough}`);
 
+      // Quality check — low count or low avg score means poor matches → show guarantor card
+      const avgScore = topN.length > 0
+        ? topN.reduce((sum, l) => sum + calculateMatchScore(l, answers!), 0) / topN.length
+        : 0;
+      const needsGuarantor = topN.length < 6 || avgScore < 75 || answers!.budget < 2800;
+      if (needsGuarantor) {
+        console.log(`[AFFILIATE] Low budget detected → showing Low-Credit card | listings found: ${topN.length} | avg score: ${Math.round(avgScore)} | budget: $${answers!.budget}`);
+      }
+
       // Generate warnings for each listing
       const warnings: Record<string, string[]> = {};
       topN.forEach(l => {
@@ -722,6 +731,12 @@ export default function DecisionClient({
   const matchScore = currentListing && answers ? calculateMatchScore(currentListing, answers) : 0;
   const recommendation = getRecommendation(matchScore);
   const currentWarnings = currentListing ? (warningsMap[currentListing.id] || []) : [];
+
+  // Affiliate logic: force Low-Credit card when results are thin or budget is low
+  const avgMatchScore = listings.length > 0 && answers
+    ? listings.reduce((sum, l) => sum + calculateMatchScore(l, answers), 0) / listings.length
+    : 0;
+  const showLowCreditCard = listings.length < 6 || avgMatchScore < 75 || (answers?.budget ?? 9999) < 2800;
 
   const saveDecision = (id: string, dec: Decision) => {
     const updated = { ...decisions, [id]: dec };
@@ -979,7 +994,12 @@ export default function DecisionClient({
               recommendation={recommendation}
               warnings={currentWarnings}
             />
-            <AffiliateOffers budget={answers.budget} matchScore={matchScore} />
+            <AffiliateOffers
+              budget={answers.budget}
+              matchScore={matchScore}
+              showLowCreditForced={showLowCreditCard}
+              finalCount={listings.length}
+            />
           </div>
         )}
       </main>

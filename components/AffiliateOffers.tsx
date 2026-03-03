@@ -11,6 +11,10 @@
 interface Props {
   budget: number;
   matchScore: number;
+  /** Force the Low-Credit card when results are thin or avg score is low */
+  showLowCreditForced?: boolean;
+  /** Total listings in final set — used to detect poor search quality */
+  finalCount?: number;
 }
 
 interface OfferTileProps {
@@ -54,9 +58,13 @@ function OfferTile({ badge, badgeColor, title, pitch, cta, trackUrl }: OfferTile
   );
 }
 
-export default function AffiliateOffers({ budget, matchScore }: Props) {
+export default function AffiliateOffers({ budget, matchScore, showLowCreditForced = false, finalCount }: Props) {
   const showStorage = budget > 3000;
-  const showLowCredit = matchScore < 75;
+  const showLowCredit =
+    showLowCreditForced ||
+    matchScore < 75 ||
+    budget < 2800 ||
+    (finalCount !== undefined && finalCount < 6);
 
   if (!showStorage && !showLowCredit) return null;
 
