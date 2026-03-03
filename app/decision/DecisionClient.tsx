@@ -450,35 +450,22 @@ export default function DecisionClient({
   const [filterStats, setFilterStats] = useState<FilterStats | null>(null);
 
   // ── Admin bypass ───────────────────────────────────────────────────────────
-  // Purely client-side: no cookies, no middleware. ?admin=heed OR localStorage.
-  const [adminBypass, setAdminBypass] = useState(false);
-  const [bypassChecked, setBypassChecked] = useState(false);
   const [adminBannerDismissed, setAdminBannerDismissed] = useState(false);
 
+  // Read banner dismiss state from sessionStorage
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('admin') === 'heed') {
-      localStorage.setItem(ADMIN_BYPASS_KEY, 'true');
-      console.log('[Heed Debug] Admin bypass activated via URL param');
-    }
-    const bypass = localStorage.getItem(ADMIN_BYPASS_KEY) === 'true';
-    setAdminBypass(bypass);
     setAdminBannerDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
-    setBypassChecked(true);
   }, []);
 
-  // Client-side paywall redirect — never fires when forceFullAccess is true
+  // Persist bypass in localStorage so AdminBypassBanner works on /storage, /low-credit
   useEffect(() => {
-    if (forceFullAccess) return; // server granted full access via ?admin=heed
-    if (!bypassChecked) return; // wait for localStorage check to complete
-    if (!adminBypass && subscriptionStatus === 'none') {
-      console.log('[Heed Debug] No access, no bypass — redirecting to /paywall');
-      router.replace('/paywall?reason=subscription');
+    if (forceFullAccess) {
+      localStorage.setItem(ADMIN_BYPASS_KEY, 'true');
     }
-  }, [forceFullAccess, bypassChecked, adminBypass, subscriptionStatus, router]);
+  }, [forceFullAccess]);
 
-  // Effective subscription status — forceFullAccess or localStorage bypass forces 'active'
-  const effectiveStatus = forceFullAccess || adminBypass ? 'active' : subscriptionStatus;
+  // Effective subscription status — forceFullAccess forces 'active'
+  const effectiveStatus = forceFullAccess ? 'active' : subscriptionStatus;
 
   // Derive accessState from effective status
   const accessState: AccessState = {
@@ -534,7 +521,10 @@ export default function DecisionClient({
 
   // Fetch listings
   useEffect(() => {
-    if (!answers) return;
+    if (!answers) {
+      setLoading(false); // no quiz answers — show the "go to /flow" screen
+      return;
+    }
 
     async function fetchData() {
       console.log('[Steady Debug] Fetching listings with answers:', answers);
@@ -760,6 +750,13 @@ export default function DecisionClient({
     }
   };
 
+  // Paywall gate — synchronous, no effects, no race conditions
+  // forceFullAccess=true (from ?admin=heed) bypasses this unconditionally
+  if (!forceFullAccess && subscriptionStatus === 'none') {
+    router.replace('/paywall?reason=subscription');
+    return null;
+  }
+
   // Loading
   if (loading) {
     return (
@@ -925,7 +922,7 @@ export default function DecisionClient({
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       {/* Admin bypass banner */}
-      {(forceFullAccess || adminBypass) && !adminBannerDismissed && (
+      {forceFullAccess && !adminBannerDismissed && (
         <div className="shrink-0 bg-[#00A651] border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-white leading-tight">
             🔧 ADMIN MODE — Full Access (Heed Bypass)
