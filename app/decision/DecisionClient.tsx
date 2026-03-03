@@ -576,6 +576,63 @@ export default function DecisionClient({
       console.log(`[DEBUG] First 5 prices:`, rawData.slice(0, 5).map(l => parsePrice(l.price)));
       console.log(`[DEBUG] Boroughs found:`, rawData.slice(0, 5).map(l => l.borough || l.neighborhood));
 
+      // ── Staten Island force mode ──────────────────────────────────────────────
+      const wantsStatenIsland = answers!.boroughs.some(b => b.toLowerCase().includes('staten'));
+      if (wantsStatenIsland) {
+        console.log('[STATEN ISLAND FORCE MODE ACTIVATED]');
+        const SI_KEYWORDS = ['staten', 'st george', 'great kills', 'annadale', 'princes bay', 'tottenville', 'dongan hills', 'stapleton'];
+
+        const rawSiListings = rawData.filter(l => {
+          const text = [l.borough, l.neighborhood, l.description].join(' ').toLowerCase();
+          return SI_KEYWORDS.some(k => text.includes(k));
+        });
+
+        console.log(`[STATEN ISLAND FORCE] Found ${rawSiListings.length} SI listings in raw data`);
+
+        if (rawSiListings.length > 0) {
+          const siListings = rawSiListings
+            .filter(l => l.original_url && parsePrice(l.price) <= answers!.budget * 2.0)
+            .sort((a, b) => calculateMatchScore(b, answers!) - calculateMatchScore(a, answers!));
+
+          console.log(`[STATEN ISLAND FORCE] After budget filter (×2.0): ${siListings.length} listings`);
+
+          if (siListings.length > 0) {
+            const topN = siListings.slice(0, 10);
+            const warnings: Record<string, string[]> = {};
+            topN.forEach(l => { warnings[l.id] = generateWarnings(l, answers!); });
+            setWarningsMap(warnings);
+            setFilterStats({ total: rawData.length, noUrl: 0, overBudget: 0, wrongBedrooms: 0, wrongBorough: 0, placeholderImage: 0, duplicates: 0, final: topN.length, relaxedUsed: false });
+            setListings(topN);
+            setLoading(false);
+            console.log(`[STATEN ISLAND FORCE] Showing ${topN.length} SI listings — done.`);
+            return;
+          }
+        }
+
+        // Fallback: 10 cheapest SI listings regardless of budget
+        const cheapestSi = rawData
+          .filter(l => {
+            const text = [l.borough, l.neighborhood].join(' ').toLowerCase();
+            return SI_KEYWORDS.some(k => text.includes(k)) && l.original_url;
+          })
+          .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+          .slice(0, 10);
+
+        if (cheapestSi.length > 0) {
+          console.log(`[STATEN ISLAND FORCE] Fallback: showing ${cheapestSi.length} cheapest SI listings`);
+          const warnings: Record<string, string[]> = {};
+          cheapestSi.forEach(l => { warnings[l.id] = generateWarnings(l, answers!); });
+          setWarningsMap(warnings);
+          setFilterStats({ total: rawData.length, noUrl: 0, overBudget: 0, wrongBedrooms: 0, wrongBorough: 0, placeholderImage: 0, duplicates: 0, final: cheapestSi.length, relaxedUsed: true });
+          setListings(cheapestSi);
+          setLoading(false);
+          return;
+        }
+
+        console.log('[STATEN ISLAND FORCE] No SI listings found in dataset at all — falling through to normal filter');
+      }
+      // ── End Staten Island force mode ──────────────────────────────────────────
+
       const stats: FilterStats = {
         total: rawData.length,
         noUrl: 0,
@@ -592,9 +649,6 @@ export default function DecisionClient({
       const needed = bedroomMap[answers!.bedrooms] ?? 1;
 
       console.log(`[FINAL FILTER] User: budget ${answers!.budget}, boroughs ${answers!.boroughs}, pets ${answers!.pets}`);
-
-      // Staten Island has sparse inventory — give it more budget headroom in strict pass
-      const wantsStatenIsland = answers!.boroughs.some(b => b.toLowerCase().trim() === 'staten island');
 
       // Helper: check if image is missing or a known placeholder
       const isPlaceholder = (l: Listing) => {
