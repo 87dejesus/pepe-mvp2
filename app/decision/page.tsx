@@ -1,15 +1,12 @@
 /**
  * /decision — Server Component
  *
- * Admin bypass is handled FIRST, server-side, before any auth/DB/Stripe code.
- * ?admin=heed → immediately renders DecisionClient with subscriptionStatus='active'.
- * No redirect to /paywall is possible in this path.
+ * ?admin=heed is checked FIRST — before cookies(), auth, DB, or Stripe.
+ * It short-circuits and renders DecisionClient with forceFullAccess=true.
+ * forceFullAccess is a synchronous prop: no effects, no race conditions,
+ * no redirect to /paywall is possible.
  *
- * For normal users:
- * 1. Reads subscription status from DB (if a session exists) and passes it down.
- * 2. If coming from Stripe checkout (?session_id=...), waits briefly for the
- *    webhook to write to DB before the DB read.
- * Access gating (redirect to /paywall) is done client-side in DecisionClient.
+ * Normal users: auth → DB subscription check → pass status to client.
  */
 
 export const dynamic = 'force-dynamic';
@@ -37,12 +34,13 @@ export default async function DecisionPage({
 }) {
   const params = await searchParams;
 
-  // ── Admin bypass — MUST be checked first, before any auth/DB code ──────────
-  // ?admin=heed grants full access unconditionally. No session required.
+  // ── Admin bypass ────────────────────────────────────────────────────────────
+  // Checked before ANY async work. forceFullAccess=true is a synchronous prop —
+  // DecisionClient never redirects when it receives this.
   if (params.admin === 'heed') {
     return (
       <Suspense>
-        <DecisionClient subscriptionStatus="active" trialEndsAt={null} />
+        <DecisionClient forceFullAccess={true} />
       </Suspense>
     );
   }
@@ -55,7 +53,7 @@ export default async function DecisionPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If coming from Stripe checkout, validate session and wait for webhook
+  // If coming from Stripe checkout, wait briefly for the webhook to write to DB
   const fromCheckout = params.checkout_success === '1';
   const sessionId = params.session_id;
 
@@ -71,9 +69,7 @@ export default async function DecisionPage({
           session.payment_status === 'paid' ||
           session.status === 'complete' ||
           (session.mode === 'subscription' && !!session.subscription);
-
         if (checkoutOk) {
-          // Webhook may still be in flight — give it up to 3s to write to DB
           await new Promise((r) => setTimeout(r, 3000));
         }
       } catch (err) {
@@ -82,7 +78,7 @@ export default async function DecisionPage({
     }
   }
 
-  // Subscription check — only if authenticated. No user → 'none', client handles redirect.
+  // Subscription check — no user → 'none', client handles redirect to paywall
   let subscriptionStatus = 'none';
   let trialEndsAt: string | null = null;
 

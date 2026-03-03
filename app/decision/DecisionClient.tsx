@@ -428,11 +428,16 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
 }
 
 type DecisionClientProps = {
-  subscriptionStatus: string;
-  trialEndsAt: string | null;
+  subscriptionStatus?: string;
+  trialEndsAt?: string | null;
+  forceFullAccess?: boolean;
 };
 
-export default function DecisionClient({ subscriptionStatus, trialEndsAt }: DecisionClientProps) {
+export default function DecisionClient({
+  subscriptionStatus = 'none',
+  trialEndsAt = null,
+  forceFullAccess = false,
+}: DecisionClientProps) {
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [warningsMap, setWarningsMap] = useState<Record<string, string[]>>({});
@@ -462,17 +467,18 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
     setBypassChecked(true);
   }, []);
 
-  // Client-side paywall redirect — fires only after bypass is confirmed absent
+  // Client-side paywall redirect — never fires when forceFullAccess is true
   useEffect(() => {
+    if (forceFullAccess) return; // server granted full access via ?admin=heed
     if (!bypassChecked) return; // wait for localStorage check to complete
     if (!adminBypass && subscriptionStatus === 'none') {
       console.log('[Heed Debug] No access, no bypass — redirecting to /paywall');
       router.replace('/paywall?reason=subscription');
     }
-  }, [bypassChecked, adminBypass, subscriptionStatus, router]);
+  }, [forceFullAccess, bypassChecked, adminBypass, subscriptionStatus, router]);
 
-  // Effective subscription status — admin bypass forces 'active'
-  const effectiveStatus = adminBypass ? 'active' : subscriptionStatus;
+  // Effective subscription status — forceFullAccess or localStorage bypass forces 'active'
+  const effectiveStatus = forceFullAccess || adminBypass ? 'active' : subscriptionStatus;
 
   // Derive accessState from effective status
   const accessState: AccessState = {
@@ -919,10 +925,10 @@ export default function DecisionClient({ subscriptionStatus, trialEndsAt }: Deci
   return (
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
       {/* Admin bypass banner */}
-      {adminBypass && !adminBannerDismissed && (
+      {(forceFullAccess || adminBypass) && !adminBannerDismissed && (
         <div className="shrink-0 bg-[#00A651] border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-white leading-tight">
-            🔧 ADMIN MODE — Full Access (Heed)
+            🔧 ADMIN MODE — Full Access (Heed Bypass)
           </p>
           <button
             onClick={() => {
