@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,6 +15,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
+  themeColor: '#00A651',
 };
 
 export const metadata: Metadata = {
@@ -72,6 +74,7 @@ export default function RootLayout({
         className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
         {children}
+        <ServiceWorkerRegistration />
         <GoogleAnalytics gaId="G-0LQ1VL0PMG" />
       </body>
     </html>
