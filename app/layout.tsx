@@ -59,8 +59,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/brand/icon-192x192.png",
-    shortcut: "/brand/icon-192x192.png",
+    icon: "/brand/steady-one-192.png",
+    shortcut: "/brand/steady-one-192.png",
     apple: [
       { url: "/brand/steady-one-192.png" },
       { url: "/brand/steady-one-180.png", sizes: "180x180" },
