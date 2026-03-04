@@ -1,16 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const viewport: Viewport = {
@@ -55,9 +50,11 @@ export const metadata: Metadata = {
       "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
     images: ["/brand/steady-one-blue.png"],
   },
+  manifest: "/manifest.json",
   icons: {
-    icon: "/brand/steady-one-black.png",
-    apple: "/brand/steady-one-black.png",
+    icon: "/brand/icon-192x192.png",
+    apple: "/brand/icon-192x192.png",
+    shortcut: "/brand/icon-192x192.png",
   },
   other: {
     "impact-site-verification": "7f1ba217-a484-4912-a99b-6f0b086341a6",
@@ -72,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
         {children}
         <GoogleAnalytics gaId="G-0LQ1VL0PMG" />
