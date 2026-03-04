@@ -179,7 +179,7 @@ function calculateMatchScore(listing: Listing, answers: Answers): number {
   return Math.min(100, Math.round(score));
 }
 
-// Determine recommendation (>80 = ACT NOW)
+// Determine recommendation (>80 = Apply Today)
 function getRecommendation(score: number): 'ACT_NOW' | 'WAIT' {
   return score >= 80 ? 'ACT_NOW' : 'WAIT';
 }
@@ -1018,13 +1018,13 @@ export default function DecisionClient({
                   : 'bg-white/[0.12] border border-white/20 text-white hover:bg-white/[0.18]'
               }`}
             >
-              View Full Listing
+              Apply Today
             </button>
             <button
               onClick={handleWait}
               className="flex-1 h-12 rounded-xl font-semibold text-sm bg-white/[0.07] border border-white/15 text-white/65 hover:bg-white/[0.11] hover:text-white/85 transition-all active:scale-[0.98]"
             >
-              Wait Consciously
+              Wait Thoughtfully
             </button>
           </div>
 

@@ -82,7 +82,7 @@ export default function PaywallPage() {
   const stepIndex = { email: 0, otp: 1, stripe: 2 } as const;
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#3B82F6] to-[#1E3A8A]">
+    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
       <Header />
 
       <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
@@ -93,29 +93,29 @@ export default function PaywallPage() {
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Heed"
-              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full border-4 border-white/30 object-cover"
+              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full border border-[#E5E5E5] object-cover"
             />
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.
             </h1>
-            <p className="text-white/70 text-sm mt-2">
+            <p className="text-[#666666] text-sm mt-2">
               Stop scrolling. The Steady One helps you commit — or consciously wait.
             </p>
           </div>
 
           {/* Value card */}
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-4 sm:p-5 mb-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
+          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#666666] mb-3">
               What you get
             </p>
             <ul className="space-y-2.5">
               {[
                 'Match score based on your real constraints',
-                'ACT NOW vs WAIT CONSCIOUSLY — no false urgency',
+                'Apply Today vs Wait Thoughtfully — no false urgency',
                 'Incentive detection: free months, no-fee deals',
                 "Heed's take on every listing",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-gray-800">
+                <li key={item} className="flex items-start gap-2 text-sm text-[#1A1A1A]">
                   <span className="text-[#00A651] font-bold mt-0.5">✓</span>
                   <span>{item}</span>
                 </li>
@@ -124,14 +124,14 @@ export default function PaywallPage() {
           </div>
 
           {/* Auth + Checkout card */}
-          <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] p-4 sm:p-5 mb-4">
+          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
 
             {/* Pricing */}
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-extrabold text-black">$2.49</span>
-              <span className="text-gray-500 text-sm">/ week</span>
+              <span className="text-3xl font-bold text-[#0A2540]">$2.49</span>
+              <span className="text-[#666666] text-sm">/ week</span>
             </div>
-            <p className="text-[#00A651] font-bold text-sm mb-4">
+            <p className="text-[#00A651] font-semibold text-sm mb-4">
               3 days free — no charge during trial
             </p>
 
@@ -142,20 +142,20 @@ export default function PaywallPage() {
                 const active = step === s;
                 return (
                   <div key={s} className="flex items-center gap-1 flex-1 last:flex-none">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 shrink-0 ${
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border-2 shrink-0 ${
                       done ? 'bg-[#00A651] border-[#00A651] text-white'
-                           : active ? 'bg-[#1E3A8A] border-[#1E3A8A] text-white'
-                           : 'bg-gray-100 border-gray-300 text-gray-400'
+                           : active ? 'bg-[#0A2540] border-[#0A2540] text-white'
+                           : 'bg-[#F8F6F3] border-[#E5E5E5] text-[#666666]'
                     }`}>
                       {done ? '✓' : i + 1}
                     </div>
                     {i < 2 && (
-                      <div className={`flex-1 h-0.5 ${done ? 'bg-[#00A651]' : 'bg-gray-200'}`} />
+                      <div className={`flex-1 h-0.5 ${done ? 'bg-[#00A651]' : 'bg-[#E5E5E5]'}`} />
                     )}
                   </div>
                 );
               })}
-              <span className="text-xs text-gray-500 ml-2 shrink-0">
+              <span className="text-xs text-[#666666] ml-2 shrink-0">
                 {step === 'email' ? 'Your email' : step === 'otp' ? 'Code' : 'Start trial'}
               </span>
             </div>
@@ -164,7 +164,7 @@ export default function PaywallPage() {
             {step === 'email' && (
               <form onSubmit={handleRequestOtp} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
+                  <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Email address
                   </label>
                   <input
@@ -174,18 +174,18 @@ export default function PaywallPage() {
                     placeholder="you@email.com"
                     required
                     autoFocus
-                    className="w-full border-2 border-black px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading || !email.trim()}
-                  className="w-full bg-[#1E3A8A] text-white font-extrabold text-base py-3.5 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
                   {loading ? <Spinner /> : 'Continue →'}
                 </button>
-                <p className="text-xs text-gray-400 text-center">
-                  We'll send a 6-digit verification code to your email.
+                <p className="text-xs text-[#666666] text-center">
+                  We&apos;ll send a 6-digit verification code to your email.
                 </p>
               </form>
             )}
@@ -194,7 +194,7 @@ export default function PaywallPage() {
             {step === 'otp' && (
               <form onSubmit={handleVerifyOtp} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
+                  <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Code sent to {email}
                   </label>
                   <input
@@ -207,20 +207,20 @@ export default function PaywallPage() {
                     placeholder="000000"
                     required
                     autoFocus
-                    className="w-full border-2 border-black px-3 py-2.5 text-2xl font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-2xl font-bold tracking-widest text-center text-[#0A2540] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading || otp.length !== 6}
-                  className="w-full bg-[#1E3A8A] text-white font-extrabold text-base py-3.5 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
                   {loading ? <Spinner /> : 'Verify →'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setStep('email'); setOtp(''); setError(null); }}
-                  className="w-full text-xs text-gray-400 hover:text-gray-600 underline"
+                  className="w-full text-xs text-[#666666] hover:text-[#0A2540] underline"
                 >
                   ← Change email
                 </button>
@@ -230,25 +230,25 @@ export default function PaywallPage() {
             {/* Step 3 — Stripe */}
             {step === 'stripe' && (
               <div className="space-y-3">
-                <p className="text-sm text-gray-700">
-                  Account created for <span className="font-bold">{email}</span>.
+                <p className="text-sm text-[#666666]">
+                  Account created for <span className="font-semibold text-[#0A2540]">{email}</span>.
                   Start your free trial:
                 </p>
                 <button
                   onClick={handleStartTrial}
                   disabled={loading}
-                  className="w-full bg-[#00A651] text-white font-extrabold text-base py-4 border-2 border-black shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50 disabled:pointer-events-none transition-all select-none"
+                  className="w-full h-14 rounded-lg bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all select-none"
                 >
                   {loading ? <Spinner /> : 'Start 3-day free trial →'}
                 </button>
-                <p className="text-xs text-gray-400 text-center">
+                <p className="text-xs text-[#666666] text-center">
                   Cancel anytime. No charge for 3 days.
                 </p>
               </div>
             )}
 
             {error && (
-              <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 p-2">
+              <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
                 {error}
               </p>
             )}
@@ -256,8 +256,8 @@ export default function PaywallPage() {
 
           {/* Dev mock helper */}
           {IS_DEV_MOCK && (
-            <div className="bg-amber-50 border-2 border-amber-400 p-4 mb-4">
-              <p className="text-xs font-bold uppercase text-amber-700 mb-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <p className="text-xs font-semibold uppercase text-amber-700 mb-2">
                 Dev mode — test without Stripe or OTP
               </p>
               <div className="flex flex-col gap-1.5">
@@ -270,7 +270,7 @@ export default function PaywallPage() {
           )}
 
           <div className="text-center mt-4 pb-safe">
-            <Link href="/" className="text-xs text-white/50 hover:text-white underline">
+            <Link href="/" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
               ← Back to home
             </Link>
           </div>
@@ -307,7 +307,7 @@ function DevMockButton({
   return (
     <button
       onClick={apply}
-      className="w-full text-left text-xs font-semibold px-3 py-2 border border-amber-400 bg-white text-amber-800 hover:bg-amber-50 active:bg-amber-100"
+      className="w-full text-left text-xs font-medium px-3 py-2 border border-amber-200 rounded-lg bg-white text-amber-800 hover:bg-amber-50 active:bg-amber-100"
     >
       {label}
     </button>

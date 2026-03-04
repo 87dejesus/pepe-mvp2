@@ -36,14 +36,14 @@ type Props = {
 };
 
 function formatBedrooms(n: number): string {
-  if (n === 0) return 'STUDIO';
-  if (n === 1) return '1 BED';
-  return `${n} BEDS`;
+  if (n === 0) return 'Studio';
+  if (n === 1) return '1 bed';
+  return `${n} beds`;
 }
 
 function formatBathrooms(n: number): string {
-  if (n === 1) return '1 BATH';
-  return `${n} BATHS`;
+  if (n === 1) return '1 bath';
+  return `${n} baths`;
 }
 
 // Detect incentives in description
@@ -66,6 +66,15 @@ function detectIncentives(description: string): string | null {
   return null;
 }
 
+function getTransitNote(borough: string): string {
+  const b = (borough || '').toLowerCase();
+  if (b.includes('manhattan')) return 'Subway station ~3–5 min walk';
+  if (b.includes('brooklyn')) return 'Subway station ~5–10 min walk';
+  if (b.includes('queens'))   return 'Subway station ~8–12 min walk';
+  if (b.includes('bronx'))    return 'Bus or subway ~10–15 min walk';
+  return 'Transit nearby';
+}
+
 // Generate empathetic commentary
 function buildHeedTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
@@ -82,16 +91,16 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
   } else {
     const over = listing.price - answers.budget;
     const pctOver = Math.round((over / answers.budget) * 100);
-    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%), but might be worth stretching for`);
+    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%) — worth considering if the fit feels right`);
   }
 
   // Bedroom match
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   if (listing.bedrooms === needed || (answers.bedrooms === '3+' && listing.bedrooms >= 3)) {
-    parts.push(`exactly the ${formatBedrooms(listing.bedrooms).toLowerCase()} you wanted`);
+    parts.push(`exactly the ${formatBedrooms(listing.bedrooms)} you wanted`);
   } else if (Math.abs(listing.bedrooms - needed) === 1) {
-    parts.push(`${formatBedrooms(listing.bedrooms).toLowerCase()} (close to what you wanted)`);
+    parts.push(`${formatBedrooms(listing.bedrooms)} (close to what you wanted)`);
   }
 
   // Location match
@@ -142,15 +151,16 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
   const heedTake = buildHeedTake(listing, answers, matchScore, warnings);
+  const transitNote = getTransitNote(listing.borough);
 
   return (
     <div
-      className={`bg-white border-2 border-black flex-1 flex flex-col transition-opacity duration-150 ${
+      className={`bg-white border border-[#E5E5E5] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.28)] flex-1 flex flex-col overflow-hidden transition-opacity duration-150 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >
       {/* Image Section */}
-      <div className="relative aspect-[4/3] bg-gray-200 border-b-2 border-black shrink-0">
+      <div className="relative aspect-[4/3] bg-[#F8F6F3] border-b border-[#E5E5E5] shrink-0">
         {hasValidImage ? (
           <img
             key={`img-${listing.id}`}
@@ -159,52 +169,50 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500">
-            <svg className="w-12 h-12 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-[#F8F6F3] text-[#666666]">
+            <svg className="w-12 h-12 mb-2 text-[#E5E5E5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-xs font-bold uppercase">No photo — check full listing</span>
+            <span className="text-xs font-medium text-[#666666]">No photo — check full listing</span>
           </div>
         )}
 
         {/* Price Tag - Top Right */}
-        <div className="absolute top-2 right-2 bg-[#00A651] text-white font-bold text-sm sm:text-lg px-2 sm:px-3 py-1 border-2 border-black whitespace-nowrap">
-          ${listing.price?.toLocaleString()}/MO
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-[#0A2540] font-bold text-sm px-3 py-1 rounded-full border border-[#E5E5E5] shadow-sm whitespace-nowrap">
+          ${listing.price?.toLocaleString()}/mo
         </div>
 
-        {/* Recommendation Badge - Top Left */}
-        <div className={`absolute top-2 left-2 font-bold text-xs sm:text-sm px-2 sm:px-3 py-1 border-2 border-black max-w-[50%] leading-tight ${
-          recommendation === 'ACT_NOW'
-            ? 'bg-[#00A651] text-white'
-            : 'bg-amber-400 text-black'
-        }`}>
-          {recommendation === 'ACT_NOW' ? 'ACT NOW' : 'WAIT'}
-        </div>
+        {/* Match quality indicator - Top Left */}
+        {recommendation === 'ACT_NOW' && (
+          <div className="absolute top-3 left-3 bg-[#00A651] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+            Strong match
+          </div>
+        )}
       </div>
 
       {/* Content Section */}
-      <div className="p-3 sm:p-4 flex-1 flex flex-col">
-        {/* Neighborhood - Bold Italic Uppercase */}
-        <h2 className="text-xl sm:text-2xl font-bold italic uppercase tracking-tight text-black">
-          {listing.neighborhood || 'UNKNOWN'}
+      <div className="p-4 sm:p-5 flex-1 flex flex-col">
+        {/* Neighborhood */}
+        <h2 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
+          {listing.neighborhood || 'Unknown'}
         </h2>
 
         {/* Borough + Specs Row */}
         <div className="flex flex-wrap items-center gap-2 mt-2">
           {listing.borough && listing.borough !== listing.neighborhood && (
-            <span className="text-sm font-bold uppercase text-gray-600">
+            <span className="text-sm font-medium text-[#666666]">
               {listing.borough}
             </span>
           )}
-          <span className="border-2 border-black px-2 py-0.5 text-xs font-bold">
+          <span className="bg-[#F8F6F3] border border-[#E5E5E5] rounded-full px-3 py-1 text-xs text-[#666666]">
             {formatBedrooms(listing.bedrooms)}
           </span>
-          <span className="border-2 border-black px-2 py-0.5 text-xs font-bold">
+          <span className="bg-[#F8F6F3] border border-[#E5E5E5] rounded-full px-3 py-1 text-xs text-[#666666]">
             {formatBathrooms(listing.bathrooms)}
           </span>
           {listing.pets?.toLowerCase() === 'yes' && (
-            <span className="border-2 border-black px-2 py-0.5 text-xs font-bold bg-green-100">
-              PETS OK
+            <span className="bg-[#00A651]/10 border border-[#00A651]/30 rounded-full px-3 py-1 text-xs text-[#00A651] font-medium">
+              Pets OK
             </span>
           )}
         </div>
@@ -213,7 +221,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         {warnings.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3">
             {warnings.map((w, i) => (
-              <span key={i} className="text-xs font-bold px-2 py-0.5 bg-amber-100 border border-amber-400 text-amber-800">
+              <span key={i} className="text-xs font-medium px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full">
                 {w}
               </span>
             ))}
@@ -221,14 +229,14 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         )}
 
         {/* Match Score Bar */}
-        <div className="mt-3">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-bold uppercase">Match Score</span>
-            <span className="text-sm font-bold">{matchScore}%</span>
+        <div className="mt-4">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-xs font-medium text-[#666666]">Match score</span>
+            <span className="text-sm font-bold text-[#0A2540]">{matchScore}%</span>
           </div>
-          <div className="w-full h-3 bg-gray-200 border-2 border-black">
+          <div className="w-full h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all duration-500 ${
+              className={`h-full rounded-full transition-all duration-500 ${
                 matchScore >= 80 ? 'bg-[#00A651]' : matchScore >= 50 ? 'bg-amber-400' : 'bg-red-400'
               }`}
               style={{ width: `${matchScore}%` }}
@@ -237,25 +245,28 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         </div>
 
         {/* Heed's Take */}
-        <div className="mt-3 p-3 border-2 border-black bg-[#1E3A8A]/5 flex-1">
+        <div className="mt-4 bg-[#F8F6F3] border-l-4 border-[#00A651] pl-4 py-3 pr-3 rounded-r-lg flex-1">
           <div className="flex items-start gap-3">
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Heed"
-              className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0"
+              className="w-9 h-9 rounded-full border border-[#E5E5E5] object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-bold uppercase mb-1 text-[#1E3A8A]">HEED&apos;S TAKE</p>
-              <p className="text-sm text-gray-700 leading-relaxed">
+              <p className="text-xs font-semibold mb-1 text-[#0A2540]">Heed&apos;s Take</p>
+              <p className="text-sm text-[#666666] leading-relaxed">
                 {heedTake}
+              </p>
+              <p className="text-xs text-[#666666]/60 mt-2 pt-2 border-t border-[#E5E5E5]">
+                {transitNote}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Description - One line */}
+        {/* Description */}
         {listing.description && (
-          <p className="text-xs text-gray-500 mt-3 line-clamp-2 border-t-2 border-dashed border-gray-300 pt-3">
+          <p className="text-xs text-[#666666] mt-3 line-clamp-2 border-t border-[#E5E5E5] pt-3">
             {listing.description}
           </p>
         )}
