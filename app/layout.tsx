@@ -53,10 +53,18 @@ export const metadata: Metadata = {
     images: ["/brand/steady-one-blue.png"],
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "The Steady One",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: "/brand/icon-192x192.png",
-    apple: "/brand/icon-192x192.png",
     shortcut: "/brand/icon-192x192.png",
+    apple: [
+      { url: "/brand/steady-one-192.png" },
+      { url: "/brand/steady-one-180.png", sizes: "180x180" },
+    ],
   },
   other: {
     "impact-site-verification": "7f1ba217-a484-4912-a99b-6f0b086341a6",
