@@ -50,16 +50,20 @@ function PaywallContent() {
   // Returns true on success, false on error.
   // Calls signInWithOtp from the browser so the PKCE verifier is stored in
   // localStorage — this is required for /auth/callback to exchange the code.
+  // emailRedirectTo uses NEXT_PUBLIC_APP_URL to avoid localhost links in prod.
   async function doSendLink(): Promise<boolean> {
     setError(null);
     setLoading(true);
+    const redirectTo = process.env.NEXT_PUBLIC_APP_URL
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+      : `${window.location.origin}/auth/callback`;
     try {
       const supabase = createSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: redirectTo,
           data: { app: 'the-steady-one' },
         },
       });
