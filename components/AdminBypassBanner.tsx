@@ -3,67 +3,48 @@
 /**
  * AdminBypassBanner
  *
- * Two jobs:
- *  1. On mount: if URL has ?admin=heed → write localStorage so the bypass
- *     persists across page navigations within the same browser.
- *  2. If heed_admin_bypass is active → show a dismissible green banner.
- *
- * Entirely client-side — no cookies, no middleware, no server reads.
- * Dismissal is stored in sessionStorage so it resets on a new browser session
- * but stays hidden while navigating within the same tab.
- *
- * Usage: drop <AdminBypassBanner /> anywhere inside a page — no Suspense needed.
+ * Shows a dismissible admin banner on /storage and /low-credit when the
+ * logged-in user is the owner. Checks via supabase.auth.getUser() — no
+ * URL params, no localStorage bypass.
  */
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-export const ADMIN_BYPASS_KEY = 'heed_admin_bypass';
-
-/** Convenience hook — returns true if the admin bypass is active. */
-export function useAdminBypass(): boolean {
-  const [active, setActive] = useState(false);
-  useEffect(() => {
-    setActive(localStorage.getItem(ADMIN_BYPASS_KEY) === 'true');
-  }, []);
-  return active;
-}
+const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
 export default function AdminBypassBanner() {
-  const [active, setActive] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Activate from URL param — purely client-side, no server involvement
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('admin') === 'heed') {
-      localStorage.setItem(ADMIN_BYPASS_KEY, 'true');
-    }
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return;
 
-    const isActive = localStorage.getItem(ADMIN_BYPASS_KEY) === 'true';
-    setActive(isActive);
-
-    // Persist dismiss choice for the browser session only
-    if (isActive) {
-      setDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
-    }
+    const supabase = createClient(url, key);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email === ADMIN_EMAIL) {
+        setIsAdmin(true);
+        setDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
+      }
+    }).catch(() => {});
   }, []);
 
-  if (!active || dismissed) return null;
-
-  function handleDismiss() {
-    sessionStorage.setItem('heed_banner_dismissed', 'true');
-    setDismissed(true);
-  }
+  if (!isAdmin || dismissed) return null;
 
   return (
-    <div className="shrink-0 bg-[#00A651] border-b-2 border-black px-4 py-2 flex items-center justify-between gap-3">
-      <p className="text-sm font-bold text-white leading-tight">
-        🔧 DEV MODE — Heed Admin Bypass Active (you have full access)
+    <div className="shrink-0 bg-[#00A651]/90 border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
+      <p className="text-xs font-medium text-white/90 leading-tight">
+        🔧 ADMIN MODE — Full access (Owner only)
       </p>
       <button
-        onClick={handleDismiss}
-        className="shrink-0 text-white/80 hover:text-white font-black text-xl leading-none w-6 h-6 flex items-center justify-center"
-        aria-label="Dismiss admin banner"
+        onClick={() => {
+          sessionStorage.setItem('heed_banner_dismissed', 'true');
+          setDismissed(true);
+        }}
+        className="shrink-0 text-white/60 hover:text-white text-lg leading-none w-5 h-5 flex items-center justify-center"
+        aria-label="Dismiss"
       >
         ×
       </button>

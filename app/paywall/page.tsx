@@ -269,6 +269,10 @@ export default function PaywallPage() {
             </div>
           )}
 
+          <p className="text-[10px] text-[#999999] text-center mt-2 leading-relaxed">
+            Admin access is for owner only — all other users are charged $2.49/wk after the 3-day trial.
+          </p>
+
           <div className="text-center mt-4 pb-safe">
             <Link href="/" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
               ← Back to home

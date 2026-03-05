@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 import AffiliateOffers from '@/components/AffiliateOffers';
 import Header from '@/components/Header';
-import { trialDaysLeft, type AccessState } from '@/lib/access';
+import { trialDaysLeft, readAccess, activateTrialLocally, type AccessState } from '@/lib/access';
 
-const ADMIN_BYPASS_KEY = 'heed_admin_bypass';
+const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
 const LS_KEY = 'heed_answers_v2';
 const DECISIONS_KEY = 'pepe_decisions';
@@ -427,17 +427,7 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
   }
 }
 
-type DecisionClientProps = {
-  subscriptionStatus?: string;
-  trialEndsAt?: string | null;
-  forceFullAccess?: boolean;
-};
-
-export default function DecisionClient({
-  subscriptionStatus = 'none',
-  trialEndsAt = null,
-  forceFullAccess = false,
-}: DecisionClientProps) {
+function DecisionClientInner() {
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [warningsMap, setWarningsMap] = useState<Record<string, string[]>>({});
@@ -449,35 +439,34 @@ export default function DecisionClient({
   const [initError, setInitError] = useState<string | null>(null);
   const [filterStats, setFilterStats] = useState<FilterStats | null>(null);
 
-  // ── Admin bypass ───────────────────────────────────────────────────────────
+  // ── Admin bypass (email-based) ──────────────────────────────────────────────
+  const searchParams = useSearchParams();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [adminBannerDismissed, setAdminBannerDismissed] = useState(false);
+  const [localAccess, setLocalAccess] = useState<AccessState>({ status: 'none', set_at: '' });
 
   // Read banner dismiss state from sessionStorage
   useEffect(() => {
     setAdminBannerDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
   }, []);
 
-  // Persist bypass in localStorage so AdminBypassBanner works on /storage, /low-credit
+  // Handle checkout success + read local access state from localStorage
   useEffect(() => {
-    if (forceFullAccess) {
-      localStorage.setItem(ADMIN_BYPASS_KEY, 'true');
+    if (searchParams.get('checkout_success') === '1') {
+      activateTrialLocally();
     }
-  }, [forceFullAccess]);
+    setLocalAccess(readAccess());
+  }, [searchParams]);
 
-  // TEMPORARY — owner bypass, full access without payment
-  const IS_OWNER_BYPASS = true;
+  const isAdmin = authChecked && userEmail === ADMIN_EMAIL;
 
-  // Effective subscription status
-  const effectiveStatus = IS_OWNER_BYPASS || forceFullAccess ? 'active' : subscriptionStatus;
+  // Effective access state — admin always gets 'active', others use localStorage
+  const accessState: AccessState = isAdmin
+    ? { status: 'active', set_at: new Date().toISOString() }
+    : localAccess;
 
-  // Derive accessState from effective status
-  const accessState: AccessState = {
-    status: (effectiveStatus as AccessState['status']) ?? 'none',
-    trial_end: trialEndsAt ?? undefined,
-    set_at: new Date().toISOString(),
-  };
-
-  // Initialize Supabase client safely
+  // Initialize Supabase client safely + check admin email
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -486,14 +475,21 @@ export default function DecisionClient({
       try {
         const client = createClient(url, key);
         setSupabaseClient(client);
+        // Check user email for admin bypass
+        client.auth.getUser()
+          .then(({ data: { user } }) => setUserEmail(user?.email ?? null))
+          .catch(() => setUserEmail(null))
+          .finally(() => setAuthChecked(true));
       } catch (err) {
         console.error('[Steady Debug] Failed to initialize Supabase:', err);
         setInitError('Failed to connect to database');
+        setAuthChecked(true);
         setLoading(false);
       }
     } else {
       console.error('[Steady Debug] Supabase env vars missing:', { url: !!url, key: !!key });
       setInitError('Database configuration missing');
+      setAuthChecked(true);
       setLoading(false);
     }
   }, []);
@@ -769,11 +765,12 @@ export default function DecisionClient({
     }
   };
 
-  // Paywall gate — bypassed by IS_OWNER_BYPASS or forceFullAccess
-  if (!IS_OWNER_BYPASS && !forceFullAccess && subscriptionStatus === 'none') {
-    router.replace('/paywall?reason=subscription');
-    return null;
-  }
+  // Paywall gate — redirect non-admin users without active access (must be in useEffect)
+  useEffect(() => {
+    if (authChecked && !isAdmin && accessState.status === 'none') {
+      router.replace('/paywall?reason=subscription');
+    }
+  }, [authChecked, isAdmin, accessState.status, router]);
 
   // Loading
   if (loading) {
@@ -936,11 +933,11 @@ export default function DecisionClient({
 
   return (
     <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
-      {/* Owner bypass banner */}
-      {(IS_OWNER_BYPASS || forceFullAccess) && !adminBannerDismissed && (
+      {/* Admin banner */}
+      {isAdmin && !adminBannerDismissed && (
         <div className="shrink-0 bg-[#00A651]/90 border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
           <p className="text-xs font-medium text-white/90 leading-tight">
-            Dev bypass active — full access, no payment required
+            🔧 ADMIN MODE — Full access (Owner only)
           </p>
           <button
             onClick={() => {
@@ -1046,5 +1043,57 @@ export default function DecisionClient({
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+
+class DecisionErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[Steady] DecisionClient crashed:', error.message, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-[100dvh] flex flex-col bg-[#0A2540] items-center justify-center px-5">
+          <div className="max-w-sm w-full bg-white/[0.07] border border-white/20 rounded-2xl p-6 text-center">
+            <p className="text-white font-semibold mb-2">Something went wrong</p>
+            <p className="text-white/55 text-sm mb-6 leading-relaxed">
+              Reload the page to try again.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="h-12 px-6 rounded-xl bg-[#00A651] text-white font-semibold hover:bg-[#00913f] transition-all"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ─── Public export (wrapped with error boundary) ─────────────────────────────
+
+export default function DecisionClient() {
+  return (
+    <DecisionErrorBoundary>
+      <DecisionClientInner />
+    </DecisionErrorBoundary>
   );
 }
