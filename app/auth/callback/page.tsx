@@ -4,29 +4,32 @@
  * /auth/callback
  *
  * Users land here after clicking the Supabase magic-link email.
- * Tokens arrive in the URL hash (#access_token=...&type=magiclink).
+ * Supabase uses PKCE flow by default: the link contains ?code=xxx.
  *
- * Strategy (avoids getSession() race):
- *   1. Subscribe to onAuthStateChange FIRST — catches the SIGNED_IN event
- *      that fires when the SDK exchanges the hash tokens.
- *   2. Also call getSession() immediately — catches the case where the SDK
- *      already processed the hash before this component mounted.
- *   3. 8-second timeout → show expired-link error with resend form.
+ * Strategy:
+ *   1. Read ?code from URL and call exchangeCodeForSession() — this works
+ *      because signInWithOtp() was called from the browser, so the PKCE
+ *      verifier is already in localStorage.
+ *   2. Also subscribe to onAuthStateChange in case the SDK auto-processes
+ *      the code before the effect runs.
+ *   3. 8-second timeout → show "Link expired" screen with resend form.
  *
- * On success → call /api/stripe/create-checkout → redirect to Stripe.
- *              Stripe success_url → /decision?checkout_success=1
+ * On success → redirect to /decision
  * On error  → "Link expired" screen with email input + resend button.
  */
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import Header from '@/components/Header';
 
-type Phase = 'verifying' | 'stripe' | 'expired' | 'config_error';
+type Phase = 'verifying' | 'error';
 
-export default function AuthCallbackPage() {
+// ─── Inner component (needs useSearchParams → must be in Suspense) ────────────
+
+function AuthCallbackContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>('verifying');
   const [resendEmail, setResendEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
@@ -34,87 +37,79 @@ export default function AuthCallbackPage() {
   const [resendError, setResendError] = useState('');
 
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      setPhase('config_error');
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createSupabaseBrowserClient();
     let settled = false;
 
-    // Called once when we have a confirmed session
-    async function onVerified(userId: string, email: string) {
+    function onSuccess() {
       if (settled) return;
       settled = true;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
-
-      setPhase('stripe');
-
-      try {
-        const res = await fetch('/api/stripe/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, userId }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.url) throw new Error(data.error ?? 'Stripe error');
-        window.location.href = data.url;
-      } catch (err) {
-        console.error('[Auth] Stripe checkout error:', err);
-        // Fall back to paywall stripe step so the user can retry
-        const params = new URLSearchParams({ step: 'stripe', userId, email });
-        router.replace(`/paywall?${params.toString()}`);
-      }
+      router.replace('/decision');
     }
 
-    // 1. Listen for SIGNED_IN (fires when SDK processes the hash tokens)
+    function onError() {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+      setPhase('error');
+    }
+
+    // 1. Subscribe to SIGNED_IN first (fires after any successful exchange)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          onVerified(session.user.id, session.user.email ?? '');
+          onSuccess();
         }
       }
     );
 
-    // 2. Check for an already-established session (hash processed before mount)
+    // 2. If there's a PKCE code in the URL, exchange it explicitly
+    const code = searchParams.get('code');
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          console.error('[Auth] exchangeCodeForSession error:', error.message);
+          onError();
+        }
+        // On success, onAuthStateChange fires SIGNED_IN → onSuccess()
+      });
+    }
+
+    // 3. Also check for an already-established session (handles edge cases
+    //    where the SDK processed the code before this effect ran)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        onVerified(session.user.id, session.user.email ?? '');
-      }
+      if (session?.user) onSuccess();
     });
 
-    // 3. Timeout — link expired or invalid
+    // 4. Timeout — link expired, wrong URL, or cookie/localStorage mismatch
     const timeoutId = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        subscription.unsubscribe();
-        setPhase('expired');
-      }
+      if (!settled) onError();
     }, 8000);
 
     return () => {
       subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [router]);
+  }, [router, searchParams]);
 
+  // ── Resend form handler ───────────────────────────────────────────────────
   async function handleResend(e: React.FormEvent) {
     e.preventDefault();
     setResendError('');
     setResendLoading(true);
     setResendDone(false);
     try {
-      const res = await fetch('/api/auth/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resendEmail.trim() }),
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: resendEmail.trim(),
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to send link.');
+      if (error) throw error;
       setResendDone(true);
     } catch (err: unknown) {
       setResendError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -123,23 +118,20 @@ export default function AuthCallbackPage() {
     }
   }
 
-  // ── Expired / error screen ────────────────────────────────────────────────
-  if (phase === 'expired' || phase === 'config_error') {
+  // ── Error / expired screen ────────────────────────────────────────────────
+  if (phase === 'error') {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-        <Header />
+        <Header variant="light" />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="max-w-sm w-full bg-white border border-[#E5E5E5] rounded-xl p-6 shadow-sm">
-            <p className="text-[#0A2540] font-semibold mb-1">
-              {phase === 'config_error' ? 'Configuration error' : 'Link expired'}
-            </p>
+            <p className="text-[#0A2540] font-semibold mb-1">Link expired</p>
             <p className="text-[#666666] text-sm mb-5 leading-relaxed">
-              {phase === 'config_error'
-                ? 'App configuration error — please contact support.'
-                : 'This link has expired or already been used. Enter your email to get a new one.'}
+              This link has expired or already been used. Enter your email to get a new one.
+              Check your inbox (including spam).
             </p>
 
-            {phase === 'expired' && !resendDone && (
+            {!resendDone ? (
               <form onSubmit={handleResend} className="space-y-3">
                 <input
                   type="email"
@@ -163,13 +155,13 @@ export default function AuthCallbackPage() {
                   </p>
                 )}
               </form>
-            )}
-
-            {resendDone && (
+            ) : (
               <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-3 text-center">
                 <p className="text-[#0A2540] font-semibold text-sm">New link sent!</p>
                 <p className="text-[#666666] text-xs mt-1">
-                  Check your inbox for <span className="font-medium">{resendEmail}</span>.
+                  Check your inbox for{' '}
+                  <span className="font-medium">{resendEmail}</span>.
+                  Also check spam.
                 </p>
               </div>
             )}
@@ -186,19 +178,33 @@ export default function AuthCallbackPage() {
     );
   }
 
-  // ── Verifying / initiating Stripe ─────────────────────────────────────────
+  // ── Verifying screen ──────────────────────────────────────────────────────
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-      <Header />
+      <Header variant="light" />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#0A2540]/30 border-t-[#0A2540] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#0A2540] font-semibold">
-            {phase === 'stripe' ? 'Starting your trial…' : 'Verifying your email…'}
-          </p>
+          <p className="text-[#0A2540] font-semibold">Verifying your email…</p>
           <p className="text-[#666666] text-sm mt-1">Just a moment.</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Page export (Suspense required for useSearchParams) ──────────────────────
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[100dvh] flex items-center justify-center bg-[#F8F6F3]">
+          <div className="w-8 h-8 border-2 border-[#0A2540]/30 border-t-[#0A2540] rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

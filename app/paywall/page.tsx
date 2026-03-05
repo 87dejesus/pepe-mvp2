@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 // Dev mock — only active when NEXT_PUBLIC_DEV_MOCK_ENABLED=true
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
@@ -21,7 +22,7 @@ function PaywallContent() {
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // When /auth/callback redirects back with ?step=stripe&userId=...&email=...
+  // When redirected back with ?step=stripe&userId=...&email=... (legacy fallback)
   useEffect(() => {
     const urlStep = searchParams.get('step');
     const urlUserId = searchParams.get('userId');
@@ -46,21 +47,26 @@ function PaywallContent() {
     if (ok) setResent(true);
   }
 
-  // Returns true on success, false on error
+  // Returns true on success, false on error.
+  // Calls signInWithOtp from the browser so the PKCE verifier is stored in
+  // localStorage — this is required for /auth/callback to exchange the code.
   async function doSendLink(): Promise<boolean> {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: { app: 'the-steady-one' },
+        },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to send link.');
+      if (error) throw error;
       return true;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : 'Failed to send link.');
       return false;
     } finally {
       setLoading(false);
