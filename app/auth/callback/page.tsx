@@ -3,19 +3,19 @@
 /**
  * /auth/callback
  *
- * Users land here after clicking the Supabase magic-link email.
- * Supabase uses PKCE flow by default: the link contains ?code=xxx.
+ * Handles two URL formats Supabase may send:
+ *   PKCE flow:     ?code=xxx  (default in @supabase/ssr)
+ *   Implicit flow: #access_token=xxx&refresh_token=xxx&type=magiclink
  *
  * Strategy:
- *   1. Read ?code from URL and call exchangeCodeForSession() — this works
- *      because signInWithOtp() was called from the browser, so the PKCE
- *      verifier is already in localStorage.
- *   2. Also subscribe to onAuthStateChange in case the SDK auto-processes
- *      the code before the effect runs.
- *   3. 8-second timeout → show "Link expired" screen with resend form.
+ *   1. Check ?code= query param → exchangeCodeForSession()
+ *   2. Check #access_token= hash fragment → setSession()
+ *   3. onAuthStateChange catches SIGNED_IN from either path
+ *   4. getSession() catches already-established session
+ *   5. 10-second timeout → "Link expired" screen with resend form
  *
- * On success → redirect to /decision
- * On error  → "Link expired" screen with email input + resend button.
+ * On success → router.replace('/decision')
+ * On error   → show resend form with new-link button
  */
 
 import { useEffect, useState, Suspense } from 'react';
@@ -25,7 +25,7 @@ import Header from '@/components/Header';
 
 type Phase = 'verifying' | 'error';
 
-// ─── Inner component (needs useSearchParams → must be in Suspense) ────────────
+// ─── Inner component (needs useSearchParams → must be inside Suspense) ────────
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -45,48 +45,82 @@ function AuthCallbackContent() {
       settled = true;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
+      console.log('[AUTH] Session verified — redirecting to /decision');
       router.replace('/decision');
     }
 
-    function onError() {
+    function onError(reason: string) {
       if (settled) return;
       settled = true;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
+      console.error('[AUTH] Auth error:', reason);
       setPhase('error');
     }
 
-    // 1. Subscribe to SIGNED_IN first (fires after any successful exchange)
+    // 1. Listen for SIGNED_IN — fires after any successful code/token exchange
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[AUTH] onAuthStateChange:', event);
         if (event === 'SIGNED_IN' && session?.user) {
           onSuccess();
         }
       }
     );
 
-    // 2. If there's a PKCE code in the URL, exchange it explicitly
+    // 2a. PKCE flow — ?code= in query string
     const code = searchParams.get('code');
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      console.log('[AUTH] Found ?code= — calling exchangeCodeForSession');
+      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
         if (error) {
-          console.error('[Auth] exchangeCodeForSession error:', error.message);
-          onError();
+          onError(`exchangeCodeForSession: ${error.message}`);
+        } else if (data.session) {
+          // onAuthStateChange may not fire in all SDK versions; guard here
+          onSuccess();
         }
-        // On success, onAuthStateChange fires SIGNED_IN → onSuccess()
       });
     }
 
-    // 3. Also check for an already-established session (handles edge cases
-    //    where the SDK processed the code before this effect ran)
+    // 2b. Implicit flow — #access_token= in hash fragment
+    // window.location.hash is not available during SSR; access it inside useEffect
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (!code && hash.includes('access_token=')) {
+      console.log('[AUTH] Found #access_token= — parsing hash tokens');
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken && refreshToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ data, error }) => {
+            if (error) {
+              onError(`setSession: ${error.message}`);
+            } else if (data.session) {
+              onSuccess();
+            }
+          });
+      } else {
+        onError('Hash present but access_token/refresh_token missing');
+      }
+    }
+
+    // 3. Check for already-established session (covers repeated visits / fast SDK)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) onSuccess();
+      if (session?.user) {
+        console.log('[AUTH] getSession returned active session');
+        onSuccess();
+      }
     });
 
-    // 4. Timeout — link expired, wrong URL, or cookie/localStorage mismatch
+    // 4. If neither code nor hash is present, start the timeout immediately
+    if (!code && !hash.includes('access_token=')) {
+      console.warn('[AUTH] No ?code or #access_token in URL — waiting for onAuthStateChange');
+    }
+
+    // 5. Timeout — catches misconfigured links, expired codes, missing verifier
     const timeoutId = setTimeout(() => {
-      if (!settled) onError();
-    }, 8000);
+      if (!settled) onError('Timeout after 10s — no session established');
+    }, 10000);
 
     return () => {
       subscription.unsubscribe();
@@ -94,7 +128,7 @@ function AuthCallbackContent() {
     };
   }, [router, searchParams]);
 
-  // ── Resend form handler ───────────────────────────────────────────────────
+  // ── Resend handler — also hardcodes production redirectTo ────────────────
   async function handleResend(e: React.FormEvent) {
     e.preventDefault();
     setResendError('');
@@ -102,7 +136,8 @@ function AuthCallbackContent() {
     setResendDone(false);
     const redirectTo = process.env.NEXT_PUBLIC_APP_URL
       ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-      : `${window.location.origin}/auth/callback`;
+      : 'https://thesteadyone.com/auth/callback';
+    console.log('[AUTH] Resend — using redirectTo:', redirectTo);
     try {
       const supabase = createSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOtp({
@@ -130,8 +165,8 @@ function AuthCallbackContent() {
           <div className="max-w-sm w-full bg-white border border-[#E5E5E5] rounded-xl p-6 shadow-sm">
             <p className="text-[#0A2540] font-semibold mb-1">Link expired</p>
             <p className="text-[#666666] text-sm mb-5 leading-relaxed">
-              This link has expired or already been used. Enter your email to get a new one.
-              Check your inbox (including spam).
+              This link has expired or already been used. Enter your email below
+              to get a fresh link. Check your inbox <em>and</em> spam folder.
             </p>
 
             {!resendDone ? (
@@ -196,7 +231,7 @@ function AuthCallbackContent() {
   );
 }
 
-// ─── Page export (Suspense required for useSearchParams) ──────────────────────
+// ─── Page export ──────────────────────────────────────────────────────────────
 
 export default function AuthCallbackPage() {
   return (
