@@ -36,17 +36,18 @@ function PaywallContent() {
   // ── Step 1: send magic link ────────────────────────────────────────────────
   async function handleSendLink(e: React.FormEvent) {
     e.preventDefault();
-    await doSendLink();
-    setStep('link_sent');
+    const ok = await doSendLink();
+    if (ok) setStep('link_sent');
   }
 
   async function handleResend() {
     setResent(false);
-    await doSendLink();
-    setResent(true);
+    const ok = await doSendLink();
+    if (ok) setResent(true);
   }
 
-  async function doSendLink() {
+  // Returns true on success, false on error
+  async function doSendLink(): Promise<boolean> {
     setError(null);
     setLoading(true);
     try {
@@ -57,8 +58,10 @@ function PaywallContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to send link.');
+      return true;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
+      return false;
     } finally {
       setLoading(false);
     }

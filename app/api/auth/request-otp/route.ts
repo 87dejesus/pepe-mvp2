@@ -22,7 +22,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
   }
 
-  const origin = req.headers.get('origin') ?? 'https://www.thesteadyone.com';
+  // NEXT_PUBLIC_APP_URL must be set in Vercel env: https://thesteadyone.com
+  // Locally set it in .env.local: http://localhost:3000
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://thesteadyone.com';
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
     email,
     options: {
       shouldCreateUser: true,
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${appUrl}/auth/callback`,
       data: { app: 'the-steady-one' },
     },
   });
