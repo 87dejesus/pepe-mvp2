@@ -1,25 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
 // Dev mock — only active when NEXT_PUBLIC_DEV_MOCK_ENABLED=true
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
-type Step = 'email' | 'otp' | 'stripe';
+type Step = 'email' | 'link_sent' | 'stripe';
 
-export default function PaywallPage() {
+// ─── Inner content (needs useSearchParams → must be inside Suspense) ──────────
+
+function PaywallContent() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Step 1: send OTP ──────────────────────────────────────────────────────
-  async function handleRequestOtp(e: React.FormEvent) {
+  // When /auth/callback redirects back with ?step=stripe&userId=...&email=...
+  useEffect(() => {
+    const urlStep = searchParams.get('step');
+    const urlUserId = searchParams.get('userId');
+    const urlEmail = searchParams.get('email');
+    if (urlStep === 'stripe' && urlUserId && urlEmail) {
+      setUserId(urlUserId);
+      setEmail(decodeURIComponent(urlEmail));
+      setStep('stripe');
+    }
+  }, [searchParams]);
+
+  // ── Step 1: send magic link ────────────────────────────────────────────────
+  async function handleSendLink(e: React.FormEvent) {
     e.preventDefault();
+    await doSendLink();
+    setStep('link_sent');
+  }
+
+  async function handleResend() {
+    setResent(false);
+    await doSendLink();
+    setResent(true);
+  }
+
+  async function doSendLink() {
     setError(null);
     setLoading(true);
     try {
@@ -29,8 +56,7 @@ export default function PaywallPage() {
         body: JSON.stringify({ email: email.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to send code.');
-      setStep('otp');
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send link.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -38,29 +64,7 @@ export default function PaywallPage() {
     }
   }
 
-  // ── Step 2: verify OTP ───────────────────────────────────────────────────
-  async function handleVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), token: otp.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Invalid code.');
-      setUserId(data.userId);
-      setStep('stripe');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ── Step 3: Stripe checkout ───────────────────────────────────────────────
+  // ── Step 3: Stripe checkout ────────────────────────────────────────────────
   async function handleStartTrial() {
     setError(null);
     setLoading(true);
@@ -68,7 +72,7 @@ export default function PaywallPage() {
       const res = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), userId }),
+        body: JSON.stringify({ email, userId }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Failed to start checkout.');
@@ -79,7 +83,7 @@ export default function PaywallPage() {
     }
   }
 
-  const stepIndex = { email: 0, otp: 1, stripe: 2 } as const;
+  const stepIndex: Record<Step, number> = { email: 0, link_sent: 1, stripe: 2 };
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
@@ -137,7 +141,7 @@ export default function PaywallPage() {
 
             {/* Step indicator */}
             <div className="flex items-center gap-1 mb-5">
-              {(['email', 'otp', 'stripe'] as Step[]).map((s, i) => {
+              {(['email', 'link_sent', 'stripe'] as Step[]).map((s, i) => {
                 const done = stepIndex[step] > i;
                 const active = step === s;
                 return (
@@ -156,13 +160,13 @@ export default function PaywallPage() {
                 );
               })}
               <span className="text-xs text-[#666666] ml-2 shrink-0">
-                {step === 'email' ? 'Your email' : step === 'otp' ? 'Code' : 'Start trial'}
+                {step === 'email' ? 'Your email' : step === 'link_sent' ? 'Verify' : 'Start trial'}
               </span>
             </div>
 
             {/* Step 1 — Email */}
             {step === 'email' && (
-              <form onSubmit={handleRequestOtp} className="space-y-3">
+              <form onSubmit={handleSendLink} className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Email address
@@ -185,55 +189,64 @@ export default function PaywallPage() {
                   {loading ? <Spinner /> : 'Continue →'}
                 </button>
                 <p className="text-xs text-[#666666] text-center">
-                  We&apos;ll send a 6-digit verification code to your email.
+                  We&apos;ll send a confirmation link to your email.
                 </p>
               </form>
             )}
 
-            {/* Step 2 — OTP */}
-            {step === 'otp' && (
-              <form onSubmit={handleVerifyOtp} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
-                    Code sent to {email}
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]{6}"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="000000"
-                    required
-                    autoFocus
-                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-2xl font-bold tracking-widest text-center text-[#0A2540] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
-                  />
+            {/* Step 2 — Link sent */}
+            {step === 'link_sent' && (
+              <div className="space-y-4">
+                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-4 text-center">
+                  <p className="text-3xl mb-2">📬</p>
+                  <p className="text-[#0A2540] font-semibold text-sm mb-1">
+                    Check your inbox
+                  </p>
+                  <p className="text-[#666666] text-sm leading-relaxed">
+                    We sent a confirmation link to{' '}
+                    <span className="font-semibold text-[#0A2540]">{email}</span>.
+                    Click it to verify and complete signup.
+                  </p>
                 </div>
+
+                {resent && (
+                  <p className="text-center text-xs font-medium text-[#00A651]">
+                    Link resent — check your inbox.
+                  </p>
+                )}
+
+                <p className="text-xs text-[#666666] text-center">
+                  Didn&apos;t get it? Check your spam folder, or resend:
+                </p>
+
                 <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] disabled:opacity-50 transition-all"
                 >
-                  {loading ? <Spinner /> : 'Verify →'}
+                  {loading ? <Spinner dark /> : 'Resend link'}
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => { setStep('email'); setOtp(''); setError(null); }}
+                  onClick={() => { setStep('email'); setResent(false); setError(null); }}
                   className="w-full text-xs text-[#666666] hover:text-[#0A2540] underline"
                 >
                   ← Change email
                 </button>
-              </form>
+              </div>
             )}
 
-            {/* Step 3 — Stripe */}
+            {/* Step 3 — Stripe (reached via /auth/callback redirect) */}
             {step === 'stripe' && (
               <div className="space-y-3">
-                <p className="text-sm text-[#666666]">
-                  Account created for <span className="font-semibold text-[#0A2540]">{email}</span>.
-                  Start your free trial:
-                </p>
+                <div className="flex items-center gap-2 bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-3 py-2.5">
+                  <span className="text-[#00A651] font-bold">✓</span>
+                  <p className="text-sm text-[#0A2540]">
+                    Email verified —{' '}
+                    <span className="font-semibold">{email}</span>
+                  </p>
+                </div>
                 <button
                   onClick={handleStartTrial}
                   disabled={loading}
@@ -258,7 +271,7 @@ export default function PaywallPage() {
           {IS_DEV_MOCK && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <p className="text-xs font-semibold uppercase text-amber-700 mb-2">
-                Dev mode — test without Stripe or OTP
+                Dev mode — test without Stripe or email
               </p>
               <div className="flex flex-col gap-1.5">
                 <DevMockButton scenario="trialing" label="Simulate trial (full access)" />
@@ -284,10 +297,24 @@ export default function PaywallPage() {
   );
 }
 
-function Spinner() {
+// ─── Page export (Suspense required for useSearchParams) ──────────────────────
+
+export default function PaywallPage() {
+  return (
+    <Suspense>
+      <PaywallContent />
+    </Suspense>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function Spinner({ dark }: { dark?: boolean }) {
   return (
     <span className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <span className={`w-4 h-4 border-2 rounded-full animate-spin ${
+        dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
+      }`} />
       Loading…
     </span>
   );
