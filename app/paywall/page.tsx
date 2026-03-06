@@ -2,14 +2,13 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { createBrowserClient } from '@supabase/ssr';
 
-// Dev mock — only active when NEXT_PUBLIC_DEV_MOCK_ENABLED=true
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
+const REDIRECT_URL = 'https://thesteadyone.com/auth/callback';
 
-type Step = 'email' | 'otp';
+type Step = 'email' | 'link_sent';
 
 function createSupabase() {
   return createBrowserClient(
@@ -21,99 +20,49 @@ function createSupabase() {
 // ─── Inner content ────────────────────────────────────────────────────────────
 
 function PaywallContent() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
 
-  // ── Step 1: send OTP ────────────────────────────────────────────────────────
-  async function handleSendOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const supabase = createSupabase();
-      const cleanEmail = email.trim().toLowerCase();
-      console.log('[OTP DEBUG] Sending code to:', cleanEmail);
-      const { error } = await supabase.auth.signInWithOtp({
-        email: cleanEmail,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: null,  // null = force OTP code, not magic link
-        },
-      });
-      console.log('[OTP DEBUG] Received response from signInWithOtp', error ? `error: ${error.message}` : 'ok');
-      if (error) throw error;
-      setStep('otp');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send code. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ── Resend OTP ──────────────────────────────────────────────────────────────
-  async function handleResend() {
-    setError(null);
-    setResent(false);
-    setLoading(true);
-    try {
-      const supabase = createSupabase();
-      const cleanEmail = email.trim().toLowerCase();
-      console.log('[OTP DEBUG] Resending code to:', cleanEmail);
-      const { error } = await supabase.auth.signInWithOtp({
-        email: cleanEmail,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: null,
-        },
-      });
-      console.log('[OTP DEBUG] Resend response', error ? `error: ${error.message}` : 'ok');
-      if (error) throw error;
-      setResent(true);
-      setOtp('');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to resend. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ── Step 2: verify OTP → /decision ─────────────────────────────────────────
-  async function handleVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const supabase = createSupabase();
-      const cleanEmail = email.trim().toLowerCase();
-      console.log('[OTP DEBUG] Verifying code:', otp, 'for:', cleanEmail);
-      const { error } = await supabase.auth.verifyOtp({
-        email: cleanEmail,
-        token: otp.trim(),
-        type: 'signup',
-      });
-      console.log('[OTP DEBUG] verifyOtp response', error ? `error: ${error.message}` : 'ok');
-      if (error) throw error;
-      router.push('/decision');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Verification failed. Try again.';
-      const isLinkOrExpiry = /expired|invalid|link/i.test(msg);
-      setError(
-        isLinkOrExpiry
-          ? 'Code expired or invalid. Request a new one below — do not click any link in the email, enter the 6-digit number only.'
-          : msg
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const isAdmin = email.trim().toLowerCase() === 'luhciano.sj@gmail.com';
-  const stepIndex: Record<Step, number> = { email: 0, otp: 1 };
+
+  async function sendLink(targetEmail: string): Promise<boolean> {
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = createSupabase();
+      console.log('[AUTH] Sending magic link to:', targetEmail, '→', REDIRECT_URL);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: targetEmail,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: REDIRECT_URL,
+        },
+      });
+      console.log('[AUTH] signInWithOtp result:', error ? error.message : 'ok');
+      if (error) throw error;
+      return true;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send link. Try again.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSendLink(e: React.FormEvent) {
+    e.preventDefault();
+    const ok = await sendLink(email.trim().toLowerCase());
+    if (ok) setStep('link_sent');
+  }
+
+  async function handleResend() {
+    setResent(false);
+    const ok = await sendLink(email.trim().toLowerCase());
+    if (ok) setResent(true);
+  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
@@ -169,34 +118,9 @@ function PaywallContent() {
               3 days free — no charge during trial
             </p>
 
-            {/* Step indicator */}
-            <div className="flex items-center gap-2 mb-5">
-              {(['email', 'otp'] as Step[]).map((s, i) => {
-                const done = stepIndex[step] > i;
-                const active = step === s;
-                return (
-                  <div key={s} className="flex items-center gap-2 flex-1 last:flex-none">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border-2 shrink-0 transition-colors ${
-                      done   ? 'bg-[#00A651] border-[#00A651] text-white'
-                             : active ? 'bg-[#0A2540] border-[#0A2540] text-white'
-                             : 'bg-[#F8F6F3] border-[#E5E5E5] text-[#666666]'
-                    }`}>
-                      {done ? '✓' : i + 1}
-                    </div>
-                    {i < 1 && (
-                      <div className={`flex-1 h-0.5 ${done ? 'bg-[#00A651]' : 'bg-[#E5E5E5]'}`} />
-                    )}
-                  </div>
-                );
-              })}
-              <span className="text-xs text-[#666666] ml-1 shrink-0">
-                {step === 'email' ? 'Your email' : 'Enter code'}
-              </span>
-            </div>
-
             {/* ── Step 1 — Email ── */}
             {step === 'email' && (
-              <form onSubmit={handleSendOtp} className="space-y-3">
+              <form onSubmit={handleSendLink} className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Email address
@@ -216,10 +140,10 @@ function PaywallContent() {
                   disabled={loading || !email.trim()}
                   className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner /> : 'Send code →'}
+                  {loading ? <Spinner /> : 'Continue →'}
                 </button>
                 <p className="text-xs text-[#666666] text-center">
-                  We&apos;ll send a 6-digit code to your email.
+                  We&apos;ll send a confirmation link to your email.
                 </p>
                 {isAdmin && (
                   <p className="text-xs text-[#00A651] text-center font-medium">
@@ -229,68 +153,51 @@ function PaywallContent() {
               </form>
             )}
 
-            {/* ── Step 2 — OTP ── */}
-            {step === 'otp' && (
+            {/* ── Step 2 — Link sent ── */}
+            {step === 'link_sent' && (
               <div className="space-y-4">
-                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-3">
-                  <p className="text-[#0A2540] font-semibold text-sm mb-0.5">
-                    We sent a 6-digit code to your email.
+                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-4">
+                  <p className="text-[#0A2540] font-semibold text-sm mb-1">
+                    Check your inbox
                   </p>
-                  <p className="text-[#666666] text-xs">
-                    Sent to <span className="font-medium text-[#0A2540]">{email}</span>. Check your inbox and spam folder.
+                  <p className="text-[#666666] text-sm leading-relaxed">
+                    We sent a confirmation link to{' '}
+                    <span className="font-semibold text-[#0A2540]">{email}</span>.
+                    Click it to verify and continue.
+                  </p>
+                  <p className="text-[#666666] text-xs mt-2">
+                    Also check your spam folder if you don&apos;t see it.
                   </p>
                 </div>
 
-                {resent && (
-                  <p className="text-center text-xs font-medium text-[#00A651]">
-                    New code sent — check your inbox.
+                {isAdmin && (
+                  <p className="text-xs text-[#00A651] text-center font-medium">
+                    Admin account — full access granted after clicking the link.
                   </p>
                 )}
 
-                <form onSubmit={handleVerifyOtp} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
-                      6-digit code
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="123456"
-                      required
-                      autoFocus
-                      className="w-full border border-[#E5E5E5] rounded-lg px-3 py-3 text-2xl font-bold text-center text-[#0A2540] tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading || otp.length < 6}
-                    className="w-full h-14 rounded-lg bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all"
-                  >
-                    {loading ? <Spinner /> : 'Verify Code →'}
-                  </button>
-                </form>
+                {resent && (
+                  <p className="text-center text-xs font-medium text-[#00A651]">
+                    New link sent — check your inbox.
+                  </p>
+                )}
 
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={() => { setStep('email'); setOtp(''); setError(null); setResent(false); }}
-                    className="text-xs text-[#666666] hover:text-[#0A2540] underline"
-                  >
-                    ← Change email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={loading}
-                    className="text-xs text-[#666666] hover:text-[#0A2540] underline disabled:opacity-50"
-                  >
-                    Resend code
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] disabled:opacity-50 transition-all"
+                >
+                  {loading ? <Spinner dark /> : 'Resend link'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setStep('email'); setError(null); setResent(false); }}
+                  className="w-full text-xs text-[#666666] hover:text-[#0A2540] underline"
+                >
+                  ← Change email
+                </button>
               </div>
             )}
 
@@ -343,10 +250,12 @@ export default function PaywallPage() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function Spinner() {
+function Spinner({ dark }: { dark?: boolean }) {
   return (
     <span className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+      <span className={`w-4 h-4 border-2 rounded-full animate-spin ${
+        dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
+      }`} />
       Loading…
     </span>
   );
