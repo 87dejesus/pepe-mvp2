@@ -1,106 +1,108 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { createBrowserClient } from '@supabase/ssr';
 
 // Dev mock — only active when NEXT_PUBLIC_DEV_MOCK_ENABLED=true
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
-type Step = 'email' | 'link_sent' | 'stripe';
+type Step = 'email' | 'otp';
 
-// ─── Inner content (needs useSearchParams → must be inside Suspense) ──────────
+function createSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+// ─── Inner content ────────────────────────────────────────────────────────────
 
 function PaywallContent() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [userId, setUserId] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
 
-  // When redirected back with ?step=stripe&userId=...&email=... (legacy fallback)
-  useEffect(() => {
-    const urlStep = searchParams.get('step');
-    const urlUserId = searchParams.get('userId');
-    const urlEmail = searchParams.get('email');
-    if (urlStep === 'stripe' && urlUserId && urlEmail) {
-      setUserId(urlUserId);
-      setEmail(decodeURIComponent(urlEmail));
-      setStep('stripe');
-    }
-  }, [searchParams]);
-
-  // ── Step 1: send magic link ────────────────────────────────────────────────
-  async function handleSendLink(e: React.FormEvent) {
+  // ── Step 1: send OTP ────────────────────────────────────────────────────────
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
-    const ok = await doSendLink();
-    if (ok) setStep('link_sent');
-  }
-
-  async function handleResend() {
-    setResent(false);
-    const ok = await doSendLink();
-    if (ok) setResent(true);
-  }
-
-  // Returns true on success, false on error.
-  // emailRedirectTo is hardcoded to the production URL so Supabase never
-  // generates a localhost link regardless of where signInWithOtp is called.
-  async function doSendLink(): Promise<boolean> {
     setError(null);
     setLoading(true);
-    const redirectTo = process.env.NEXT_PUBLIC_APP_URL
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-      : 'https://thesteadyone.com/auth/callback';
-    console.log('[AUTH] Using redirectTo:', redirectTo);
     try {
-      const supabase = createSupabaseBrowserClient();
+      const supabase = createSupabase();
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: redirectTo,
-          data: { app: 'the-steady-one' },
-        },
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: true },
       });
       if (error) throw error;
-      return true;
+      setStep('otp');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send link.');
-      return false;
+      setError(err instanceof Error ? err.message : 'Failed to send code. Try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Step 3: Stripe checkout ────────────────────────────────────────────────
-  async function handleStartTrial() {
+  // ── Resend OTP ──────────────────────────────────────────────────────────────
+  async function handleResend() {
     setError(null);
+    setResent(false);
     setLoading(true);
     try {
-      const res = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, userId }),
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: true },
       });
-      const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Failed to start checkout.');
-      window.location.href = data.url;
+      if (error) throw error;
+      setResent(true);
+      setOtp('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : 'Failed to resend. Try again.');
+    } finally {
       setLoading(false);
     }
   }
 
-  const stepIndex: Record<Step, number> = { email: 0, link_sent: 1, stripe: 2 };
+  // ── Step 2: verify OTP → /decision ─────────────────────────────────────────
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: otp.trim(),
+        type: 'email',
+      });
+      if (error) throw error;
+      // Session is now established — go straight to decision
+      router.push('/decision');
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message.includes('expired') || err.message.includes('invalid')
+            ? 'Incorrect or expired code. Check your email or request a new code.'
+            : err.message
+          : 'Verification failed. Try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const stepIndex: Record<Step, number> = { email: 0, otp: 1 };
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-      <Header />
+      <Header variant="light" />
 
       <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
         <div className="max-w-sm w-full">
@@ -110,7 +112,7 @@ function PaywallContent() {
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Heed"
-              className="w-20 h-20 sm:w-24 sm:h-24 object-contain mx-auto mb-3"
+              className="max-w-[80px] w-full h-auto object-contain mx-auto mb-3"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.
@@ -140,7 +142,7 @@ function PaywallContent() {
             </ul>
           </div>
 
-          {/* Auth + Checkout card */}
+          {/* Auth card */}
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
 
             {/* Pricing */}
@@ -153,33 +155,33 @@ function PaywallContent() {
             </p>
 
             {/* Step indicator */}
-            <div className="flex items-center gap-1 mb-5">
-              {(['email', 'link_sent', 'stripe'] as Step[]).map((s, i) => {
+            <div className="flex items-center gap-2 mb-5">
+              {(['email', 'otp'] as Step[]).map((s, i) => {
                 const done = stepIndex[step] > i;
                 const active = step === s;
                 return (
-                  <div key={s} className="flex items-center gap-1 flex-1 last:flex-none">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border-2 shrink-0 ${
-                      done ? 'bg-[#00A651] border-[#00A651] text-white'
-                           : active ? 'bg-[#0A2540] border-[#0A2540] text-white'
-                           : 'bg-[#F8F6F3] border-[#E5E5E5] text-[#666666]'
+                  <div key={s} className="flex items-center gap-2 flex-1 last:flex-none">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border-2 shrink-0 transition-colors ${
+                      done   ? 'bg-[#00A651] border-[#00A651] text-white'
+                             : active ? 'bg-[#0A2540] border-[#0A2540] text-white'
+                             : 'bg-[#F8F6F3] border-[#E5E5E5] text-[#666666]'
                     }`}>
                       {done ? '✓' : i + 1}
                     </div>
-                    {i < 2 && (
+                    {i < 1 && (
                       <div className={`flex-1 h-0.5 ${done ? 'bg-[#00A651]' : 'bg-[#E5E5E5]'}`} />
                     )}
                   </div>
                 );
               })}
-              <span className="text-xs text-[#666666] ml-2 shrink-0">
-                {step === 'email' ? 'Your email' : step === 'link_sent' ? 'Verify' : 'Start trial'}
+              <span className="text-xs text-[#666666] ml-1 shrink-0">
+                {step === 'email' ? 'Your email' : 'Enter code'}
               </span>
             </div>
 
-            {/* Step 1 — Email */}
+            {/* ── Step 1 — Email ── */}
             {step === 'email' && (
-              <form onSubmit={handleSendLink} className="space-y-3">
+              <form onSubmit={handleSendOtp} className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Email address
@@ -199,77 +201,76 @@ function PaywallContent() {
                   disabled={loading || !email.trim()}
                   className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner /> : 'Continue →'}
+                  {loading ? <Spinner /> : 'Send code →'}
                 </button>
                 <p className="text-xs text-[#666666] text-center">
-                  We&apos;ll send a confirmation link to your email.
+                  We&apos;ll send a 6-digit code to your email.
                 </p>
               </form>
             )}
 
-            {/* Step 2 — Link sent */}
-            {step === 'link_sent' && (
+            {/* ── Step 2 — OTP ── */}
+            {step === 'otp' && (
               <div className="space-y-4">
-                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-4 text-center">
-                  <p className="text-3xl mb-2">📬</p>
-                  <p className="text-[#0A2540] font-semibold text-sm mb-1">
-                    Check your inbox
+                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-3">
+                  <p className="text-[#0A2540] font-semibold text-sm mb-0.5">
+                    We sent a 6-digit code to your email.
                   </p>
-                  <p className="text-[#666666] text-sm leading-relaxed">
-                    We sent a confirmation link to{' '}
-                    <span className="font-semibold text-[#0A2540]">{email}</span>.
-                    Click it to verify and complete signup.
+                  <p className="text-[#666666] text-xs">
+                    Sent to <span className="font-medium text-[#0A2540]">{email}</span>. Check your inbox and spam folder.
                   </p>
                 </div>
 
                 {resent && (
                   <p className="text-center text-xs font-medium text-[#00A651]">
-                    Link resent — check your inbox.
+                    New code sent — check your inbox.
                   </p>
                 )}
 
-                <p className="text-xs text-[#666666] text-center">
-                  Didn&apos;t get it? Check your spam folder, or resend:
-                </p>
+                <form onSubmit={handleVerifyOtp} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
+                      6-digit code
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="123456"
+                      required
+                      autoFocus
+                      className="w-full border border-[#E5E5E5] rounded-lg px-3 py-3 text-2xl font-bold text-center text-[#0A2540] tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || otp.length < 6}
+                    className="w-full h-14 rounded-lg bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all"
+                  >
+                    {loading ? <Spinner /> : 'Verify →'}
+                  </button>
+                </form>
 
-                <button
-                  onClick={handleResend}
-                  disabled={loading}
-                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] disabled:opacity-50 transition-all"
-                >
-                  {loading ? <Spinner dark /> : 'Resend link'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { setStep('email'); setResent(false); setError(null); }}
-                  className="w-full text-xs text-[#666666] hover:text-[#0A2540] underline"
-                >
-                  ← Change email
-                </button>
-              </div>
-            )}
-
-            {/* Step 3 — Stripe (reached via /auth/callback redirect) */}
-            {step === 'stripe' && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-3 py-2.5">
-                  <span className="text-[#00A651] font-bold">✓</span>
-                  <p className="text-sm text-[#0A2540]">
-                    Email verified —{' '}
-                    <span className="font-semibold">{email}</span>
-                  </p>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setStep('email'); setOtp(''); setError(null); setResent(false); }}
+                    className="text-xs text-[#666666] hover:text-[#0A2540] underline"
+                  >
+                    ← Change email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={loading}
+                    className="text-xs text-[#666666] hover:text-[#0A2540] underline disabled:opacity-50"
+                  >
+                    Resend code
+                  </button>
                 </div>
-                <button
-                  onClick={handleStartTrial}
-                  disabled={loading}
-                  className="w-full h-14 rounded-lg bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all select-none"
-                >
-                  {loading ? <Spinner /> : 'Start 3-day free trial →'}
-                </button>
-                <p className="text-xs text-[#666666] text-center">
-                  Cancel anytime. No charge for 3 days.
-                </p>
               </div>
             )}
 
@@ -310,7 +311,7 @@ function PaywallContent() {
   );
 }
 
-// ─── Page export (Suspense required for useSearchParams) ──────────────────────
+// ─── Page export ──────────────────────────────────────────────────────────────
 
 export default function PaywallPage() {
   return (
@@ -320,14 +321,12 @@ export default function PaywallPage() {
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function Spinner({ dark }: { dark?: boolean }) {
+function Spinner() {
   return (
     <span className="flex items-center justify-center gap-2">
-      <span className={`w-4 h-4 border-2 rounded-full animate-spin ${
-        dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
-      }`} />
+      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
       Loading…
     </span>
   );
