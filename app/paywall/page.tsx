@@ -36,10 +36,16 @@ function PaywallContent() {
     setLoading(true);
     try {
       const supabase = createSupabase();
+      const cleanEmail = email.trim().toLowerCase();
+      console.log('[OTP DEBUG] Sending code to:', cleanEmail);
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: true, emailRedirectTo: null },
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: null,  // null = force OTP code, not magic link
+        },
       });
+      console.log('[OTP DEBUG] Received response from signInWithOtp', error ? `error: ${error.message}` : 'ok');
       if (error) throw error;
       setStep('otp');
     } catch (err: unknown) {
@@ -56,10 +62,16 @@ function PaywallContent() {
     setLoading(true);
     try {
       const supabase = createSupabase();
+      const cleanEmail = email.trim().toLowerCase();
+      console.log('[OTP DEBUG] Resending code to:', cleanEmail);
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: true, emailRedirectTo: null },
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: null,
+        },
       });
+      console.log('[OTP DEBUG] Resend response', error ? `error: ${error.message}` : 'ok');
       if (error) throw error;
       setResent(true);
       setOtp('');
@@ -77,21 +89,23 @@ function PaywallContent() {
     setLoading(true);
     try {
       const supabase = createSupabase();
+      const cleanEmail = email.trim().toLowerCase();
+      console.log('[OTP DEBUG] Verifying code:', otp, 'for:', cleanEmail);
       const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         token: otp.trim(),
         type: 'signup',
       });
+      console.log('[OTP DEBUG] verifyOtp response', error ? `error: ${error.message}` : 'ok');
       if (error) throw error;
-      // Session established — admin gets full access, everyone else hits paywall check in /decision
       router.push('/decision');
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Verification failed. Try again.';
+      const isLinkOrExpiry = /expired|invalid|link/i.test(msg);
       setError(
-        err instanceof Error
-          ? err.message.includes('expired') || err.message.includes('invalid')
-            ? 'Incorrect or expired code. Check your email or request a new code.'
-            : err.message
-          : 'Verification failed. Try again.'
+        isLinkOrExpiry
+          ? 'Code expired or invalid. Request a new one below — do not click any link in the email, enter the 6-digit number only.'
+          : msg
       );
     } finally {
       setLoading(false);
