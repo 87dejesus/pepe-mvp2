@@ -82,19 +82,15 @@ export default function FlowPage() {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-10 max-w-sm w-full text-center">
-            <div
-              className="w-28 h-28 rounded-full mx-auto mb-6 border border-white/20 bg-white/[0.07] flex items-center justify-center"
+            <Image
+              src="/brand/pepe-ny.jpeg"
+              alt="Heed analyzing…"
+              width={128}
+              height={128}
+              className="w-32 h-32 object-contain mx-auto mb-6"
               style={{ animation: "heedPulse 2s ease-in-out infinite" }}
-            >
-              <Image
-                src="/brand/pepe-ny.jpeg"
-                alt="Heed analyzing…"
-                width={112}
-                height={112}
-                className="w-full h-full rounded-full object-contain"
-                unoptimized
-              />
-            </div>
+              unoptimized
+            />
             <div
               className="w-7 h-7 border-2 border-white/60 border-t-transparent rounded-full mx-auto mb-5"
               style={{ animation: "heedSpin 1s linear infinite" }}
@@ -185,9 +181,11 @@ export default function FlowPage() {
 
         {/* Heed bubble + question */}
         <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-          <div className="w-11 h-11 rounded-full border border-white/20 bg-white/[0.07] shrink-0 mt-0.5 flex items-center justify-center">
-            <img src="/brand/pepe-ny.jpeg" alt="Heed" className="w-full h-full rounded-full object-contain" />
-          </div>
+          <img
+            src="/brand/pepe-ny.jpeg"
+            alt="Heed"
+            className="w-12 h-12 object-contain shrink-0 mt-0.5"
+          />
           <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
             <p className="text-sm font-semibold text-[#0A2540] leading-snug">
               {questions[step]}

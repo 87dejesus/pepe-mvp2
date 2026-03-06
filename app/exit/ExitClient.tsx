@@ -14,7 +14,7 @@ export default function ExitClient() {
           <img
             src="/brand/pepe-ny.jpeg"
             alt="Heed"
-            className="w-24 h-24 mx-auto mb-6 rounded-full border border-[#E5E5E5] object-cover shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+            className="w-32 h-32 object-contain mx-auto mb-6"
           />
 
           {/* Main message */}

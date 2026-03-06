@@ -844,7 +844,7 @@ function DecisionClientInner() {
                 <img
                   src="/brand/pepe-ny.jpeg"
                   alt="Heed"
-                  className="w-10 h-10 rounded-full border border-white/20 object-cover shrink-0"
+                  className="w-10 h-10 object-contain shrink-0"
                 />
                 <div>
                   <h1 className="text-lg font-semibold text-white">No matches right now</h1>

@@ -110,7 +110,7 @@ function PaywallContent() {
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Heed"
-              className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full border border-[#E5E5E5] object-cover"
+              className="w-20 h-20 sm:w-24 sm:h-24 object-contain mx-auto mb-3"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.

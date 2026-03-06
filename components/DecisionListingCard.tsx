@@ -250,7 +250,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             <img
               src="/brand/pepe-ny.jpeg"
               alt="Heed"
-              className="w-9 h-9 rounded-full border border-[#E5E5E5] object-cover shrink-0"
+              className="w-10 h-10 object-contain shrink-0"
             />
             <div>
               <p className="text-xs font-semibold mb-1 text-[#0A2540]">Heed&apos;s Take</p>
