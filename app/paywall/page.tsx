@@ -256,7 +256,7 @@ function PaywallContent() {
                     disabled={loading || otp.length < 6}
                     className="w-full h-14 rounded-lg bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] transition-all"
                   >
-                    {loading ? <Spinner /> : 'Verify →'}
+                    {loading ? <Spinner /> : 'Verify Code →'}
                   </button>
                 </form>
 
