@@ -82,15 +82,17 @@ export default function FlowPage() {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-10 max-w-sm w-full text-center">
-            <Image
-              src="/brand/pepe-ny.jpeg"
-              alt="Heed analyzing…"
-              width={128}
-              height={128}
-              className="w-32 h-32 object-contain mx-auto mb-6"
-              style={{ animation: "heedPulse 2s ease-in-out infinite" }}
-              unoptimized
-            />
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/brand/pepe-ny.jpeg"
+                alt="Heed analyzing…"
+                width={140}
+                height={140}
+                className="max-w-[140px] w-full h-auto object-contain"
+                style={{ animation: "heedPulse 2s ease-in-out infinite" }}
+                unoptimized
+              />
+            </div>
             <div
               className="w-7 h-7 border-2 border-white/60 border-t-transparent rounded-full mx-auto mb-5"
               style={{ animation: "heedSpin 1s linear infinite" }}
@@ -184,7 +186,7 @@ export default function FlowPage() {
           <img
             src="/brand/pepe-ny.jpeg"
             alt="Heed"
-            className="w-12 h-12 object-contain shrink-0 mt-0.5"
+            className="max-w-[48px] w-full h-auto object-contain shrink-0 mt-0.5"
           />
           <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
             <p className="text-sm font-semibold text-[#0A2540] leading-snug">
