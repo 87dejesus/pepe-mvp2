@@ -38,7 +38,7 @@ function PaywallContent() {
       const supabase = createSupabase();
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: true },
+        options: { shouldCreateUser: true, emailRedirectTo: null },
       });
       if (error) throw error;
       setStep('otp');
@@ -58,7 +58,7 @@ function PaywallContent() {
       const supabase = createSupabase();
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: true },
+        options: { shouldCreateUser: true, emailRedirectTo: null },
       });
       if (error) throw error;
       setResent(true);
@@ -80,10 +80,10 @@ function PaywallContent() {
       const { error } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: otp.trim(),
-        type: 'email',
+        type: 'signup',
       });
       if (error) throw error;
-      // Session is now established — go straight to decision
+      // Session established — admin gets full access, everyone else hits paywall check in /decision
       router.push('/decision');
     } catch (err: unknown) {
       setError(
@@ -98,6 +98,7 @@ function PaywallContent() {
     }
   }
 
+  const isAdmin = email.trim().toLowerCase() === 'luhciano.sj@gmail.com';
   const stepIndex: Record<Step, number> = { email: 0, otp: 1 };
 
   return (
@@ -206,6 +207,11 @@ function PaywallContent() {
                 <p className="text-xs text-[#666666] text-center">
                   We&apos;ll send a 6-digit code to your email.
                 </p>
+                {isAdmin && (
+                  <p className="text-xs text-[#00A651] text-center font-medium">
+                    Admin account — full access after verification.
+                  </p>
+                )}
               </form>
             )}
 
