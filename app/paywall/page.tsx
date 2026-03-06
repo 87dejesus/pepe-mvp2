@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
+import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import Header from '@/components/Header';
 
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
-const REDIRECT_URL = 'https://thesteadyone.com/auth/callback';
+const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
-type Step = 'email' | 'link_sent';
+type Step = 'email' | 'otp';
 
 function createSupabase() {
   return createBrowserClient(
@@ -17,51 +18,82 @@ function createSupabase() {
   );
 }
 
-// ─── Inner content ────────────────────────────────────────────────────────────
-
 function PaywallContent() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resent, setResent] = useState(false);
+  const [isAdminBypass, setIsAdminBypass] = useState(false);
 
-  const isAdmin = email.trim().toLowerCase() === 'luhciano.sj@gmail.com';
+  const normalizedEmail = email.trim().toLowerCase();
 
-  async function sendLink(targetEmail: string): Promise<boolean> {
+  async function handleContinue(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
+
+    if (!normalizedEmail) return;
+
+    if (normalizedEmail === ADMIN_EMAIL) {
+      setIsAdminBypass(true);
+      router.push('/decision');
+      return;
+    }
+
     setLoading(true);
     try {
       const supabase = createSupabase();
-      console.log('[AUTH] Sending magic link to:', targetEmail, '→', REDIRECT_URL);
       const { error } = await supabase.auth.signInWithOtp({
-        email: targetEmail,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: REDIRECT_URL,
-        },
+        email: normalizedEmail,
+        options: { shouldCreateUser: true, emailRedirectTo: null },
       });
-      console.log('[AUTH] signInWithOtp result:', error ? error.message : 'ok');
+
       if (error) throw error;
-      return true;
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send link. Try again.');
-      return false;
+      setStep('otp');
+    } catch {
+      setError('Could not send code right now. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSendLink(e: React.FormEvent) {
-    e.preventDefault();
-    const ok = await sendLink(email.trim().toLowerCase());
-    if (ok) setStep('link_sent');
+  function handleOtpChange(value: string) {
+    const numbersOnly = value.replace(/\D/g, '').slice(0, 6);
+    setOtp(numbersOnly);
   }
 
-  async function handleResend() {
-    setResent(false);
-    const ok = await sendLink(email.trim().toLowerCase());
-    if (ok) setResent(true);
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (otp.trim().length !== 6) {
+      setError('Please enter the 6-digit code.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: otp.trim(),
+        type: 'signup',
+      });
+
+      if (error) throw error;
+      router.push('/decision');
+    } catch {
+      setError('Code expired or invalid. Request new code');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetToEmailStep() {
+    setStep('email');
+    setOtp('');
+    setError(null);
   }
 
   return (
@@ -70,8 +102,6 @@ function PaywallContent() {
 
       <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
         <div className="max-w-sm w-full">
-
-          {/* Mascot + Headline */}
           <div className="text-center mb-5">
             <img
               src="/brand/pepe-ny.jpeg"
@@ -86,7 +116,6 @@ function PaywallContent() {
             </p>
           </div>
 
-          {/* Value card */}
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#666666] mb-3">
               What you get
@@ -106,10 +135,7 @@ function PaywallContent() {
             </ul>
           </div>
 
-          {/* Auth card */}
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
-
-            {/* Pricing */}
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-3xl font-bold text-[#0A2540]">$2.49</span>
               <span className="text-[#666666] text-sm">/ week</span>
@@ -118,9 +144,14 @@ function PaywallContent() {
               3 days free — no charge during trial
             </p>
 
-            {/* ── Step 1 — Email ── */}
+            {isAdminBypass && (
+              <p className="mb-3 text-sm text-[#166534] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 font-medium text-center">
+                Admin account — full access granted
+              </p>
+            )}
+
             {step === 'email' && (
-              <form onSubmit={handleSendLink} className="space-y-3">
+              <form onSubmit={handleContinue} className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
                     Email address
@@ -137,78 +168,56 @@ function PaywallContent() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading || !email.trim()}
+                  disabled={loading || !normalizedEmail}
                   className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner /> : 'Continue →'}
+                  {loading ? <Spinner /> : 'Continue'}
                 </button>
-                <p className="text-xs text-[#666666] text-center">
-                  We&apos;ll send a confirmation link to your email.
-                </p>
-                {isAdmin && (
-                  <p className="text-xs text-[#00A651] text-center font-medium">
-                    Admin account — full access after verification.
-                  </p>
-                )}
               </form>
             )}
 
-            {/* ── Step 2 — Link sent ── */}
-            {step === 'link_sent' && (
-              <div className="space-y-4">
-                <div className="bg-[#F0F9F4] border border-[#00A651]/25 rounded-lg px-4 py-4">
-                  <p className="text-[#0A2540] font-semibold text-sm mb-1">
-                    Check your inbox
-                  </p>
-                  <p className="text-[#666666] text-sm leading-relaxed">
-                    We sent a confirmation link to{' '}
-                    <span className="font-semibold text-[#0A2540]">{email}</span>.
-                    Click it to verify and continue.
-                  </p>
-                  <p className="text-[#666666] text-xs mt-2">
-                    Also check your spam folder if you don&apos;t see it.
-                  </p>
-                </div>
-
-                {isAdmin && (
-                  <p className="text-xs text-[#00A651] text-center font-medium">
-                    Admin account — full access granted after clicking the link.
-                  </p>
-                )}
-
-                {resent && (
-                  <p className="text-center text-xs font-medium text-[#00A651]">
-                    New link sent — check your inbox.
-                  </p>
-                )}
-
+            {step === 'otp' && (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <p className="text-center text-sm font-medium text-[#0A2540]">
+                  Enter the 6-digit code we sent to your email
+                </p>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => handleOtpChange(e.target.value)}
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="123456"
+                  autoFocus
+                  className="w-full text-center text-3xl tracking-[0.3em] font-semibold border border-[#E5E5E5] rounded-lg px-3 py-4 text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                />
                 <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={loading}
-                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] disabled:opacity-50 transition-all"
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
-                  {loading ? <Spinner dark /> : 'Resend link'}
+                  {loading ? <Spinner /> : 'Verify Code'}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => { setStep('email'); setError(null); setResent(false); }}
-                  className="w-full text-xs text-[#666666] hover:text-[#0A2540] underline"
-                >
-                  ← Change email
-                </button>
-              </div>
+              </form>
             )}
 
             {error && (
-              <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                {error}
-              </p>
+              <div className="mt-3 space-y-3">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                  {error}
+                </p>
+                <button
+                  type="button"
+                  onClick={resetToEmailStep}
+                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
+                >
+                  Back
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Dev mock helper */}
           {IS_DEV_MOCK && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <p className="text-xs font-semibold uppercase text-amber-700 mb-2">
@@ -238,8 +247,6 @@ function PaywallContent() {
   );
 }
 
-// ─── Page export ──────────────────────────────────────────────────────────────
-
 export default function PaywallPage() {
   return (
     <Suspense>
@@ -248,14 +255,14 @@ export default function PaywallPage() {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function Spinner({ dark }: { dark?: boolean }) {
   return (
     <span className="flex items-center justify-center gap-2">
-      <span className={`w-4 h-4 border-2 rounded-full animate-spin ${
-        dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
-      }`} />
+      <span
+        className={`w-4 h-4 border-2 rounded-full animate-spin ${
+          dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
+        }`}
+      />
       Loading…
     </span>
   );
@@ -276,6 +283,7 @@ function DevMockButton({
     }
     window.location.href = '/decision';
   }
+
   return (
     <button
       onClick={apply}
