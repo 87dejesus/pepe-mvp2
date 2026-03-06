@@ -83,15 +83,15 @@ export default function FlowPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-10 max-w-sm w-full text-center">
             <div
-              className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border border-white/20"
+              className="w-28 h-28 rounded-full mx-auto mb-6 border border-white/20 bg-white/[0.07] flex items-center justify-center"
               style={{ animation: "heedPulse 2s ease-in-out infinite" }}
             >
               <Image
                 src="/brand/pepe-ny.jpeg"
                 alt="Heed analyzing…"
-                width={80}
-                height={80}
-                style={{ objectFit: "cover" }}
+                width={112}
+                height={112}
+                className="w-full h-full rounded-full object-contain"
                 unoptimized
               />
             </div>
@@ -185,8 +185,8 @@ export default function FlowPage() {
 
         {/* Heed bubble + question */}
         <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shrink-0 mt-0.5">
-            <img src="/brand/pepe-ny.jpeg" alt="Heed" className="w-full h-full object-cover" />
+          <div className="w-11 h-11 rounded-full border border-white/20 bg-white/[0.07] shrink-0 mt-0.5 flex items-center justify-center">
+            <img src="/brand/pepe-ny.jpeg" alt="Heed" className="w-full h-full rounded-full object-contain" />
           </div>
           <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
             <p className="text-sm font-semibold text-[#0A2540] leading-snug">
