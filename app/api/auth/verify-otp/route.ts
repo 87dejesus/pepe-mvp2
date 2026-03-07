@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const token = (body.token ?? '').trim();
 
   if (!email || !token) {
-    return NextResponse.json({ error: 'Email e código são obrigatórios.' }, { status: 400 });
+    return NextResponse.json({ error: 'Email and code are required.' }, { status: 400 });
   }
 
   // We need to set cookies on the response, so we build the response first
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   if (error || !data.session) {
     console.error('[Auth] verify-otp error:', error?.message);
     return NextResponse.json(
-      { error: error?.message ?? 'Código inválido. Tente novamente.' },
+      { error: error?.message ?? 'Invalid code. Please try again.' },
       { status: 400 }
     );
   }

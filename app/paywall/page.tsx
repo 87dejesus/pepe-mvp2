@@ -26,6 +26,8 @@ function PaywallContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAdminBypass, setIsAdminBypass] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -46,7 +48,7 @@ function PaywallContent() {
       const supabase = createSupabase();
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { shouldCreateUser: true, emailRedirectTo: null },
+        options: { shouldCreateUser: true },
       });
 
       if (error) throw error;
@@ -78,7 +80,7 @@ function PaywallContent() {
       const { error } = await supabase.auth.verifyOtp({
         email: normalizedEmail,
         token: otp.trim(),
-        type: 'signup',
+        type: 'email',
       });
 
       if (error) throw error;
@@ -94,6 +96,26 @@ function PaywallContent() {
     setStep('email');
     setOtp('');
     setError(null);
+    setResendSent(false);
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendSent(false);
+    setError(null);
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: true },
+      });
+      if (error) throw error;
+      setResendSent(true);
+    } catch {
+      setError('Could not resend the code. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
   }
 
   return (
@@ -103,10 +125,15 @@ function PaywallContent() {
       <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
         <div className="max-w-sm w-full">
           <div className="text-center mb-5">
+            {/*
+              Mascot slot: replace src with a transparent PNG/WebP when available.
+              e.g. src="/brand/heed-mascot.png"
+              Until then, using the wordmark logo which has no background.
+            */}
             <img
-              src="/brand/pepe-ny.jpeg"
-              alt="Heed"
-              className="max-w-[80px] w-full h-auto object-contain mx-auto mb-3"
+              src="/brand/steady-one-blue.png"
+              alt="The Steady One"
+              className="h-10 w-auto object-contain mx-auto mb-3"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.
@@ -178,9 +205,14 @@ function PaywallContent() {
 
             {step === 'otp' && (
               <form onSubmit={handleVerifyCode} className="space-y-4">
-                <p className="text-center text-sm font-medium text-[#0A2540]">
-                  Enter the 6-digit code we sent to your email
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="font-semibold text-[#0A2540]">Check your inbox</p>
+                  <p className="text-sm text-[#666666]">
+                    We sent a 6-digit verification code to{' '}
+                    <span className="font-medium text-[#0A2540]">{normalizedEmail}</span>.
+                    Enter it below to verify your email and continue.
+                  </p>
+                </div>
                 <input
                   type="text"
                   value={otp}
@@ -199,6 +231,29 @@ function PaywallContent() {
                 >
                   {loading ? <Spinner /> : 'Verify Code'}
                 </button>
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Sending…' : 'Resend code'}
+                  </button>
+                  <span className="text-[#E5E5E5]">|</span>
+                  <button
+                    type="button"
+                    onClick={resetToEmailStep}
+                    className="text-sm text-[#666666] underline underline-offset-2 hover:text-[#0A2540]"
+                  >
+                    Change email
+                  </button>
+                </div>
+                {resendSent && (
+                  <p className="text-sm text-[#00A651] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 text-center">
+                    Code resent — check your inbox.
+                  </p>
+                )}
               </form>
             )}
 
@@ -207,13 +262,15 @@ function PaywallContent() {
                 <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                   {error}
                 </p>
-                <button
-                  type="button"
-                  onClick={resetToEmailStep}
-                  className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
-                >
-                  Back
-                </button>
+                {step === 'email' && (
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
+                  >
+                    Try again
+                  </button>
+                )}
               </div>
             )}
           </div>

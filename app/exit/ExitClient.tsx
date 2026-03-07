@@ -10,11 +10,11 @@ export default function ExitClient() {
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="max-w-md w-full text-center">
-          {/* Heed mascot */}
+          {/* Mascot slot: replace src with a transparent PNG/WebP when available (e.g. /brand/heed-mascot.png) */}
           <img
-            src="/brand/pepe-ny.jpeg"
-            alt="Heed"
-            className="w-32 h-32 object-contain mx-auto mb-6"
+            src="/brand/steady-one-blue.png"
+            alt="The Steady One"
+            className="h-12 w-auto object-contain mx-auto mb-6"
           />
 
           {/* Main message */}

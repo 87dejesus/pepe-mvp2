@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
     email,
     options: {
       shouldCreateUser: true,
-      emailRedirectTo: `${appUrl}/auth/callback`,
       data: { app: 'the-steady-one' },
     },
   });
