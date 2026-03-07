@@ -12,9 +12,9 @@ export default function ExitClient() {
         <div className="max-w-md w-full text-center">
           {/* Mascot slot: replace src with a transparent PNG/WebP when available (e.g. /brand/heed-mascot.png) */}
           <img
-            src="/brand/steady-one-blue.png"
-            alt="The Steady One"
-            className="h-12 w-auto object-contain mx-auto mb-6"
+            src="/brand/heed-mascot.png"
+            alt="Heed"
+            className="w-24 h-24 object-contain mx-auto mb-6"
           />
 
           {/* Main message */}

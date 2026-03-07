@@ -131,9 +131,9 @@ function PaywallContent() {
               Until then, using the wordmark logo which has no background.
             */}
             <img
-              src="/brand/steady-one-blue.png"
-              alt="The Steady One"
-              className="h-10 w-auto object-contain mx-auto mb-3"
+              src="/brand/heed-mascot.png"
+              alt="Heed"
+              className="w-24 h-24 object-contain mx-auto mb-3"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.

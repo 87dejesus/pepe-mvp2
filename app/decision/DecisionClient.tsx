@@ -842,7 +842,7 @@ function DecisionClientInner() {
             <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-6 mb-4">
               <div className="flex items-start gap-3 mb-5">
                 <img
-                  src="/brand/pepe-ny.jpeg"
+                  src="/brand/heed-mascot.png"
                   alt="Heed"
                   className="w-10 h-10 object-contain shrink-0"
                 />

@@ -248,9 +248,9 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         <div className="mt-4 bg-[#F8F6F3] border-l-4 border-[#00A651] pl-4 py-3 pr-3 rounded-r-lg flex-1">
           <div className="flex items-start gap-3">
             <img
-              src="/brand/pepe-ny.jpeg"
+              src="/brand/heed-mascot.png"
               alt="Heed"
-              className="max-w-[48px] w-full h-auto object-contain shrink-0"
+              className="w-10 h-10 object-contain shrink-0"
             />
             <div>
               <p className="text-xs font-semibold mb-1 text-[#0A2540]">Heed&apos;s Take</p>
