@@ -1,4 +1,4 @@
-const CACHE_NAME = 'steady-one-v1';
+const CACHE_NAME = 'steady-one-v2';
 
 const PRECACHE_URLS = [
   '/',

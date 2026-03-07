@@ -126,11 +126,6 @@ function PaywallContent() {
       <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
         <div className="max-w-sm w-full">
           <div className="text-center mb-5">
-            {/*
-              Mascot slot: replace src with a transparent PNG/WebP when available.
-              e.g. src="/brand/heed-mascot.png"
-              Until then, using the wordmark logo which has no background.
-            */}
             <Image
               src="/brand/heed-mascot.png"
               alt="Heed mascot"
