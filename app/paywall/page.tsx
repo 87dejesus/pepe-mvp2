@@ -8,7 +8,6 @@ import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
-const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
 type Step = 'email' | 'otp';
 
@@ -26,7 +25,6 @@ function PaywallContent() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAdminBypass, setIsAdminBypass] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
 
@@ -37,21 +35,6 @@ function PaywallContent() {
     setError(null);
 
     if (!normalizedEmail) return;
-
-    if (normalizedEmail === ADMIN_EMAIL) {
-      console.log('[Admin] Bypass detected for', normalizedEmail);
-      setIsAdminBypass(true);
-      // Write active access to localStorage so the decision page gate doesn't
-      // redirect back to /paywall. The gate checks steady_access status='none'
-      // before a Supabase session exists — without this it always loops back.
-      localStorage.setItem('steady_access', JSON.stringify({
-        status: 'active',
-        set_at: new Date().toISOString(),
-      }));
-      console.log('[Admin] steady_access set to active, redirecting to /decision');
-      router.push('/decision');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -187,12 +170,6 @@ function PaywallContent() {
             <p className="text-[#00A651] font-semibold text-sm mb-4">
               3 days free — no charge during trial
             </p>
-
-            {isAdminBypass && (
-              <p className="mb-3 text-sm text-[#166534] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 font-medium text-center">
-                Admin account — full access granted
-              </p>
-            )}
 
             {step === 'email' && (
               <form onSubmit={handleContinue} className="space-y-3">
