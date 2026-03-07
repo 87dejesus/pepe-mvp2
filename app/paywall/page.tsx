@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
+import { activateTrialLocally } from '@/lib/access';
 
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
@@ -77,15 +78,26 @@ function PaywallContent() {
     setLoading(true);
     try {
       const supabase = createSupabase();
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email: normalizedEmail,
         token: otp.trim(),
         type: 'email',
       });
 
+      console.log('[OTP] verifyOtp result — error:', error, '| session:', !!data?.session, '| user:', data?.user?.email ?? null);
+
       if (error) throw error;
+
+      // Grant 3-day trial on successful email verification.
+      // Without this, DecisionClient reads steady_access='none' and
+      // immediately bounces the user back to /paywall.
+      activateTrialLocally();
+      console.log('[OTP] trial activated — steady_access set to trialing, pushing to /decision');
+
       router.push('/decision');
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] verifyOtp failed:', msg);
       setError('Code expired or invalid. Request new code');
     } finally {
       setLoading(false);
