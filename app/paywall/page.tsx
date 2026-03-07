@@ -46,16 +46,23 @@ function PaywallContent() {
 
     setLoading(true);
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      console.log('[OTP] env check — URL present:', !!supabaseUrl, '| KEY present:', !!supabaseKey);
+
       const supabase = createSupabase();
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: { shouldCreateUser: true },
       });
 
+      console.log('[OTP] signInWithOtp result — error:', error);
       if (error) throw error;
       setStep('otp');
-    } catch {
-      setError('Could not send code right now. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] send failed:', err);
+      setError(`Send failed: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -110,10 +117,13 @@ function PaywallContent() {
         email: normalizedEmail,
         options: { shouldCreateUser: true },
       });
+      console.log('[OTP] resend result — error:', error);
       if (error) throw error;
       setResendSent(true);
-    } catch {
-      setError('Could not resend the code. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] resend failed:', err);
+      setError(`Resend failed: ${msg}`);
     } finally {
       setResendLoading(false);
     }
