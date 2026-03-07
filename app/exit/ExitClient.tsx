@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 
@@ -11,10 +12,12 @@ export default function ExitClient() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="max-w-md w-full text-center">
           {/* Mascot slot: replace src with a transparent PNG/WebP when available (e.g. /brand/heed-mascot.png) */}
-          <img
+          <Image
             src="/brand/heed-mascot.png"
-            alt="Heed"
-            className="w-24 h-24 object-contain mx-auto mb-6"
+            alt="Heed mascot"
+            width={96}
+            height={96}
+            className="object-contain mx-auto mb-6"
           />
 
           {/* Main message */}

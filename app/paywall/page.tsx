@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
@@ -130,10 +131,12 @@ function PaywallContent() {
               e.g. src="/brand/heed-mascot.png"
               Until then, using the wordmark logo which has no background.
             */}
-            <img
+            <Image
               src="/brand/heed-mascot.png"
-              alt="Heed"
-              className="w-24 h-24 object-contain mx-auto mb-3"
+              alt="Heed mascot"
+              width={96}
+              height={96}
+              className="object-contain mx-auto mb-3"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
               Make one clear decision.

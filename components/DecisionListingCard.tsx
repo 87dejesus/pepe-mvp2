@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 type Listing = {
   id: string;
@@ -249,8 +250,10 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           <div className="flex items-start gap-3">
             <img
               src="/brand/heed-mascot.png"
-              alt="Heed"
-              className="w-10 h-10 object-contain shrink-0"
+              alt="Heed mascot"
+              width={40}
+              height={40}
+              className="object-contain shrink-0"
             />
             <div>
               <p className="text-xs font-semibold mb-1 text-[#0A2540]">Heed&apos;s Take</p>

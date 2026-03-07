@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
+import Image from 'next/image';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -843,8 +844,10 @@ function DecisionClientInner() {
               <div className="flex items-start gap-3 mb-5">
                 <img
                   src="/brand/heed-mascot.png"
-                  alt="Heed"
-                  className="w-10 h-10 object-contain shrink-0"
+                  alt="Heed mascot"
+                  width={40}
+                  height={40}
+                  className="object-contain shrink-0"
                 />
                 <div>
                   <h1 className="text-lg font-semibold text-white">No matches right now</h1>

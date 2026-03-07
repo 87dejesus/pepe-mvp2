@@ -85,10 +85,10 @@ export default function FlowPage() {
             <div className="flex justify-center mb-6">
               <Image
                 src="/brand/heed-mascot.png"
-                alt="Heed analyzing…"
-                width={112}
-                height={112}
-                className="w-28 h-28 object-contain"
+                alt="Heed mascot"
+                width={96}
+                height={96}
+                className="object-contain"
                 style={{ animation: "heedPulse 2s ease-in-out infinite" }}
                 unoptimized
               />
@@ -183,10 +183,12 @@ export default function FlowPage() {
 
         {/* Heed bubble + question */}
         <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-          <img
+          <Image
             src="/brand/heed-mascot.png"
-            alt="Heed"
-            className="w-10 h-10 object-contain shrink-0 mt-0.5"
+            alt="Heed mascot"
+            width={40}
+            height={40}
+            className="object-contain shrink-0 mt-0.5"
           />
           <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
             <p className="text-sm font-semibold text-[#0A2540] leading-snug">
