@@ -39,7 +39,16 @@ function PaywallContent() {
     if (!normalizedEmail) return;
 
     if (normalizedEmail === ADMIN_EMAIL) {
+      console.log('[Admin] Bypass detected for', normalizedEmail);
       setIsAdminBypass(true);
+      // Write active access to localStorage so the decision page gate doesn't
+      // redirect back to /paywall. The gate checks steady_access status='none'
+      // before a Supabase session exists — without this it always loops back.
+      localStorage.setItem('steady_access', JSON.stringify({
+        status: 'active',
+        set_at: new Date().toISOString(),
+      }));
+      console.log('[Admin] steady_access set to active, redirecting to /decision');
       router.push('/decision');
       return;
     }
