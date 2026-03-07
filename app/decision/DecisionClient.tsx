@@ -440,7 +440,7 @@ function DecisionClientInner() {
   const [initError, setInitError] = useState<string | null>(null);
   const [filterStats, setFilterStats] = useState<FilterStats | null>(null);
 
-  // ── Admin bypass (email-based) ──────────────────────────────────────────────
+  // ── Admin detection (authenticated via supabase.auth.getUser()) ─────────────
   const searchParams = useSearchParams();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -476,7 +476,7 @@ function DecisionClientInner() {
       try {
         const client = createClient(url, key);
         setSupabaseClient(client);
-        // Check user email for admin bypass
+        // Identify admin by authenticated email — requires real Supabase session
         client.auth.getUser()
           .then(({ data: { user } }) => setUserEmail(user?.email ?? null))
           .catch(() => setUserEmail(null))
