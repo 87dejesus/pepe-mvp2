@@ -1,65 +1,63 @@
 /**
  * AffiliateOffers — contextual partner tiles shown inside /decision.
  *
- * Rules:
- *   budget > 3000  → show Storage offer (Extra Space Storage)
- *   matchScore < 75 → show Low-Credit / guarantor offer (The Guarantee)
+ * Rules (independent — both can appear simultaneously):
+ *   Storage card:    budget >= $3,000
+ *   Low-Credit card: budget < $2,800 OR matchScore < 75 OR finalCount < 6 OR forced
  *
  * All CTA clicks go through /api/track for attribution.
+ * Styled for dark (#0A2540) background context.
  */
 
 interface Props {
   budget: number;
   matchScore: number;
-  /** Force the Low-Credit card when results are thin or avg score is low */
   showLowCreditForced?: boolean;
-  /** Total listings in final set — used to detect poor search quality */
   finalCount?: number;
 }
 
 interface OfferTileProps {
-  badge: string;
-  badgeColor: string;
+  accentColor: string;
+  label: string;
   title: string;
   pitch: string;
   cta: string;
   trackUrl: string;
 }
 
-function OfferTile({ badge, badgeColor, title, pitch, cta, trackUrl }: OfferTileProps) {
+function OfferTile({ accentColor, label, title, pitch, cta, trackUrl }: OfferTileProps) {
   return (
-    <div className="bg-white border-2 border-black shadow-[3px_3px_0px_0px_black] flex overflow-hidden">
-      {/* Left accent bar */}
-      <div className="w-1.5 shrink-0" style={{ backgroundColor: badgeColor }} />
+    <div className="flex items-center gap-3 bg-white/[0.07] border border-white/20 rounded-xl px-4 py-3 overflow-hidden">
+      {/* Left accent */}
+      <div className="w-0.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
 
-      {/* Content */}
-      <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
-        <div className="min-w-0 flex-1">
-          <span
-            className="inline-block text-white text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 mb-1 leading-none"
-            style={{ backgroundColor: badgeColor }}
-          >
-            {badge}
-          </span>
-          <p className="text-xs font-black text-black leading-tight">{title}</p>
-          <p className="text-[11px] text-gray-500 leading-tight mt-0.5 line-clamp-1">{pitch}</p>
-        </div>
-
-        <a
-          href={trackUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 bg-black text-white text-[11px] font-black uppercase px-3 py-2 border-2 border-black hover:bg-[#00A651] transition-colors whitespace-nowrap select-none"
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <span
+          className="inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full mb-1 leading-none"
+          style={{ backgroundColor: accentColor, color: '#fff' }}
         >
-          {cta} →
-        </a>
+          {label}
+        </span>
+        <p className="text-xs font-semibold text-white leading-tight">{title}</p>
+        <p className="text-[11px] text-white/50 leading-tight mt-0.5 line-clamp-1">{pitch}</p>
       </div>
+
+      {/* CTA */}
+      <a
+        href={trackUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0 bg-[#00A651] hover:bg-[#00913f] text-white text-[11px] font-semibold rounded-lg px-3 py-2 transition-colors whitespace-nowrap select-none"
+      >
+        {cta} →
+      </a>
     </div>
   );
 }
 
 export default function AffiliateOffers({ budget, matchScore, showLowCreditForced = false, finalCount }: Props) {
-  const showStorage = budget > 3000;
+  const showStorage = budget >= 3000;
   const showLowCredit =
     showLowCreditForced ||
     matchScore < 75 ||
@@ -80,14 +78,14 @@ export default function AffiliateOffers({ budget, matchScore, showLowCreditForce
 
   return (
     <div className="mt-3 space-y-2">
-      <p className="text-[10px] font-black uppercase tracking-widest text-white/50 px-0.5">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-white/35 px-1">
         Tools for your move
       </p>
 
       {showStorage && (
         <OfferTile
-          badge="STORAGE"
-          badgeColor="#E84B2A"
+          accentColor="#E84B2A"
+          label="Storage"
           title="Need storage during your move?"
           pitch="Climate-controlled units near you — reserve in minutes"
           cta="Find Storage"
@@ -97,9 +95,9 @@ export default function AffiliateOffers({ budget, matchScore, showLowCreditForce
 
       {showLowCredit && (
         <OfferTile
-          badge="GUARANTOR"
-          badgeColor="#1E3A8A"
-          title="Don't meet the 40x income rule?"
+          accentColor="#1E6AA8"
+          label="Guarantor"
+          title="Don't meet the 40× income rule?"
           pitch="The Guarantee vouches for you so landlords say yes"
           cta="Get Guaranteed"
           trackUrl={lowCreditTrackUrl}

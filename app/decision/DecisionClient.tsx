@@ -8,7 +8,7 @@ import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
 import AffiliateOffers from '@/components/AffiliateOffers';
 import Header from '@/components/Header';
-import { trialDaysLeft, readAccess, activateTrialLocally, type AccessState } from '@/lib/access';
+import { trialDaysLeft, readAccess, cacheServerAccess, invalidateAccessCache, type AccessState, type AccessStatus } from '@/lib/access';
 
 const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
@@ -445,27 +445,25 @@ function DecisionClientInner() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [adminBannerDismissed, setAdminBannerDismissed] = useState(false);
-  const [localAccess, setLocalAccess] = useState<AccessState>({ status: 'none', set_at: '' });
+  // Server-verified access state + its own "checked" flag (separate from auth)
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [accessState, setAccessState] = useState<AccessState>({ status: 'none', set_at: '' });
+  // True when server returned 'new_user' — needs /paywall routing, not /subscribe
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Read banner dismiss state from sessionStorage
   useEffect(() => {
     setAdminBannerDismissed(sessionStorage.getItem('heed_banner_dismissed') === 'true');
   }, []);
 
-  // Handle checkout success + read local access state from localStorage
+  // On checkout success, force the access check to hit the server (not stale cache)
   useEffect(() => {
     if (searchParams.get('checkout_success') === '1') {
-      activateTrialLocally();
+      invalidateAccessCache();
     }
-    setLocalAccess(readAccess());
   }, [searchParams]);
 
-  const isAdmin = authChecked && userEmail === ADMIN_EMAIL;
-
-  // Effective access state — admin always gets 'active', others use localStorage
-  const accessState: AccessState = isAdmin
-    ? { status: 'active', set_at: new Date().toISOString() }
-    : localAccess;
+  const isAdmin = authChecked && (userEmail ?? '').toLowerCase().trim() === ADMIN_EMAIL;
 
   // Initialize Supabase client safely + check admin email
   useEffect(() => {
@@ -495,6 +493,77 @@ function DecisionClientInner() {
     }
   }, []);
 
+  // ── Server-verified access check ────────────────────────────────────────────
+  // Runs after auth resolves. Checks localStorage cache first; falls back to
+  // /api/auth/access-status when cache is missing or expired (10-min TTL).
+  useEffect(() => {
+    if (!authChecked) return;
+
+    // No authenticated user → send to paywall
+    if (!userEmail) {
+      router.replace('/paywall');
+      return;
+    }
+
+    // Admin — skip server check, grant access immediately
+    if ((userEmail ?? '').toLowerCase().trim() === ADMIN_EMAIL) {
+      setAccessChecked(true);
+      return;
+    }
+
+    // Check localStorage cache
+    const cached = readAccess();
+    if (cached.status !== 'none') {
+      console.log('[Steady Debug] Access gate: cache hit —', cached.status);
+      setAccessState(cached);
+      setAccessChecked(true);
+      return;
+    }
+
+    // Cache miss or TTL expired — ask the server
+    console.log('[Steady Debug] Access gate: cache miss — fetching /api/auth/access-status');
+    fetch('/api/auth/access-status')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`access-status ${res.status}`);
+        return res.json() as Promise<{
+          status: string;
+          trial_ends_at: string | null;
+          current_period_end: string | null;
+        }>;
+      })
+      .then((data) => {
+        console.log('[Steady Debug] Access gate: server returned', data.status);
+
+        if (data.status === 'new_user') {
+          // Authenticated but no trial row — needs to go through /paywall to start trial
+          setIsNewUser(true);
+          setAccessState({ status: 'none', set_at: new Date().toISOString() });
+          setAccessChecked(true);
+          return;
+        }
+
+        const serverState = {
+          status: data.status as AccessStatus,
+          trial_ends_at: data.trial_ends_at,
+          current_period_end: data.current_period_end,
+        };
+        cacheServerAccess(serverState);
+        setAccessState({
+          status: serverState.status,
+          trial_end: data.trial_ends_at ?? undefined,
+          current_period_end: data.current_period_end ?? undefined,
+          set_at: new Date().toISOString(),
+        });
+        setAccessChecked(true);
+      })
+      .catch((err) => {
+        // Server check failed — safe default: treat as no access
+        console.error('[Steady Debug] Access gate: server check failed:', err);
+        setAccessState({ status: 'none', set_at: new Date().toISOString() });
+        setAccessChecked(true);
+      });
+  }, [authChecked, userEmail, router]);
+
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(LS_KEY) || localStorage.getItem('steady_answers');
@@ -519,8 +588,10 @@ function DecisionClientInner() {
     }
   }, []);
 
-  // Fetch listings
+  // Fetch listings — only after access is confirmed (prevents loading while gate is pending)
   useEffect(() => {
+    if (!accessChecked) return;
+
     if (!answers) {
       setLoading(false); // no quiz answers — show the "go to /flow" screen
       return;
@@ -722,7 +793,7 @@ function DecisionClientInner() {
     }
     fetchData();
   // supabaseClient kept in deps so Supabase fallback re-runs if client initializes late
-  }, [answers, supabaseClient]);
+  }, [answers, supabaseClient, accessChecked]);
 
   // Current listing data
   const currentListing = listings[currentIndex] || null;
@@ -766,22 +837,46 @@ function DecisionClientInner() {
     }
   };
 
-  // Paywall gate — redirect non-admin users without active access (must be in useEffect)
+  // Access gate — enforces all access rules after server check completes
   useEffect(() => {
-    if (authChecked && !isAdmin && accessState.status === 'none') {
-      router.replace('/paywall?reason=subscription');
-    }
-  }, [authChecked, isAdmin, accessState.status, router]);
+    if (!accessChecked || isAdmin) return;
 
-  // Loading
-  if (loading) {
+    const { status, current_period_end } = accessState;
+
+    // Allow: active subscription or valid trial
+    if (status === 'trialing' || status === 'active') return;
+
+    // Allow: canceled but within paid grace period
+    if (status === 'canceled') {
+      const gracePeriodEnd = current_period_end ? new Date(current_period_end) : null;
+      if (gracePeriodEnd && gracePeriodEnd > new Date()) return;
+      router.replace('/subscribe?reason=canceled');
+      return;
+    }
+
+    // Block: payment failed — needs to update card
+    if (status === 'payment_failed') {
+      router.replace('/subscribe?reason=payment_failed');
+      return;
+    }
+
+    // Block: no access (status === 'none')
+    // isNewUser = authenticated but never started trial → /paywall to begin trial
+    // otherwise → trial has expired, no subscription → /subscribe
+    router.replace(isNewUser ? '/paywall' : '/subscribe?reason=trial_ended');
+  }, [accessChecked, isAdmin, accessState, isNewUser, router]);
+
+  // Loading — covers both the access-check phase and the listings-fetch phase
+  if (!accessChecked || loading) {
     return (
       <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-white/60 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm text-white/50">Finding matches…</p>
+            <p className="text-sm text-white/50">
+              {!accessChecked ? 'Verifying access…' : 'Finding matches…'}
+            </p>
           </div>
         </div>
       </div>

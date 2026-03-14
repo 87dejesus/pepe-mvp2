@@ -70,7 +70,7 @@ export default function FlowPage() {
 
   useEffect(() => {
     if (showDiagnosis) {
-      const timer = setTimeout(() => { window.location.href = "/decision"; }, 3000);
+      const timer = setTimeout(() => { window.location.href = "/onboarding/source"; }, 3000);
       return () => clearTimeout(timer);
     }
   }, [showDiagnosis]);

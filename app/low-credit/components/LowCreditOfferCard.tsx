@@ -15,24 +15,24 @@ export default function LowCreditOfferCard({
     `&source=low-credit`;
 
   return (
-    <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] flex flex-col">
+    <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex flex-col overflow-hidden">
       {/* Colored header strip */}
       <div
         className="px-4 py-3"
         style={{ backgroundColor: accentColor }}
       >
-        <span className="text-white font-black text-xs uppercase tracking-widest">
+        <span className="text-white font-semibold text-xs uppercase tracking-wider">
           {badge}
         </span>
       </div>
 
       {/* Card body */}
       <div className="p-4 sm:p-5 flex flex-col flex-1">
-        <h3 className="font-black text-lg sm:text-xl text-black leading-tight mb-1">
+        <h3 className="font-bold text-lg text-[#0A2540] leading-tight mb-1">
           {name}
         </h3>
-        <p className="font-bold text-sm text-gray-500 mb-3">{benefit}</p>
-        <p className="text-sm text-gray-700 leading-relaxed flex-1 mb-5">
+        <p className="font-medium text-sm text-[#666666] mb-3">{benefit}</p>
+        <p className="text-sm text-[#1A1A1A] leading-relaxed flex-1 mb-5">
           {description}
         </p>
 
@@ -40,7 +40,7 @@ export default function LowCreditOfferCard({
           href={trackUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full text-center bg-black text-white font-black uppercase text-sm py-3 border-2 border-black shadow-[3px_3px_0px_0px_black] hover:bg-[#00A651] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all select-none"
+          className="flex items-center justify-center w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] active:scale-[0.98] transition-all select-none"
         >
           Get Guaranteed Now →
         </a>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
-import { activateTrialLocally } from '@/lib/access';
+import { cacheServerAccess } from '@/lib/access';
 
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
@@ -88,13 +88,68 @@ function PaywallContent() {
 
       if (error) throw error;
 
-      // Grant 3-day trial on successful email verification.
-      // Without this, DecisionClient reads steady_access='none' and
-      // immediately bounces the user back to /paywall.
-      activateTrialLocally();
-      console.log('[OTP] trial activated — steady_access set to trialing, pushing to /decision');
+      // Check server-authoritative access state now that the user is authenticated
+      const accessRes = await fetch('/api/auth/access-status');
+      if (!accessRes.ok) {
+        throw new Error(`access-status ${accessRes.status}`);
+      }
+      const accessData = await accessRes.json() as {
+        status: string;
+        trial_ends_at: string | null;
+        current_period_end: string | null;
+      };
+      console.log('[OTP] access-status:', accessData);
 
-      router.push('/decision');
+      if (accessData.status === 'new_user') {
+        // First time — start the 3-day trial (server enforces one-per-user)
+        const trialRes = await fetch('/api/auth/start-trial', { method: 'POST' });
+        if (trialRes.ok) {
+          const trialData = await trialRes.json() as { status: string; trial_ends_at: string };
+          cacheServerAccess({ status: 'trialing', trial_ends_at: trialData.trial_ends_at });
+          console.log('[OTP] trial started — pushing to /decision');
+          router.push('/decision');
+        } else if (trialRes.status === 409) {
+          // Race condition — trial was already created; re-fetch current state
+          const retryRes = await fetch('/api/auth/access-status');
+          const retryData = await retryRes.json() as { status: string; trial_ends_at: string | null; current_period_end: string | null };
+          cacheServerAccess(retryData as Parameters<typeof cacheServerAccess>[0]);
+          router.push('/decision');
+        } else {
+          throw new Error(`start-trial ${trialRes.status}`);
+        }
+        return;
+      }
+
+      if (accessData.status === 'trialing' || accessData.status === 'active') {
+        cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
+        console.log('[OTP] has access — pushing to /decision');
+        router.push('/decision');
+        return;
+      }
+
+      if (accessData.status === 'canceled') {
+        // Allow access if still within the paid period (grace period)
+        const gracePeriodEnd = accessData.current_period_end ? new Date(accessData.current_period_end) : null;
+        if (gracePeriodEnd && gracePeriodEnd > new Date()) {
+          cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
+          console.log('[OTP] canceled but within grace period — pushing to /decision');
+          router.push('/decision');
+        } else {
+          console.log('[OTP] canceled and grace period expired — pushing to /subscribe');
+          router.push('/subscribe?reason=canceled');
+        }
+        return;
+      }
+
+      if (accessData.status === 'payment_failed') {
+        console.log('[OTP] payment_failed — pushing to /subscribe');
+        router.push('/subscribe?reason=payment_failed');
+        return;
+      }
+
+      // 'none' or unknown — trial has expired, no active subscription
+      console.log('[OTP] no access (status:', accessData.status, ') — pushing to /subscribe');
+      router.push('/subscribe?reason=trial_ended');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       console.error('[OTP] verifyOtp failed:', msg);

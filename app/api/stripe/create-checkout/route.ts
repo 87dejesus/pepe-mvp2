@@ -2,14 +2,16 @@
  * POST /api/stripe/create-checkout
  *
  * Creates a Stripe Checkout Session for the $2.49/week plan with 3-day free trial.
- * Expects { email, userId } in the request body (set after Supabase OTP auth).
+ * Identity is derived from the authenticated Supabase session cookie — never trusted from client body.
  * Passes supabase_user_id in metadata so the webhook can link the subscription.
  *
  * Returns { url } — client redirects to that URL.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import Stripe from 'stripe';
+import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,16 +31,53 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json().catch(() => ({}));
-  const email = (body.email ?? '').trim().toLowerCase();
-  const userId = (body.userId ?? '').trim();
+  // Derive identity from authenticated session — never trust client body
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-  if (!email || !userId) {
-    return NextResponse.json(
-      { error: 'Email e userId são obrigatórios.' },
-      { status: 400 }
-    );
+  if (authError || !user?.email) {
+    return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
   }
+
+  const userId = user.id;
+  const email = user.email;
+
+  // reason is non-sensitive UI metadata used only for the cancel_url — not for identity
+  const body = await req.json().catch(() => ({}));
+  const cancelReason = typeof body.reason === 'string' && body.reason ? `?reason=${body.reason}` : '';
+
+  // ── Trial eligibility check ──────────────────────────────────────────────────
+  // Rule: grant a Stripe trial (trial_period_days: 3) ONLY if the user has never
+  // consumed the server-side OTP trial. The OTP trial sets trial_ends_at in the
+  // users table via /api/auth/start-trial. Any non-null trial_ends_at means the
+  // user already had their free trial — no second trial via Stripe.
+  //
+  // This covers all cases:
+  //   - No row in users table      → trial_ends_at is null → Stripe trial granted
+  //   - Row with trial_ends_at null → trial never used      → Stripe trial granted
+  //   - Row with trial_ends_at set  → OTP trial consumed    → NO Stripe trial
+  const db = createSupabaseServiceClient();
+  const { data: userRow, error: dbError } = await db
+    .from('users')
+    .select('trial_ends_at')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (dbError) {
+    console.error('[Stripe] Failed to check trial eligibility:', dbError.message);
+    return NextResponse.json({ error: 'Could not verify trial eligibility.' }, { status: 500 });
+  }
+
+  const trialAlreadyUsed = !!userRow?.trial_ends_at;
+  const stripeTrial = trialAlreadyUsed ? undefined : { trial_period_days: 3 };
+
+  console.log(
+    `[Stripe] User ${userId} — trial_ends_at: ${userRow?.trial_ends_at ?? 'null'} → Stripe trial: ${trialAlreadyUsed ? 'SKIPPED' : 'GRANTED'}`
+  );
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2026-02-25.clover' as Stripe.LatestApiVersion,
@@ -58,7 +97,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       subscription_data: {
-        trial_period_days: 3,
+        ...stripeTrial,
         metadata: {
           supabase_user_id: userId,
         },
@@ -67,8 +106,9 @@ export async function POST(req: NextRequest) {
       metadata: {
         supabase_user_id: userId,
       },
-      success_url: `${origin}/decision?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/paywall`,
+      // Returns to /subscribe for post-checkout verification (polling for webhook)
+      success_url: `${origin}/subscribe?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/subscribe${cancelReason}`,
     });
 
     console.log(`[Stripe] Checkout session created: ${session.id} for user ${userId}`);
