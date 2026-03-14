@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,10 +11,10 @@ import {
   Instagram,
   Users,
   MoreHorizontal,
+  type LucideIcon,
 } from 'lucide-react';
 import Header from '@/components/Header';
 import { OnboardingProgress } from '@/components/OnboardingProgress';
-
 
 type SourceId =
   | 'tiktok'
@@ -26,14 +25,16 @@ type SourceId =
   | 'friend_family'
   | 'other';
 
-const SOURCES: { id: SourceId; label: string; icon: ReactNode }[] = [
-  { id: 'tiktok',        label: 'TikTok',          icon: <Music className="w-10 h-10 text-[#00F2EA] mb-3" /> },
-  { id: 'reddit',        label: 'Reddit',           icon: <MessageCircle className="w-10 h-10 text-[#FF4500] mb-3" /> },
-  { id: 'x',             label: 'X (Twitter)',      icon: <Twitter className="w-10 h-10 text-white mb-3" /> },
-  { id: 'google',        label: 'Google',           icon: <Search className="w-10 h-10 text-[#4285F4] mb-3" /> },
-  { id: 'instagram',     label: 'Instagram',        icon: <Instagram className="w-10 h-10 text-[#E1306C] mb-3" /> },
-  { id: 'friend_family', label: 'Friend or family', icon: <Users className="w-10 h-10 text-[#00A651] mb-3" /> },
-  { id: 'other',         label: 'Other',            icon: <MoreHorizontal className="w-10 h-10 text-gray-400 mb-3" /> },
+// Store component references — NOT pre-created JSX elements.
+// Pre-created JSX in module-level arrays fails to hydrate in Next.js production builds.
+const SOURCES: { id: SourceId; label: string; Icon: LucideIcon; color: string }[] = [
+  { id: 'tiktok',        label: 'TikTok',          Icon: Music,          color: 'text-[#00F2EA]' },
+  { id: 'reddit',        label: 'Reddit',           Icon: MessageCircle,  color: 'text-[#FF4500]' },
+  { id: 'x',             label: 'X (Twitter)',      Icon: Twitter,        color: 'text-white' },
+  { id: 'google',        label: 'Google',           Icon: Search,         color: 'text-[#4285F4]' },
+  { id: 'instagram',     label: 'Instagram',        Icon: Instagram,      color: 'text-[#E1306C]' },
+  { id: 'friend_family', label: 'Friend or family', Icon: Users,          color: 'text-[#00A651]' },
+  { id: 'other',         label: 'Other',            Icon: MoreHorizontal, color: 'text-gray-400' },
 ];
 
 export default function SourcePage() {
@@ -88,20 +89,20 @@ export default function SourcePage() {
           </div>
         </div>
 
-        {/* Source grid — 2 columns */}
+        {/* Source grid — 2 columns, icons rendered inline */}
         <div className="grid grid-cols-2 gap-4 px-4 mb-6">
-          {SOURCES.map((source) => (
+          {SOURCES.map(({ id, label, Icon, color }) => (
             <button
-              key={source.id}
-              onClick={() => setSelected(source.id)}
+              key={id}
+              onClick={() => setSelected(id)}
               className={`flex flex-col items-center justify-center p-6 bg-[#0A2540]/80 rounded-xl border transition-all text-white ${
-                selected === source.id
+                selected === id
                   ? 'border-[#00A651]'
                   : 'border-[#00A651]/30 hover:border-[#00A651]'
               }`}
             >
-              {source.icon}
-              <span className="text-sm font-medium">{source.label}</span>
+              <Icon className={`w-10 h-10 mb-3 ${color}`} />
+              <span className="text-sm font-medium">{label}</span>
             </button>
           ))}
         </div>
