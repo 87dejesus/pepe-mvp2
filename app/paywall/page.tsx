@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { cacheServerAccess } from '@/lib/access';
@@ -20,7 +19,6 @@ function createSupabase() {
 }
 
 function PaywallContent() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -88,91 +86,25 @@ function PaywallContent() {
 
       if (error) throw error;
 
-      // Admin bypass — skip access-status entirely, go straight to /decision
-      if ((data?.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
+      if (!data?.session) {
+        throw new Error('Verification failed — no session returned. Try requesting a new code.');
+      }
+
+      console.log('[OTP] verified — session:', !!data.session, '| user:', data.user?.email ?? null);
+
+      // Admin bypass — go directly to /decision
+      if ((data.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
         cacheServerAccess({ status: 'active', trial_ends_at: null });
-        console.log('[OTP] admin detected — bypassing access check, redirecting to /decision');
+        console.log('[OTP] admin — redirecting to /decision');
         window.location.href = '/decision';
         return;
       }
 
-      // Onboarding flow: if a priceId was saved, go to Stripe Checkout now
-      const savedPriceId = localStorage.getItem('heed_selected_price_id');
-      if (savedPriceId) {
-        localStorage.removeItem('heed_selected_price_id');
-        console.log('[OTP] saved priceId found — creating Stripe session:', savedPriceId);
-        const res = await fetch('/api/stripe/create-checkout-v2', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priceId: savedPriceId }),
-        });
-        const checkoutData = (await res.json()) as { url?: string; error?: string };
-        if (!res.ok || !checkoutData.url) throw new Error(checkoutData.error ?? 'Checkout failed');
-        window.location.href = checkoutData.url;
-        return;
-      }
-
-      // Check server-authoritative access state now that the user is authenticated
-      const accessRes = await fetch('/api/auth/access-status');
-      if (!accessRes.ok) {
-        throw new Error(`access-status ${accessRes.status}`);
-      }
-      const accessData = await accessRes.json() as {
-        status: string;
-        trial_ends_at: string | null;
-        current_period_end: string | null;
-      };
-      console.log('[OTP] access-status:', accessData);
-
-      if (accessData.status === 'new_user') {
-        // First time — start the 3-day trial (server enforces one-per-user)
-        const trialRes = await fetch('/api/auth/start-trial', { method: 'POST' });
-        if (trialRes.ok) {
-          const trialData = await trialRes.json() as { status: string; trial_ends_at: string };
-          cacheServerAccess({ status: 'trialing', trial_ends_at: trialData.trial_ends_at });
-          console.log('[OTP] trial started — redirecting to /decision');
-          window.location.href = '/decision';
-        } else if (trialRes.status === 409) {
-          // Race condition — trial was already created; re-fetch current state
-          const retryRes = await fetch('/api/auth/access-status');
-          const retryData = await retryRes.json() as { status: string; trial_ends_at: string | null; current_period_end: string | null };
-          cacheServerAccess(retryData as Parameters<typeof cacheServerAccess>[0]);
-          window.location.href = '/decision';
-        } else {
-          throw new Error(`start-trial ${trialRes.status}`);
-        }
-        return;
-      }
-
-      if (accessData.status === 'trialing' || accessData.status === 'active') {
-        cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
-        console.log('[OTP] has access — redirecting to /decision');
-        window.location.href = '/decision';
-        return;
-      }
-
-      if (accessData.status === 'canceled') {
-        const gracePeriodEnd = accessData.current_period_end ? new Date(accessData.current_period_end) : null;
-        if (gracePeriodEnd && gracePeriodEnd > new Date()) {
-          cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
-          console.log('[OTP] canceled but within grace period — redirecting to /decision');
-          window.location.href = '/decision';
-        } else {
-          console.log('[OTP] canceled and grace period expired — redirecting to /subscribe');
-          window.location.href = '/subscribe?reason=canceled';
-        }
-        return;
-      }
-
-      if (accessData.status === 'payment_failed') {
-        console.log('[OTP] payment_failed — redirecting to /subscribe');
-        window.location.href = '/subscribe?reason=payment_failed';
-        return;
-      }
-
-      // 'none' or unknown — trial has expired, no active subscription
-      console.log('[OTP] no access (status:', accessData.status, ') — redirecting to /subscribe');
-      window.location.href = '/subscribe?reason=trial_ended';
+      // All other users: navigate to post-auth handler via hard navigation.
+      // This guarantees session cookies are sent on the next API requests.
+      // post-auth handles: Stripe checkout (if priceId saved), trial start, and access routing.
+      console.log('[OTP] navigating to /onboarding/post-auth');
+      window.location.href = '/onboarding/post-auth';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       console.error('[OTP] verifyOtp failed:', msg);
