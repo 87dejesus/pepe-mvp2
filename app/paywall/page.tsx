@@ -91,8 +91,8 @@ function PaywallContent() {
       // Admin bypass — skip access-status entirely, go straight to /decision
       if ((data?.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
         cacheServerAccess({ status: 'active', trial_ends_at: null });
-        console.log('[OTP] admin detected — bypassing access check, pushing to /decision');
-        router.push('/decision');
+        console.log('[OTP] admin detected — bypassing access check, redirecting to /decision');
+        window.location.href = '/decision';
         return;
       }
 
@@ -130,14 +130,14 @@ function PaywallContent() {
         if (trialRes.ok) {
           const trialData = await trialRes.json() as { status: string; trial_ends_at: string };
           cacheServerAccess({ status: 'trialing', trial_ends_at: trialData.trial_ends_at });
-          console.log('[OTP] trial started — pushing to /decision');
-          router.push('/decision');
+          console.log('[OTP] trial started — redirecting to /decision');
+          window.location.href = '/decision';
         } else if (trialRes.status === 409) {
           // Race condition — trial was already created; re-fetch current state
           const retryRes = await fetch('/api/auth/access-status');
           const retryData = await retryRes.json() as { status: string; trial_ends_at: string | null; current_period_end: string | null };
           cacheServerAccess(retryData as Parameters<typeof cacheServerAccess>[0]);
-          router.push('/decision');
+          window.location.href = '/decision';
         } else {
           throw new Error(`start-trial ${trialRes.status}`);
         }
@@ -146,34 +146,33 @@ function PaywallContent() {
 
       if (accessData.status === 'trialing' || accessData.status === 'active') {
         cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
-        console.log('[OTP] has access — pushing to /decision');
-        router.push('/decision');
+        console.log('[OTP] has access — redirecting to /decision');
+        window.location.href = '/decision';
         return;
       }
 
       if (accessData.status === 'canceled') {
-        // Allow access if still within the paid period (grace period)
         const gracePeriodEnd = accessData.current_period_end ? new Date(accessData.current_period_end) : null;
         if (gracePeriodEnd && gracePeriodEnd > new Date()) {
           cacheServerAccess(accessData as Parameters<typeof cacheServerAccess>[0]);
-          console.log('[OTP] canceled but within grace period — pushing to /decision');
-          router.push('/decision');
+          console.log('[OTP] canceled but within grace period — redirecting to /decision');
+          window.location.href = '/decision';
         } else {
-          console.log('[OTP] canceled and grace period expired — pushing to /subscribe');
-          router.push('/subscribe?reason=canceled');
+          console.log('[OTP] canceled and grace period expired — redirecting to /subscribe');
+          window.location.href = '/subscribe?reason=canceled';
         }
         return;
       }
 
       if (accessData.status === 'payment_failed') {
-        console.log('[OTP] payment_failed — pushing to /subscribe');
-        router.push('/subscribe?reason=payment_failed');
+        console.log('[OTP] payment_failed — redirecting to /subscribe');
+        window.location.href = '/subscribe?reason=payment_failed';
         return;
       }
 
       // 'none' or unknown — trial has expired, no active subscription
-      console.log('[OTP] no access (status:', accessData.status, ') — pushing to /subscribe');
-      router.push('/subscribe?reason=trial_ended');
+      console.log('[OTP] no access (status:', accessData.status, ') — redirecting to /subscribe');
+      window.location.href = '/subscribe?reason=trial_ended';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       console.error('[OTP] verifyOtp failed:', msg);
