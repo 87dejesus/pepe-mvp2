@@ -88,6 +88,14 @@ function PaywallContent() {
 
       if (error) throw error;
 
+      // Admin bypass — skip access-status entirely, go straight to /decision
+      if ((data?.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
+        cacheServerAccess({ status: 'active', trial_ends_at: null });
+        console.log('[OTP] admin detected — bypassing access check, pushing to /decision');
+        router.push('/decision');
+        return;
+      }
+
       // Check server-authoritative access state now that the user is authenticated
       const accessRes = await fetch('/api/auth/access-status');
       if (!accessRes.ok) {
