@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { OnboardingProgress } from '@/components/OnboardingProgress';
 
@@ -44,82 +43,17 @@ const PLANS: Record<
   },
 };
 
-function createSupabase() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<PlanKey>('annual');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false); // hides UI until admin check completes
 
-  // Admin bypass: if already authenticated as admin, skip payment entirely
-  useEffect(() => {
-    async function checkAdmin() {
-      try {
-        const supabase = createSupabase();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.email === 'luhciano.sj@gmail.com') {
-          router.replace('/decision');
-          return;
-        }
-      } catch {}
-      setReady(true);
-    }
-    checkAdmin();
-  }, [router]);
-
-  async function handleCTA() {
-    setLoading(true);
-    setError(null);
+  function handleCTA() {
     const plan = PLANS[selected];
-
-    try {
-      const supabase = createSupabase();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        // Not authenticated yet — store choice then send to /paywall
-        localStorage.setItem('heed_selected_price_id', plan.priceId);
-        router.push('/paywall');
-        return;
-      }
-
-      // Already authenticated — go straight to Stripe Checkout
-      const res = await fetch('/api/stripe/create-checkout-v2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: plan.priceId }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Checkout failed');
-      window.location.href = data.url;
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Something went wrong. Try again.';
-      setError(msg);
-      setLoading(false);
-    }
-  }
-
-  // Spinner while admin check runs (avoids flash of pricing for admin user)
-  if (!ready) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-[#0A2540]">
-        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      </div>
-    );
+    // Always authenticate first — save plan choice and go to /paywall
+    localStorage.setItem('heed_selected_price_id', plan.priceId);
+    router.push('/paywall');
   }
 
   return (
@@ -222,24 +156,10 @@ export default function PricingPage() {
         {/* CTA */}
         <button
           onClick={handleCTA}
-          disabled={loading}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none transition-all mb-3"
+          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-3"
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              Preparing checkout…
-            </span>
-          ) : (
-            `Start free trial — ${PLANS[selected].label}`
-          )}
+          {`Start free trial — ${PLANS[selected].label}`}
         </button>
-
-        {error && (
-          <p className="text-red-400 text-xs text-center mb-3 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
-            {error}
-          </p>
-        )}
 
         <p className="text-white/30 text-xs text-center leading-relaxed">
           No credit card required today. Cancel anytime.

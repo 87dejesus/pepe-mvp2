@@ -96,6 +96,22 @@ function PaywallContent() {
         return;
       }
 
+      // Onboarding flow: if a priceId was saved, go to Stripe Checkout now
+      const savedPriceId = localStorage.getItem('heed_selected_price_id');
+      if (savedPriceId) {
+        localStorage.removeItem('heed_selected_price_id');
+        console.log('[OTP] saved priceId found — creating Stripe session:', savedPriceId);
+        const res = await fetch('/api/stripe/create-checkout-v2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceId: savedPriceId }),
+        });
+        const checkoutData = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok || !checkoutData.url) throw new Error(checkoutData.error ?? 'Checkout failed');
+        window.location.href = checkoutData.url;
+        return;
+      }
+
       // Check server-authoritative access state now that the user is authenticated
       const accessRes = await fetch('/api/auth/access-status');
       if (!accessRes.ok) {
