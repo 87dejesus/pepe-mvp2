@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       },
       metadata: { supabase_user_id: user.id },
       locale: 'en',
-      success_url: `${origin}/decision?checkout_success=1`,
+      success_url: `${origin}/subscribe?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/onboarding/pricing`,
     });
 

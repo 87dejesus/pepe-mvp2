@@ -110,6 +110,29 @@ function SubscribeContent() {
   // True when server returned no_stripe_customer — needs support, not retry
   const [noCustomer, setNoCustomer] = useState(false);
 
+  // Direct session verification — bypasses webhook timing.
+  // Defined at component scope so it can be called from both init() and handleRecheck().
+  async function checkSessionDirect(sid: string): Promise<boolean> {
+    try {
+      console.log('[subscribe] check-session pre-flight for', sid);
+      const res = await fetch(`/api/stripe/check-session?session_id=${sid}`);
+      const data = await res.json() as { status?: string; trial_ends_at?: string | null; current_period_end?: string | null; error?: string };
+      console.log('[subscribe] check-session result:', res.status, data);
+      if (res.ok && (data.status === 'trialing' || data.status === 'active')) {
+        cacheServerAccess({
+          status: data.status as AccessStatus,
+          trial_ends_at: data.trial_ends_at ?? null,
+          current_period_end: data.current_period_end ?? null,
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.warn('[subscribe] check-session threw — falling back to poll:', e);
+      return false;
+    }
+  }
+
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -144,30 +167,6 @@ function SubscribeContent() {
       }
       console.log('[subscribe] pollForAccess exhausted — access not yet granted');
       return false;
-    }
-
-    // Direct session verification — bypasses webhook timing.
-    // Called first when returning from Stripe checkout with a session_id.
-    // Writes subscription state directly from Stripe API, same as webhook would.
-    async function checkSessionDirect(sid: string): Promise<boolean> {
-      try {
-        console.log('[subscribe] check-session pre-flight for', sid);
-        const res = await fetch(`/api/stripe/check-session?session_id=${sid}`);
-        const data = await res.json() as { status?: string; trial_ends_at?: string | null; current_period_end?: string | null; error?: string };
-        console.log('[subscribe] check-session result:', res.status, data);
-        if (res.ok && (data.status === 'trialing' || data.status === 'active')) {
-          cacheServerAccess({
-            status: data.status as AccessStatus,
-            trial_ends_at: data.trial_ends_at ?? null,
-            current_period_end: data.current_period_end ?? null,
-          });
-          return true;
-        }
-        return false;
-      } catch (e) {
-        console.warn('[subscribe] check-session threw — falling back to poll:', e);
-        return false;
-      }
     }
 
     async function init() {
@@ -248,10 +247,23 @@ function SubscribeContent() {
     init();
   }, [checkoutSuccess, portalReturn, sessionId, router]);
 
-  // Manual recheck from payment_pending state
+  // Manual recheck from payment_pending state.
+  // Retries check-session first (if we have a sessionId) so it can write the DB,
+  // then falls back to a single access-status poll.
   async function handleRecheck() {
     setPhase('verifying_payment');
     try {
+      // Re-run direct Stripe session verification — this is the only path that can
+      // write the users table when the webhook hasn't fired yet.
+      if (sessionId?.startsWith('cs_')) {
+        const granted = await checkSessionDirect(sessionId);
+        if (granted) {
+          router.replace('/decision');
+          return;
+        }
+      }
+
+      // Fallback: check if DB was written by the webhook in the meantime
       const res = await fetch('/api/auth/access-status');
       if (res.ok) {
         const data: ServerAccessData = await res.json();
