@@ -186,7 +186,7 @@ function PaywallContent() {
 
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-[#0A2540]">$2.49</span>
+              <span className="text-3xl font-bold text-[#0A2540]">$4.49</span>
               <span className="text-[#666666] text-sm">/ week</span>
             </div>
             <p className="text-[#00A651] font-semibold text-sm mb-4">
@@ -306,7 +306,7 @@ function PaywallContent() {
           )}
 
           <p className="text-[10px] text-[#999999] text-center mt-2 leading-relaxed">
-            Admin access is for owner only — all other users are charged $2.49/wk after the 3-day trial.
+            Admin access is for owner only — all other users are charged $4.49/wk after the 3-day trial.
           </p>
 
           <div className="text-center mt-4 pb-safe">

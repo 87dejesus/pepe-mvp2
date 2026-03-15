@@ -1,7 +1,7 @@
 /**
  * POST /api/stripe/create-checkout
  *
- * Creates a Stripe Checkout Session for the $2.49/week plan with 3-day free trial.
+ * Creates a Stripe Checkout Session for the $4.49/week plan with 3-day free trial.
  * Identity is derived from the authenticated Supabase session cookie — never trusted from client body.
  * Passes supabase_user_id in metadata so the webhook can link the subscription.
  *

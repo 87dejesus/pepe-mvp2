@@ -1079,7 +1079,7 @@ function DecisionClientInner() {
       {accessState.status === 'trialing' && (
         <div className="shrink-0 bg-amber-500/20 border-b border-amber-500/20 px-3 py-1.5 text-center">
           <p className="text-xs font-medium text-amber-300 leading-tight">
-            Trial — {daysLeft} days left · $2.49/wk after
+            Trial — {daysLeft} days left · $4.49/wk after
           </p>
         </div>
       )}
