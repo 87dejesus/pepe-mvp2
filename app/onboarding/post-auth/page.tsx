@@ -70,7 +70,7 @@ export default function PostAuthPage() {
         // ── 2. User already has access → /decision, stale priceId cleared ─
         if (accessData.status === 'trialing' || accessData.status === 'active') {
           localStorage.removeItem('heed_selected_price_id');
-          cacheServerAccess(accessData);
+          cacheServerAccess({ ...accessData, status: accessData.status as Exclude<AccessStatus, 'new_user'> });
           console.log('[post-auth] → /decision (status:', accessData.status + ')');
           window.location.href = '/decision';
           return;
@@ -82,7 +82,7 @@ export default function PostAuthPage() {
           console.log('[post-auth] canceled — grace end:', accessData.current_period_end, '| in grace:', inGrace);
           if (inGrace) {
             localStorage.removeItem('heed_selected_price_id');
-            cacheServerAccess(accessData);
+            cacheServerAccess({ ...accessData, status: accessData.status as Exclude<AccessStatus, 'new_user'> });
             console.log('[post-auth] → /decision (canceled, in grace period)');
             window.location.href = '/decision';
           } else {
@@ -130,7 +130,7 @@ export default function PostAuthPage() {
           } else if (trialRes.status === 409) {
             const retryData = await trialRes.json() as AccessData;
             console.log('[post-auth] start-trial 409 (race/duplicate):', JSON.stringify(retryData));
-            cacheServerAccess(retryData);
+            cacheServerAccess({ ...retryData, status: retryData.status as Exclude<AccessStatus, 'new_user'> });
             console.log('[post-auth] → /decision (trial already existed)');
             window.location.href = '/decision';
           } else {

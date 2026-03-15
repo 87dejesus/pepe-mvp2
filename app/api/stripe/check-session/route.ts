@@ -29,6 +29,15 @@ import {
   createSupabaseServiceClient,
 } from '@/lib/supabase-server';
 
+// Stripe fields that moved in newer API versions — cast via this shape to avoid TS errors
+type SubData = {
+  id: string;
+  status: string;
+  customer: string | { id: string };
+  trial_end: number | null;
+  current_period_end: number;
+};
+
 export const dynamic = 'force-dynamic';
 
 function getStripe(): Stripe {
@@ -93,8 +102,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: 'pending' });
     }
 
-    // Fetch subscription details
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    // Fetch subscription details — cast via SubData to avoid API-version type drift
+    const sub = (await stripe.subscriptions.retrieve(subscriptionId)) as unknown as SubData;
     const stripeSubStatus = sub.status; // 'trialing' | 'active' | 'incomplete' | ...
     console.log(`[check-session] subscription ${subscriptionId} status: ${stripeSubStatus}`);
 
