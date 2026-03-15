@@ -68,13 +68,26 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature') ?? '';
 
+  // Diagnostic: log first 12 chars of the secret (safe — not reversible) and
+  // whether the signature header arrived, so mismatches are visible in Vercel logs.
+  const secretHint = webhookSecret.slice(0, 12) + '…';
+  const stripeMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST';
+  console.log(
+    `[Webhook] Incoming POST — stripe mode: ${stripeMode} | sig header present: ${!!sig} | secret hint: ${secretHint} | body bytes: ${body.length}`
+  );
+
   let event: Stripe.Event;
   try {
     const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[Webhook] Signature verification failed:', msg);
+    console.error(
+      `[Webhook] Signature verification FAILED — stripe mode: ${stripeMode} | secret hint: ${secretHint} | error: ${msg}`
+    );
+    console.error(
+      '[Webhook] Fix: go to Stripe Dashboard (LIVE mode) → Developers → Webhooks → your endpoint → Signing secret → copy the whsec_... value → update STRIPE_WEBHOOK_SECRET in Vercel → redeploy'
+    );
     return NextResponse.json({ error: `Webhook error: ${msg}` }, { status: 400 });
   }
 

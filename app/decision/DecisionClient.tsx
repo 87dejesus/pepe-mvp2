@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Component, type ReactNode, type ErrorInfo } from 'react';
 import Image from 'next/image';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
@@ -472,12 +473,18 @@ function DecisionClientInner() {
 
     if (url && key) {
       try {
-        const client = createClient(url, key);
+        const client = createBrowserClient(url, key);
         setSupabaseClient(client);
         // Identify admin by authenticated email — requires real Supabase session
         client.auth.getUser()
-          .then(({ data: { user } }) => setUserEmail(user?.email ?? null))
-          .catch(() => setUserEmail(null))
+          .then(({ data: { user }, error }) => {
+            console.log('[Steady Debug] getUser result — user:', user?.email ?? null, '| error:', error?.message ?? null);
+            setUserEmail(user?.email ?? null);
+          })
+          .catch((err: unknown) => {
+            console.error('[Steady Debug] getUser threw:', err instanceof Error ? err.message : err);
+            setUserEmail(null);
+          })
           .finally(() => setAuthChecked(true));
       } catch (err) {
         console.error('[Steady Debug] Failed to initialize Supabase:', err);
@@ -499,8 +506,27 @@ function DecisionClientInner() {
   useEffect(() => {
     if (!authChecked) return;
 
-    // No authenticated user → send to paywall
+    // No authenticated user — check for a fresh, server-issued access cache before
+    // bouncing to /paywall. getUser() can return null due to transient network errors
+    // or an expired access token that couldn't be silently refreshed; a valid cache
+    // written seconds ago by post-auth is strong evidence the user is legitimate.
     if (!userEmail) {
+      const cached = readAccess();
+      const cacheCoversAccess =
+        cached.status === 'trialing' ||
+        cached.status === 'active' ||
+        (cached.status === 'canceled' &&
+          cached.current_period_end != null &&
+          new Date(cached.current_period_end) > new Date());
+
+      if (cacheCoversAccess) {
+        console.log('[Steady Debug] Access gate: getUser() null but fresh cache —', cached.status, '— using as short-lived fallback');
+        setAccessState(cached);
+        setAccessChecked(true);
+        return;
+      }
+
+      console.log('[Steady Debug] Access gate: no session + no valid cache — redirecting to /paywall');
       router.replace('/paywall');
       return;
     }

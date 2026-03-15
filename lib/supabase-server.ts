@@ -30,6 +30,41 @@ export function createSupabaseServerClient(cookieStore: ReadonlyRequestCookies) 
   });
 }
 
+/**
+ * For Route Handlers (API routes) — reads AND writes cookies via next/headers.
+ *
+ * Unlike createSupabaseServerClient, this variant propagates refreshed auth
+ * tokens back to the browser so that users with a recently expired access token
+ * (but a still-valid refresh token) are not silently logged out on the next request.
+ *
+ * Usage:
+ *   const cookieStore = await cookies();
+ *   const supabase = createSupabaseServerRouteClient(cookieStore);
+ */
+export function createSupabaseServerRouteClient(cookieStore: ReadonlyRequestCookies) {
+  return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            // In Route Handlers, cookies() returns a mutable store at runtime.
+            // The ReadonlyRequestCookies type doesn't expose set() but it exists.
+            (cookieStore as unknown as { set(n: string, v: string, o?: object): void })
+              .set(name, value, options)
+          );
+        } catch {
+          // Swallow: called from a Server Component where set() is unavailable.
+          // The current request still resolves correctly; the refreshed token
+          // simply won't be written to the browser for this edge case.
+        }
+      },
+    },
+  });
+}
+
 /** For API Routes — can both read and write cookies on request/response. */
 export function createSupabaseRouteClient(
   req: NextRequest,

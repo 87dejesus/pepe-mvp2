@@ -88,6 +88,7 @@ function SubscribeContent() {
   const reason = searchParams.get('reason') ?? '';
   const checkoutSuccess = searchParams.get('checkout_success') === '1';
   const portalReturn = searchParams.get('portal_return') === '1';
+  const sessionId = searchParams.get('session_id') ?? null;
 
   const isPaymentFailed = reason === 'payment_failed';
   const copy = REASON_COPY[reason] ?? DEFAULT_COPY;
@@ -129,7 +130,9 @@ function SubscribeContent() {
     async function pollForAccess(): Promise<boolean> {
       for (let attempt = 0; attempt < 5; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+        console.log(`[subscribe] pollForAccess attempt ${attempt + 1}/5`);
         const data = await fetchAccess();
+        console.log(`[subscribe] access-status response: ${data?.status ?? 'null'}`);
         if (data && hasGrantedAccess(data)) {
           cacheServerAccess({
             status: data.status as AccessStatus,
@@ -139,7 +142,32 @@ function SubscribeContent() {
           return true;
         }
       }
+      console.log('[subscribe] pollForAccess exhausted — access not yet granted');
       return false;
+    }
+
+    // Direct session verification — bypasses webhook timing.
+    // Called first when returning from Stripe checkout with a session_id.
+    // Writes subscription state directly from Stripe API, same as webhook would.
+    async function checkSessionDirect(sid: string): Promise<boolean> {
+      try {
+        console.log('[subscribe] check-session pre-flight for', sid);
+        const res = await fetch(`/api/stripe/check-session?session_id=${sid}`);
+        const data = await res.json() as { status?: string; trial_ends_at?: string | null; current_period_end?: string | null; error?: string };
+        console.log('[subscribe] check-session result:', res.status, data);
+        if (res.ok && (data.status === 'trialing' || data.status === 'active')) {
+          cacheServerAccess({
+            status: data.status as AccessStatus,
+            trial_ends_at: data.trial_ends_at ?? null,
+            current_period_end: data.current_period_end ?? null,
+          });
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.warn('[subscribe] check-session threw — falling back to poll:', e);
+        return false;
+      }
     }
 
     async function init() {
@@ -163,6 +191,18 @@ function SubscribeContent() {
       if (checkoutSuccess) {
         invalidateAccessCache();
         setPhase('verifying_payment');
+        console.log('[subscribe] Returned from checkout — session_id:', sessionId ?? '(none)');
+
+        // Fast-path: verify session directly from Stripe API, no webhook needed
+        if (sessionId?.startsWith('cs_')) {
+          const granted = await checkSessionDirect(sessionId);
+          if (granted) {
+            router.replace('/decision');
+            return;
+          }
+        }
+
+        // Fallback: poll access-status waiting for webhook to update the DB
         const granted = await pollForAccess();
         if (granted) {
           router.replace('/decision');
@@ -206,7 +246,7 @@ function SubscribeContent() {
     }
 
     init();
-  }, [checkoutSuccess, portalReturn, router]);
+  }, [checkoutSuccess, portalReturn, sessionId, router]);
 
   // Manual recheck from payment_pending state
   async function handleRecheck() {
@@ -289,11 +329,11 @@ function SubscribeContent() {
     const pendingHeading =
       pendingContext === 'portal'
         ? 'Payment update in progress'
-        : 'Payment received — access pending';
+        : 'Checkout complete — activating access';
     const pendingBody =
       pendingContext === 'portal'
         ? "Your payment method was updated. Stripe is retrying your invoice — this usually takes a few seconds."
-        : "Your payment went through but access hasn't activated yet. This usually takes a few seconds.";
+        : "Your checkout was received but access confirmation is taking longer than usual. Click below to check — it typically resolves in a few seconds.";
 
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">

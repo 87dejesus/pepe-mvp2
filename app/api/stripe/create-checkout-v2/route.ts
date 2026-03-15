@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import Stripe from 'stripe';
 import {
-  createSupabaseServerClient,
+  createSupabaseServerRouteClient,
   createSupabaseServiceClient,
 } from '@/lib/supabase-server';
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   // Authenticate via session cookie — never trust client for identity
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = createSupabaseServerRouteClient(cookieStore);
   const {
     data: { user },
     error: authError,

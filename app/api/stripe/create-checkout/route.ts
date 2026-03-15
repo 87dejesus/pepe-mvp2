@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import Stripe from 'stripe';
-import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase-server';
+import { createSupabaseServerRouteClient, createSupabaseServiceClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +31,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Log Stripe environment to confirm test vs live mode in Vercel logs
+  const stripeMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST';
+  console.log(`[Stripe] create-checkout — mode: ${stripeMode} | priceId: ${process.env.STRIPE_PRICE_ID ?? '(not set)'}`);
+
   // Derive identity from authenticated session — never trust client body
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = createSupabaseServerRouteClient(cookieStore);
   const {
     data: { user },
     error: authError,
