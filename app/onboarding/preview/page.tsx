@@ -37,7 +37,7 @@ export default function PreviewPage() {
     <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
         <OnboardingProgress step={11} />
 
         {/* Heed speech bubble with bob animation */}
@@ -120,9 +120,13 @@ export default function PreviewPage() {
           This is a preview example based on your answers. Real listings update daily from NYC sources.
         </p>
 
+        <div className="pb-4" />
+      </div>
+
+      <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full">
         <button
           onClick={() => router.push('/onboarding/pricing')}
-          className="mt-auto w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mt-4"
+          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
         >
           Explore my options
         </button>

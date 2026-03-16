@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { OnboardingProgress } from '@/components/OnboardingProgress';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { readAccess, hasAccess } from '@/lib/access';
 
 // ── Plan definitions ────────────────────────────────────────────────────────
@@ -55,26 +55,31 @@ export default function PricingPage() {
     const plan = PLANS[selected];
     localStorage.setItem('heed_selected_price_id', plan.priceId);
 
-    // Guard: skip paywall if the user already has valid access
+    // Guard 1: fast local cache check (no network, within 10-min TTL)
     const access = readAccess();
     if (hasAccess(access)) {
       router.push('/onboarding/post-auth');
       return;
     }
 
-    // Secondary check: Supabase session — authenticated user with expired cache
-    // should re-verify server-side rather than be sent to purchase again
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      router.push('/onboarding/post-auth');
-      return;
+    // Guard 2: server-verified session via getUser()
+    // getUser() is required here — getSession() reads from the cookie store
+    // synchronously and can return null on the initial call before @supabase/ssr
+    // has hydrated cookies from the browser, causing a false "not authenticated"
+    // result even for users with a valid session. getUser() makes a server round-trip
+    // that correctly refreshes the token and returns the authenticated user.
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.push('/onboarding/post-auth');
+        return;
+      }
+    } catch {
+      // Network error — fall through to paywall
     }
 
-    // New unauthenticated user — send to paywall for auth + subscription
+    // No authenticated session confirmed — new user needs to authenticate
     router.push('/paywall');
   }
 
@@ -82,7 +87,7 @@ export default function PricingPage() {
     <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
         <OnboardingProgress step={12} />
 
         {/* Heed speech bubble */}
@@ -175,18 +180,19 @@ export default function PricingPage() {
           )}
         </div>
 
-        {/* CTA */}
-        <div className="mt-auto pt-4">
-          <button
-            onClick={handleCTA}
-            className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-3"
-          >
-            {`Start free trial — ${PLANS[selected].label}`}
-          </button>
-          <p className="text-white/30 text-xs text-center leading-relaxed">
-            No credit card required today. Cancel anytime.
-          </p>
-        </div>
+        <div className="pb-4" />
+      </div>
+
+      <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full">
+        <button
+          onClick={handleCTA}
+          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-2"
+        >
+          {`Start free trial — ${PLANS[selected].label}`}
+        </button>
+        <p className="text-white/30 text-xs text-center leading-relaxed">
+          No credit card required today. Cancel anytime.
+        </p>
       </div>
     </div>
   );

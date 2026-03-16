@@ -165,7 +165,7 @@ export default function FlowPage() {
     <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 flex flex-col px-5 pb-6 max-w-lg mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
 
         {/* Progress bar */}
         <div className="mb-7 pt-3">
@@ -316,29 +316,31 @@ export default function FlowPage() {
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex gap-3 mt-auto pt-4">
-          {step > 1 && (
-            <button
-              onClick={handleBack}
-              className="h-14 px-5 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-medium hover:bg-white/[0.11] transition-all"
-            >
-              Back
-            </button>
-          )}
-          <button
-            onClick={handleNext}
-            disabled={!canContinue()}
-            className={`flex-1 h-14 rounded-xl font-semibold text-base transition-all ${
-              canContinue()
-                ? "bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]"
-                : "bg-white/[0.07] text-white/25 cursor-not-allowed"
-            }`}
-          >
-            {step === 7 ? "Find My Match" : "Continue"}
-          </button>
-        </div>
+        {/* Bottom padding so last option isn't flush against nav */}
+        <div className="pb-4" />
+      </div>
 
+      {/* Navigation — outside the scroll area, always visible at bottom */}
+      <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full flex gap-3">
+        {step > 1 && (
+          <button
+            onClick={handleBack}
+            className="h-14 px-5 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-medium hover:bg-white/[0.11] transition-all"
+          >
+            Back
+          </button>
+        )}
+        <button
+          onClick={handleNext}
+          disabled={!canContinue()}
+          className={`flex-1 h-14 rounded-xl font-semibold text-base transition-all ${
+            canContinue()
+              ? "bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]"
+              : "bg-white/[0.07] text-white/25 cursor-not-allowed"
+          }`}
+        >
+          {step === 7 ? "Find My Match" : "Continue"}
+        </button>
       </div>
     </div>
   );
