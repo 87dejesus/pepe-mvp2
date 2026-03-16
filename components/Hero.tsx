@@ -1,29 +1,36 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true; // set directly — React's muted prop doesn't always write the HTML attribute
+    v.play().catch(() => {}); // attempt autoplay, silently ignore if browser blocks
+  }, []);
+
   return (
     <section className="relative w-full overflow-hidden bg-[#0A2540]" style={{ minHeight: '92dvh' }}>
 
       {/* ── Video ────────────────────────────────────────────────────────────── */}
-      {/*
-        Place your video at /public/brand/hero.mp4
-        Scene: woman arrives at apartment door with "Available" sign →
-        landlord flips sign to "Rented" → close-up of her disappointed face → fade out.
-        Recommended: 8–12s loop, silent (audio stripped), 1080x1920 portrait or 1920x1080.
-      */}
       <video
+        ref={videoRef}
         src="/brand/hero.mp4"
         autoPlay
         muted
         loop
         playsInline
+        disablePictureInPicture
         className="absolute inset-0 w-full h-full object-cover"
+        style={{ pointerEvents: 'none' }}
       />
 
-      {/* ── Dark scrim (always present, softens video) ───────────────────────── */}
+      {/* ── Dark scrim ───────────────────────────────────────────────────────── */}
       <div className="absolute inset-0 bg-[#0A2540]/50" />
 
       {/* ── Gradient: transparent top → solid navy bottom ───────────────────── */}
@@ -34,31 +41,31 @@ export default function Hero() {
         <Image
           src="/brand/steady-one-white.png"
           alt="The Steady One"
-          width={80}
-          height={28}
-          className="object-contain opacity-70"
+          width={110}
+          height={38}
+          className="object-contain opacity-80"
           priority
         />
       </div>
 
       {/* ── Overlay text — bottom of video area ─────────────────────────────── */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-6 pb-10 flex flex-col items-center">
-        <div className="w-full max-w-md bg-[#0A2540]/75 backdrop-blur-sm rounded-2xl px-6 py-5 mb-6 text-center">
-          <p className="text-white font-bold text-xl leading-snug mb-2">
+        <div className="w-full max-w-lg bg-[#0A2540]/80 backdrop-blur-sm rounded-2xl px-7 py-7 mb-7 text-center">
+          <p className="text-white font-bold text-2xl sm:text-3xl leading-snug mb-3">
             Feeling the pressure of apartment hunting?
           </p>
-          <p className="text-white/80 font-semibold text-base leading-snug mb-1">
+          <p className="text-white/80 font-semibold text-lg leading-snug mb-1">
             You don&apos;t need more listings.
           </p>
-          <p className="text-white/80 font-semibold text-base leading-snug">
+          <p className="text-white/80 font-semibold text-lg leading-snug">
             You need clarity to decide before it&apos;s gone.
           </p>
         </div>
 
-        {/* ── CTA ─────────────────────────────────────────────────────────────── */}
+        {/* ── Primary CTA ──────────────────────────────────────────────────────── */}
         <Link
           href="/flow"
-          className="flex items-center justify-center w-full max-w-md bg-[#00A651] hover:bg-[#00913f] text-white font-semibold text-base h-14 rounded-xl active:scale-[0.98] transition-all shadow-[0_4px_24px_rgba(0,166,81,0.4)]"
+          className="flex items-center justify-center w-full max-w-lg bg-[#00A651] hover:bg-[#00913f] text-white font-semibold text-base h-14 rounded-xl active:scale-[0.98] transition-all shadow-[0_4px_24px_rgba(0,166,81,0.4)]"
         >
           Find your steady home
         </Link>

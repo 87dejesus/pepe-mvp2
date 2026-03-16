@@ -186,12 +186,12 @@ export default function FlowPage() {
           <Image
             src="/brand/heed-mascot.png"
             alt="Heed mascot"
-            width={40}
-            height={40}
+            width={52}
+            height={52}
             className="object-contain shrink-0 mt-0.5"
           />
-          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
-            <p className="text-sm font-semibold text-[#0A2540] leading-snug">
+          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-4 flex-1">
+            <p className="text-base font-semibold text-[#0A2540] leading-snug">
               {questions[step]}
             </p>
             {step === 6 && (
@@ -201,7 +201,7 @@ export default function FlowPage() {
         </div>
 
         {/* Options area */}
-        <div className={`flex-1 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
 
           {/* Step 1 — Boroughs */}
           {step === 1 && (
@@ -317,7 +317,7 @@ export default function FlowPage() {
         </div>
 
         {/* Navigation */}
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-auto pt-6">
           {step > 1 && (
             <button
               onClick={handleBack}
