@@ -1,0 +1,33 @@
+{
+  "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "withpepe.com"
+        }
+      ],
+      "destination": "https://thesteadyone.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.withpepe.com"
+        }
+      ],
+      "destination": "https://thesteadyone.com/:path*",
+      "permanent": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsx:*)",
+      "Bash(npm run dev:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 6936 -Force\")",
+      "Bash(powershell -Command \"npm run dev 2>&1 | Select-String ''Query enviada'', ''Results Found'', ''Match Data''\")",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri ''http://localhost:3000/api/listings?borough=Staten%20Island&bedrooms=1&budget=5000'' -Method Get\")",
+      "Bash(powershell -Command \"Stop-Process -Id 9884 -Force\")",
+      "Bash(powershell -Command \"Resolve-DnsName www.withpepe.com\")",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
+    ]
+  }
+}

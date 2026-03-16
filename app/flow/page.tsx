@@ -1,190 +1,345 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Header from "@/components/Header";
+
+const LS_KEY = "heed_answers_v2";
 
 type Answers = {
   boroughs: string[];
-  budgetMax: number;
-  beds: "0" | "1" | "2" | "3+";
-  moveWhen: "now" | "2-4w" | "1-2m" | "flex";
-  commuteNote: string;
-  dealbreakers: string[];
+  budget: number;
+  bedrooms: string;
+  bathrooms: string;
+  pets: string;
+  amenities: string[];
+  timing: string;
 };
 
-const LS_KEY = "pepe_answers_v1";
-
 export default function FlowPage() {
-  const router = useRouter();
-
   const [step, setStep] = useState(1);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const [boroughs, setBoroughs] = useState<string[]>(["Manhattan"]);
-  const [budgetMax, setBudgetMax] = useState<number>(3200);
-  const [beds, setBeds] = useState<Answers["beds"]>("1");
-  const [moveWhen, setMoveWhen] = useState<Answers["moveWhen"]>("now");
-  const [commuteNote, setCommuteNote] = useState<string>("");
-  const [dealbreakers, setDealbreakers] = useState<string[]>([]);
+  const [boroughs, setBoroughs] = useState<string[]>([]);
+  const [budget, setBudget] = useState<number>(3500);
+  const [bedrooms, setBedrooms] = useState<string>("");
+  const [bathrooms, setBathrooms] = useState<string>("");
+  const [pets, setPets] = useState<string>("");
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [timing, setTiming] = useState<string>("");
 
-  const canContinue = useMemo(() => {
+  function toggleArray(arr: string[], value: string): string[] {
+    return arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value];
+  }
+
+  function canContinue(): boolean {
     if (step === 1) return boroughs.length > 0;
-    if (step === 2) return budgetMax >= 1000;
-    if (step === 3) return !!beds;
-    if (step === 4) return !!moveWhen;
-    if (step === 5) return commuteNote.trim().length >= 10; // obrigatória no MVP
-    return true;
-  }, [step, boroughs, budgetMax, beds, moveWhen, commuteNote]);
-
-  function toggle(list: string[], value: string) {
-    return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
+    if (step === 2) return budget >= 500;
+    if (step === 3) return bedrooms !== "";
+    if (step === 4) return bathrooms !== "";
+    if (step === 5) return pets !== "";
+    if (step === 6) return true;
+    if (step === 7) return timing !== "";
+    return false;
   }
 
-  function saveAndGo() {
-    const payload: Answers = {
-      boroughs,
-      budgetMax,
-      beds,
-      moveWhen,
-      commuteNote: commuteNote.trim(),
-      dealbreakers,
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-    router.push("/decision");
+  function handleNext() {
+    if (step < 7) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setStep(step + 1);
+        setIsTransitioning(false);
+      }, 180);
+    } else {
+      const answers: Answers = { boroughs, budget, bedrooms, bathrooms, pets, amenities, timing };
+      localStorage.setItem(LS_KEY, JSON.stringify(answers));
+      setShowDiagnosis(true);
+    }
   }
+
+  function handleBack() {
+    if (step > 1) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setStep(step - 1);
+        setIsTransitioning(false);
+      }, 180);
+    }
+  }
+
+  useEffect(() => {
+    if (showDiagnosis) {
+      const timer = setTimeout(() => { window.location.href = "/onboarding/source"; }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDiagnosis]);
+
+  // ── Diagnosis screen ────────────────────────────────────────────────────────
+  if (showDiagnosis) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <div className="bg-white/[0.07] border border-white/20 rounded-2xl p-10 max-w-sm w-full text-center">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/brand/heed-mascot.png"
+                alt="Heed mascot"
+                width={96}
+                height={96}
+                className="object-contain"
+                style={{ animation: "heedPulse 2s ease-in-out infinite" }}
+                unoptimized
+              />
+            </div>
+            <div
+              className="w-7 h-7 border-2 border-white/60 border-t-transparent rounded-full mx-auto mb-5"
+              style={{ animation: "heedSpin 1s linear infinite" }}
+            />
+            <h1 className="text-lg font-semibold text-white mb-2">
+              Gathering the facts…
+            </h1>
+            <p className="text-sm text-white/55 leading-relaxed">
+              Finding the paths that minimize the usual NYC frustrations based on what you told me.
+            </p>
+          </div>
+          <style>{`
+            @keyframes heedSpin  { to { transform: rotate(360deg); } }
+            @keyframes heedPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Option card ─────────────────────────────────────────────────────────────
+  const OptionCard = ({
+    selected,
+    onClick,
+    children,
+    type = "radio",
+  }: {
+    selected: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+    type?: "radio" | "checkbox";
+  }) => (
+    <div
+      onClick={onClick}
+      className={`flex items-center px-4 py-3.5 mb-2 rounded-xl cursor-pointer transition-all border ${
+        selected
+          ? "border-[#00A651]/60 bg-[#00A651]/[0.12]"
+          : "border-white/20 bg-white/[0.05] hover:bg-white/[0.09]"
+      }`}
+    >
+      <div
+        className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 mr-3 transition-all ${
+          type === "radio" ? "rounded-full" : "rounded"
+        } ${selected ? "border-[#00A651] bg-[#00A651]" : "border-white/30"}`}
+      >
+        {selected && (
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+      <span className={`text-sm ${selected ? "font-medium text-white" : "text-white/70"}`}>
+        {children}
+      </span>
+    </div>
+  );
+
+  // ── Questions ───────────────────────────────────────────────────────────────
+  const questions: Record<number, string> = {
+    1: "Which boroughs work for your daily life?",
+    2: "What's your monthly budget?",
+    3: "How many bedrooms do you need?",
+    4: "How many bathrooms do you need?",
+    5: "Any pets coming along?",
+    6: "Which amenities matter most to you?",
+    7: "When are you planning to move?",
+  };
 
   return (
-    <main style={{ padding: 24, maxWidth: 720 }}>
-      <h1>Flow</h1>
-      <p>Answer fast. We only ask what changes the decision.</p>
+    <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
+      <Header />
 
-      <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
-        {step === 1 && (
-          <>
-            <h2>Where are you willing to live?</h2>
-            <p>Select boroughs. Keep it honest.</p>
-            {["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"].map((b) => (
-              <label key={b} style={{ display: "block", marginTop: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={boroughs.includes(b)}
-                  onChange={() => setBoroughs(toggle(boroughs, b))}
-                />{" "}
-                {b}
-              </label>
-            ))}
-          </>
-        )}
+      <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
 
-        {step === 2 && (
-          <>
-            <h2>Max monthly budget</h2>
-            <p>NYC pressure is real. We need the hard ceiling.</p>
-            <input
-              type="number"
-              value={budgetMax}
-              onChange={(e) => setBudgetMax(Number(e.target.value))}
-              style={{ marginTop: 8, padding: 8, width: 220 }}
-              min={500}
+        {/* Progress bar */}
+        <div className="mb-7 pt-3">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs text-white/50 font-medium">Step {step} of 7</span>
+            <span className="text-xs text-white/35">{Math.round((step / 7) * 100)}%</span>
+          </div>
+          <div className="h-px bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#00A651] rounded-full transition-all duration-300"
+              style={{ width: `${(step / 7) * 100}%` }}
             />
-          </>
-        )}
+          </div>
+        </div>
 
-        {step === 3 && (
-          <>
-            <h2>Bedrooms</h2>
-            {(["0", "1", "2", "3+"] as const).map((v) => (
-              <label key={v} style={{ display: "block", marginTop: 8 }}>
-                <input type="radio" checked={beds === v} onChange={() => setBeds(v)} /> {v}
-              </label>
-            ))}
-            <p style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
-              Studio is 0. This will matter in tradeoffs.
+        {/* Heed bubble + question */}
+        <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+          <Image
+            src="/brand/heed-mascot.png"
+            alt="Heed mascot"
+            width={40}
+            height={40}
+            className="object-contain shrink-0 mt-0.5"
+          />
+          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
+            <p className="text-sm font-semibold text-[#0A2540] leading-snug">
+              {questions[step]}
             </p>
-          </>
-        )}
-
-        {step === 4 && (
-          <>
-            <h2>How soon do you need to move?</h2>
-            {[
-              { v: "now", t: "Now (days)" },
-              { v: "2-4w", t: "2–4 weeks" },
-              { v: "1-2m", t: "1–2 months" },
-              { v: "flex", t: "Flexible" },
-            ].map((o) => (
-              <label key={o.v} style={{ display: "block", marginTop: 8 }}>
-                <input
-                  type="radio"
-                  checked={moveWhen === (o.v as any)}
-                  onChange={() => setMoveWhen(o.v as any)}
-                />{" "}
-                {o.t}
-              </label>
-            ))}
-          </>
-        )}
-
-        {step === 5 && (
-          <>
-            <h2>Commute reality check</h2>
-            <p>Write 1–2 lines. Example: “I work in Midtown. I can handle 45 min door-to-door.”</p>
-            <textarea
-              value={commuteNote}
-              onChange={(e) => setCommuteNote(e.target.value)}
-              rows={4}
-              style={{ marginTop: 8, padding: 8, width: "100%" }}
-              placeholder="Your commute limits…"
-            />
-          </>
-        )}
-
-        {step === 6 && (
-          <>
-            <h2>Dealbreakers</h2>
-            <p>Select what will make you regret it.</p>
-            {["No elevator", "No laundry", "Street noise", "Long walk to subway", "Broker fee"].map(
-              (d) => (
-                <label key={d} style={{ display: "block", marginTop: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={dealbreakers.includes(d)}
-                    onChange={() => setDealbreakers(toggle(dealbreakers, d))}
-                  />{" "}
-                  {d}
-                </label>
-              )
+            {step === 6 && (
+              <p className="text-[11px] text-[#0A2540]/50 mt-0.5">Select all that apply — optional</p>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
 
-      <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-        <button
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          disabled={step === 1}
-          style={{ padding: "10px 14px" }}
-        >
-          Back
-        </button>
+        {/* Options area */}
+        <div className={`flex-1 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
 
-        {step < 6 ? (
+          {/* Step 1 — Boroughs */}
+          {step === 1 && (
+            <div>
+              {["Manhattan", "Brooklyn", "Queens", "Bronx"].map((b) => (
+                <OptionCard key={b} selected={boroughs.includes(b)} onClick={() => setBoroughs(toggleArray(boroughs, b))} type="checkbox">
+                  {b}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+
+          {/* Step 2 — Budget */}
+          {step === 2 && (
+            <div className="bg-white/[0.07] border border-white/20 rounded-xl p-5">
+              <div className="text-4xl font-bold text-white text-center mb-5 tabular-nums">
+                ${budget.toLocaleString()}
+                <span className="text-base font-normal text-white/40 ml-1">/mo</span>
+              </div>
+              <input
+                type="range"
+                min={1000}
+                max={15000}
+                step={100}
+                value={budget}
+                onChange={(e) => setBudget(Number(e.target.value))}
+                className="w-full cursor-pointer accent-[#00A651]"
+              />
+              <div className="flex justify-between text-xs text-white/35 mt-3 font-medium">
+                <span>$1,000</span>
+                <span>$15,000</span>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3 — Bedrooms */}
+          {step === 3 && (
+            <div>
+              {[
+                { value: "0", label: "Studio" },
+                { value: "1", label: "1 Bedroom" },
+                { value: "2", label: "2 Bedrooms" },
+                { value: "3+", label: "3+ Bedrooms" },
+              ].map((opt) => (
+                <OptionCard key={opt.value} selected={bedrooms === opt.value} onClick={() => setBedrooms(opt.value)}>
+                  {opt.label}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+
+          {/* Step 4 — Bathrooms */}
+          {step === 4 && (
+            <div>
+              {[
+                { value: "1", label: "1 Bathroom" },
+                { value: "1.5", label: "1.5 Bathrooms" },
+                { value: "2+", label: "2+ Bathrooms" },
+              ].map((opt) => (
+                <OptionCard key={opt.value} selected={bathrooms === opt.value} onClick={() => setBathrooms(opt.value)}>
+                  {opt.label}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+
+          {/* Step 5 — Pets */}
+          {step === 5 && (
+            <div>
+              {[
+                { value: "none", label: "No pets" },
+                { value: "cats", label: "Cats" },
+                { value: "dogs", label: "Dogs" },
+                { value: "both", label: "Cats and dogs" },
+              ].map((opt) => (
+                <OptionCard key={opt.value} selected={pets === opt.value} onClick={() => setPets(opt.value)}>
+                  {opt.label}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+
+          {/* Step 6 — Amenities */}
+          {step === 6 && (
+            <div>
+              {[
+                { value: "washer_dryer", label: "Washer/dryer in unit" },
+                { value: "elevator", label: "Elevator" },
+                { value: "doorman", label: "Doorman" },
+                { value: "gym", label: "Gym" },
+              ].map((opt) => (
+                <OptionCard key={opt.value} selected={amenities.includes(opt.value)} onClick={() => setAmenities(toggleArray(amenities, opt.value))} type="checkbox">
+                  {opt.label}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+
+          {/* Step 7 — Timing */}
+          {step === 7 && (
+            <div>
+              {[
+                { value: "asap", label: "ASAP — I need to move soon" },
+                { value: "30days", label: "Within 30 days" },
+                { value: "researching", label: "Just researching for now" },
+              ].map((opt) => (
+                <OptionCard key={opt.value} selected={timing === opt.value} onClick={() => setTiming(opt.value)}>
+                  {opt.label}
+                </OptionCard>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex gap-3 mt-6">
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              className="h-14 px-5 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-medium hover:bg-white/[0.11] transition-all"
+            >
+              Back
+            </button>
+          )}
           <button
-            onClick={() => setStep((s) => s + 1)}
-            disabled={!canContinue}
-            style={{ padding: "10px 14px" }}
+            onClick={handleNext}
+            disabled={!canContinue()}
+            className={`flex-1 h-14 rounded-xl font-semibold text-base transition-all ${
+              canContinue()
+                ? "bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]"
+                : "bg-white/[0.07] text-white/25 cursor-not-allowed"
+            }`}
           >
-            Continue
+            {step === 7 ? "Find My Match" : "Continue"}
           </button>
-        ) : (
-          <button onClick={saveAndGo} style={{ padding: "10px 14px" }}>
-            See decision
-          </button>
-        )}
-      </div>
+        </div>
 
-      <p style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
-        Step {step} of 6
-      </p>
-    </main>
+      </div>
+    </div>
   );
 }

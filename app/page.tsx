@@ -1,43 +1,40 @@
-import Link from "next/link";
+import Link from 'next/link';
+import Header from '@/components/Header';
+import Hero from '@/components/Hero';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 dark:bg-zinc-950">
-      {/* Heed wordmark */}
-      <div className="mb-10 sm:mb-16">
-        <span className="text-6xl font-bold tracking-tight text-zinc-900 sm:text-8xl dark:text-zinc-50">
-          Heed
-        </span>
-      </div>
+    <main className="min-h-[100dvh] flex flex-col bg-[#0A2540] font-sans">
+      <Header />
 
-      {/* Headline + subheadline */}
-      <div className="mb-12 flex flex-col items-center gap-5 text-center sm:mb-16">
-        <h1 className="max-w-xs text-4xl font-semibold leading-tight tracking-tight text-zinc-900 sm:max-w-2xl sm:text-6xl dark:text-zinc-50">
-          Is this apartment worth committing to?
-        </h1>
-        <p className="max-w-xs text-lg leading-relaxed text-zinc-500 sm:max-w-lg sm:text-xl dark:text-zinc-400">
-          NYC moves fast. Heed helps you decide clearly — before you sign.
-        </p>
-      </div>
+      {/* Hero — full-width video with overlay text + CTA */}
+      <Hero />
 
-      {/* CTAs */}
-      <div className="flex flex-col items-center gap-5">
+      {/* Value Props */}
+      <section className="px-6 py-8 max-w-md mx-auto w-full space-y-3">
+        <div className="bg-white/[0.07] border border-white/20 rounded-xl p-4">
+          <p className="text-sm font-semibold mb-1 text-white">Know your trade-offs</p>
+          <p className="text-sm text-white/60 leading-relaxed">
+            Answer 7 quick questions. We match you with listings that fit your non-negotiables.
+          </p>
+        </div>
+        <div className="bg-white/[0.07] border border-white/20 rounded-xl p-4">
+          <p className="text-sm font-semibold mb-1 text-white">Decide with confidence</p>
+          <p className="text-sm text-white/60 leading-relaxed">
+            Each listing gets a match score and an honest take. Act now or wait consciously.
+          </p>
+        </div>
+      </section>
+
+      {/* Secondary CTA */}
+      <section className="px-6 pb-10">
         <Link
           href="/flow"
-          className="flex h-14 w-72 items-center justify-center rounded-full bg-zinc-900 text-base font-semibold text-white transition-colors hover:bg-zinc-700 sm:w-80 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="flex items-center justify-center w-full max-w-md mx-auto bg-[#00A651] hover:bg-[#00913f] text-white font-semibold text-base h-14 rounded-xl active:scale-[0.98] transition-all"
         >
-          Find your steady home
+          Find My Home
         </Link>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Already have an account?{" "}
-          <Link
-            href="/signin"
-            className="font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
-          >
-            Sign in
-          </Link>
-        </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

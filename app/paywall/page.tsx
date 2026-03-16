@@ -1,111 +1,374 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { createBrowserClient } from '@supabase/ssr';
+import Header from '@/components/Header';
+import { cacheServerAccess } from '@/lib/access';
 
-const LS_ANSWERS = "pepe_answers_v1";
-const LS_SUB = "pepe_subscription_v1";
+const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
-type SubState = {
-  paywall_seen: boolean;
-  subscribed: boolean;
-  trial_started_at?: string; // ISO
-};
+type Step = 'email' | 'otp';
 
-export default function PaywallPage() {
-  const router = useRouter();
-  const [answers, setAnswers] = useState<any>(null);
-  const [sub, setSub] = useState<SubState>({ paywall_seen: true, subscribed: false });
+function createSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-  useEffect(() => {
-    const a = localStorage.getItem(LS_ANSWERS);
-    if (!a) {
-      router.push("/flow");
+function PaywallContent() {
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  async function handleContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!normalizedEmail) return;
+
+    setLoading(true);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      console.log('[OTP] env check — URL present:', !!supabaseUrl, '| KEY present:', !!supabaseKey);
+
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: true },
+      });
+
+      console.log('[OTP] signInWithOtp result — error:', error);
+      if (error) throw error;
+      setStep('otp');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] send failed:', err);
+      setError(`Send failed: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleOtpChange(value: string) {
+    const numbersOnly = value.replace(/\D/g, '').slice(0, 6);
+    setOtp(numbersOnly);
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (otp.trim().length !== 6) {
+      setError('Please enter the 6-digit code.');
       return;
     }
-    setAnswers(JSON.parse(a));
 
-    const raw = localStorage.getItem(LS_SUB);
-    if (raw) setSub(JSON.parse(raw));
-    else localStorage.setItem(LS_SUB, JSON.stringify({ paywall_seen: true, subscribed: false }));
-  }, [router]);
+    setLoading(true);
+    try {
+      const supabase = createSupabase();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: otp.trim(),
+        type: 'email',
+      });
 
-  const pressure = useMemo(() => {
-    if (!answers) return "unknown";
-    if (answers.moveWhen === "now") return "high";
-    if (answers.moveWhen === "2-4w") return "medium";
-    return "lower";
-  }, [answers]);
+      console.log('[OTP] verifyOtp result — error:', error, '| session:', !!data?.session, '| user:', data?.user?.email ?? null);
 
-  function startTrial() {
-    const next: SubState = {
-      paywall_seen: true,
-      subscribed: true,
-      trial_started_at: new Date().toISOString(),
-    };
-    localStorage.setItem(LS_SUB, JSON.stringify(next));
-    setSub(next);
-    router.push("/decision");
+      if (error) throw error;
+
+      if (!data?.session) {
+        throw new Error('Verification failed — no session returned. Try requesting a new code.');
+      }
+
+      console.log('[OTP] verified — session:', !!data.session, '| user:', data.user?.email ?? null);
+
+      // Admin bypass — go directly to /decision
+      if ((data.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
+        cacheServerAccess({ status: 'active', trial_ends_at: null });
+        console.log('[OTP] admin — redirecting to /decision');
+        window.location.href = '/decision';
+        return;
+      }
+
+      // All other users: navigate to post-auth handler via hard navigation.
+      // This guarantees session cookies are sent on the next API requests.
+      // post-auth handles: Stripe checkout (if priceId saved), trial start, and access routing.
+      console.log('[OTP] navigating to /onboarding/post-auth');
+      window.location.href = '/onboarding/post-auth';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] verifyOtp failed:', msg);
+      setError('Code expired or invalid. Request new code');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function notNow() {
-    const next: SubState = { ...sub, paywall_seen: true };
-    localStorage.setItem(LS_SUB, JSON.stringify(next));
-    router.push("/exit");
+  function resetToEmailStep() {
+    setStep('email');
+    setOtp('');
+    setError(null);
+    setResendSent(false);
   }
 
-  if (!answers) return <main style={{ padding: 24 }}>Loading…</main>;
+  async function handleResend() {
+    setResendLoading(true);
+    setResendSent(false);
+    setError(null);
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: true },
+      });
+      console.log('[OTP] resend result — error:', error);
+      if (error) throw error;
+      setResendSent(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      console.error('[OTP] resend failed:', err);
+      setError(`Resend failed: ${msg}`);
+    } finally {
+      setResendLoading(false);
+    }
+  }
 
   return (
-    <main style={{ padding: 24, maxWidth: 720 }}>
-      <h1>Before you commit</h1>
-      <p style={{ marginTop: 6 }}>
-        Pepe is not a listings site. It helps you make one decision with less regret.
-      </p>
+    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
+      <Header variant="light" />
 
-      <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 10 }}>
-        <h2 style={{ marginTop: 0 }}>What you get</h2>
+      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-6 overflow-y-auto">
+        <div className="max-w-sm w-full">
+          <div className="text-center mb-5">
+            <Image
+              src="/brand/heed-mascot.png"
+              alt="Heed mascot"
+              width={96}
+              height={96}
+              className="object-contain mx-auto mb-3"
+            />
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
+              Make one clear decision.
+            </h1>
+            <p className="text-[#666666] text-sm mt-2">
+              Stop scrolling. The Steady One helps you commit — or consciously wait.
+            </p>
+            <p className="text-xs text-[#999999] mt-1.5">
+              Already a member? Enter your email to sign back in.
+            </p>
+          </div>
 
-        <ul style={{ marginTop: 10, lineHeight: 1.6 }}>
-          <li>Clear tradeoffs based on your constraints</li>
-          <li>Pressure-aware guidance (NYC behavior, not generic scoring)</li>
-          <li>Why now signals, so hesitation is conscious</li>
-          <li>Support sections (guarantors, moving tools) when relevant</li>
-        </ul>
+          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#666666] mb-3">
+              What you get
+            </p>
+            <ul className="space-y-2.5">
+              {[
+                'Match score based on your real constraints',
+                'Apply Today vs Wait Thoughtfully — no false urgency',
+                'Incentive detection: free months, no-fee deals',
+                "Heed's take on every listing",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-[#1A1A1A]">
+                  <span className="text-[#00A651] font-bold mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div style={{ marginTop: 14, padding: 12, background: "#f7f7f7", borderRadius: 10 }}>
-          <strong>Current pressure:</strong> {pressure.toUpperCase()} <br />
-          <span style={{ opacity: 0.8 }}>
-            In NYC, "wait" often means "lose the option." Pepe makes that trade explicit.
-          </span>
-        </div>
-      </div>
+          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-3xl font-bold text-[#0A2540]">$4.49</span>
+              <span className="text-[#666666] text-sm">/ week</span>
+            </div>
+            <p className="text-[#00A651] font-semibold text-sm mb-4">
+              3 days free — no charge during trial
+            </p>
 
-      <div style={{ marginTop: 16, padding: 16, border: "1px solid #ddd", borderRadius: 10 }}>
-        <h2 style={{ marginTop: 0 }}>Trial</h2>
-        <p style={{ marginTop: 8 }}>
-          3 days free, then $2.49/week. Cancel anytime.
-        </p>
+            {step === 'email' && (
+              <form onSubmit={handleContinue} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1 uppercase tracking-wide">
+                    Email address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    required
+                    autoFocus
+                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || !normalizedEmail}
+                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                >
+                  {loading ? <Spinner /> : 'Continue'}
+                </button>
+                <p className="text-[10px] text-[#999999] text-center mt-2">
+                  Already subscribed or trialing? Signing in never creates a new charge.
+                </p>
+              </form>
+            )}
 
-        <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button onClick={startTrial} style={{ padding: "10px 14px" }}>
-            Start free trial
-          </button>
-          <button onClick={notNow} style={{ padding: "10px 14px" }}>
-            Not now
-          </button>
-        </div>
+            {step === 'otp' && (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <div className="text-center space-y-1">
+                  <p className="font-semibold text-[#0A2540]">Check your inbox</p>
+                  <p className="text-sm text-[#666666]">
+                    We sent a 6-digit code to{' '}
+                    <span className="font-medium text-[#0A2540]">{normalizedEmail}</span>.
+                    Enter it to sign in — your existing access will be restored automatically.
+                  </p>
+                </div>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => handleOtpChange(e.target.value)}
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="123456"
+                  autoFocus
+                  className="w-full text-center text-3xl tracking-[0.3em] font-semibold border border-[#E5E5E5] rounded-lg px-3 py-4 text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="w-full h-14 rounded-lg bg-[#0A2540] text-white font-semibold text-base hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                >
+                  {loading ? <Spinner /> : 'Verify Code'}
+                </button>
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Sending…' : 'Resend code'}
+                  </button>
+                  <span className="text-[#E5E5E5]">|</span>
+                  <button
+                    type="button"
+                    onClick={resetToEmailStep}
+                    className="text-sm text-[#666666] underline underline-offset-2 hover:text-[#0A2540]"
+                  >
+                    Change email
+                  </button>
+                </div>
+                {resendSent && (
+                  <p className="text-sm text-[#00A651] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 text-center">
+                    Code resent — check your inbox.
+                  </p>
+                )}
+              </form>
+            )}
 
-        <p style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
-          MVP note: payment is simulated for now. We are validating decision quality first.
-        </p>
+            {error && (
+              <div className="mt-3 space-y-3">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                  {error}
+                </p>
+                {step === 'email' && (
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="w-full h-11 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
+                  >
+                    Try again
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
-        {sub.subscribed && (
-          <p style={{ marginTop: 10, fontSize: 13 }}>
-            Status: <strong>Trial started</strong> ({sub.trial_started_at})
+          {IS_DEV_MOCK && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <p className="text-xs font-semibold uppercase text-amber-700 mb-2">
+                Dev mode — test without Stripe or email
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <DevMockButton scenario="trialing" label="Simulate trial (full access)" />
+                <DevMockButton scenario="active" label="Simulate paid subscription" />
+                <DevMockButton scenario="canceled" label="Simulate canceled (paywall)" />
+                <DevMockButton scenario={null} label="Clear mock (real state)" />
+              </div>
+            </div>
+          )}
+
+          <p className="text-[10px] text-[#999999] text-center mt-2 leading-relaxed">
+            New users get 3 days free, then $4.49/wk. Returning members are never charged again just for signing in.
           </p>
-        )}
+
+          <div className="text-center mt-4 pb-safe">
+            <Link href="/" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
+              ← Back to home
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
+  );
+}
+
+export default function PaywallPage() {
+  return (
+    <Suspense>
+      <PaywallContent />
+    </Suspense>
+  );
+}
+
+function Spinner({ dark }: { dark?: boolean }) {
+  return (
+    <span className="flex items-center justify-center gap-2">
+      <span
+        className={`w-4 h-4 border-2 rounded-full animate-spin ${
+          dark ? 'border-[#0A2540]/30 border-t-[#0A2540]' : 'border-white/40 border-t-white'
+        }`}
+      />
+      Loading…
+    </span>
+  );
+}
+
+function DevMockButton({
+  scenario,
+  label,
+}: {
+  scenario: 'trialing' | 'active' | 'canceled' | null;
+  label: string;
+}) {
+  function apply() {
+    if (scenario === null) {
+      localStorage.removeItem('steady_dev_mock');
+    } else {
+      localStorage.setItem('steady_dev_mock', scenario);
+    }
+    window.location.href = '/decision';
+  }
+
+  return (
+    <button
+      onClick={apply}
+      className="w-full text-left text-xs font-medium px-3 py-2 border border-amber-200 rounded-lg bg-white text-amber-800 hover:bg-amber-50 active:bg-amber-100"
+    >
+      {label}
+    </button>
   );
 }
