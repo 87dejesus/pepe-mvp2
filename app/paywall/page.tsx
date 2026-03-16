@@ -76,7 +76,7 @@ export default function PaywallPage() {
         <div style={{ marginTop: 14, padding: 12, background: "#f7f7f7", borderRadius: 10 }}>
           <strong>Current pressure:</strong> {pressure.toUpperCase()} <br />
           <span style={{ opacity: 0.8 }}>
-            In NYC, “wait” often means “lose the option.” Pepe makes that trade explicit.
+            In NYC, "wait" often means "lose the option." Pepe makes that trade explicit.
           </span>
         </div>
       </div>
