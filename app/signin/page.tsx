@@ -1,147 +1,263 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { createBrowserClient } from '@supabase/ssr';
+import Header from '@/components/Header';
+import { cacheServerAccess } from '@/lib/access';
 
-type Step = "email" | "otp" | "done";
+type Step = 'email' | 'otp';
 
-export default function SignInPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+function createSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+function SignInContent() {
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
-  async function sendOtp(e: React.FormEvent) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  async function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!normalizedEmail) return;
+
     setLoading(true);
-    const { error: authErr } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: false },
-    });
-    setLoading(false);
-    if (authErr) {
-      // shouldCreateUser: false returns an error for unknown emails — surface a clear message
-      if (authErr.message.toLowerCase().includes("signups not allowed")) {
-        setError("No account found for that email. If you subscribed on a different device, make sure to use the same email address.");
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+      setStep('otp');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      // shouldCreateUser: false returns a specific error for unknown emails
+      if (msg.toLowerCase().includes('signups not allowed') || msg.toLowerCase().includes('user not found')) {
+        setError('No account found for that email. Make sure you use the same email you originally signed up with.');
       } else {
-        setError(authErr.message);
+        setError(`Could not send code: ${msg}`);
       }
-      return;
+    } finally {
+      setLoading(false);
     }
-    setStep("otp");
   }
 
-  async function verifyOtp(e: React.FormEvent) {
+  async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: otp.trim(),
-      type: "email",
-    });
-    setLoading(false);
-    if (verifyErr) {
-      setError("Invalid or expired code. Please check the code and try again.");
+
+    if (otp.trim().length !== 6) {
+      setError('Please enter the 6-digit code.');
       return;
     }
-    // Auth confirmed — route through post-auth orchestration layer
-    router.push("/onboarding/post-auth");
+
+    setLoading(true);
+    try {
+      const supabase = createSupabase();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: otp.trim(),
+        type: 'email',
+      });
+
+      if (error) throw error;
+
+      if (!data?.session) {
+        throw new Error('Verification failed — no session returned. Try requesting a new code.');
+      }
+
+      // Admin bypass — go directly to /decision
+      if ((data.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
+        cacheServerAccess({ status: 'active', trial_ends_at: null });
+        window.location.href = '/decision';
+        return;
+      }
+
+      // Route through post-auth orchestration — handles trialing, active, canceled, etc.
+      window.location.href = '/onboarding/post-auth';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      setError('Code expired or invalid. Request a new code.');
+      console.error('[signin] verifyOtp failed:', msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendSent(false);
+    setError(null);
+    try {
+      const supabase = createSupabase();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+      setResendSent(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      setError(`Resend failed: ${msg}`);
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  function resetToEmailStep() {
+    setStep('email');
+    setOtp('');
+    setError(null);
+    setResendSent(false);
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 dark:bg-zinc-950">
-      <div className="w-full max-w-sm">
-        {/* Wordmark */}
-        <div className="mb-10 text-center">
-          <a href="/" className="text-4xl font-bold tracking-tight text-zinc-900 no-underline dark:text-zinc-50">
-            Heed
-          </a>
+    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
+      <Header variant="light" />
+
+      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-10 overflow-y-auto">
+        <div className="max-w-sm w-full">
+
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-[#0A2540] leading-tight mb-2">
+              Sign in to your account
+            </h1>
+            <p className="text-sm text-[#666666] leading-relaxed">
+              Enter the email you used when you signed up. We&apos;ll send a one-time code to restore your access.
+            </p>
+            <p className="text-xs text-[#00A651] font-medium mt-2">
+              You will not be charged again just for signing in.
+            </p>
+          </div>
+
+          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5">
+            {step === 'email' && (
+              <form onSubmit={handleContinue} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wide">
+                    Email address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    required
+                    autoFocus
+                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                  />
+                </div>
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                    {error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || !normalizedEmail}
+                  className="w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                >
+                  {loading ? <Spinner /> : 'Send code'}
+                </button>
+              </form>
+            )}
+
+            {step === 'otp' && (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <div className="space-y-1">
+                  <p className="font-semibold text-[#0A2540] text-sm">Check your inbox</p>
+                  <p className="text-sm text-[#666666]">
+                    We sent a 6-digit code to{' '}
+                    <span className="font-medium text-[#0A2540]">{normalizedEmail}</span>.
+                    Enter it below to sign in.
+                  </p>
+                </div>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="123456"
+                  autoFocus
+                  className="w-full text-center text-3xl tracking-[0.3em] font-semibold border border-[#E5E5E5] rounded-lg px-3 py-4 text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                />
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                    {error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                >
+                  {loading ? <Spinner /> : 'Verify and sign in'}
+                </button>
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Sending…' : 'Resend code'}
+                  </button>
+                  <span className="text-[#E5E5E5]">|</span>
+                  <button
+                    type="button"
+                    onClick={resetToEmailStep}
+                    className="text-sm text-[#666666] underline underline-offset-2 hover:text-[#0A2540]"
+                  >
+                    Change email
+                  </button>
+                </div>
+                {resendSent && (
+                  <p className="text-sm text-[#00A651] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 text-center">
+                    Code resent — check your inbox.
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
+
+          <div className="text-center mt-6">
+            <Link href="/" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
+              ← Back to home
+            </Link>
+          </div>
         </div>
-
-        {step === "email" && (
-          <>
-            <h1 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Sign in
-            </h1>
-            <p className="mb-8 text-sm text-zinc-500 dark:text-zinc-400">
-              Enter the email you used when you subscribed. We&apos;ll send a one-time code.
-            </p>
-            <form onSubmit={sendOtp} className="flex flex-col gap-4">
-              <input
-                type="email"
-                required
-                autoFocus
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12 w-full rounded-xl border border-zinc-200 px-4 text-base text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-zinc-400"
-              />
-              {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-900 text-base font-semibold text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                {loading ? "Sending…" : "Send code"}
-              </button>
-            </form>
-          </>
-        )}
-
-        {step === "otp" && (
-          <>
-            <h1 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Check your email
-            </h1>
-            <p className="mb-8 text-sm text-zinc-500 dark:text-zinc-400">
-              We sent a 6-digit code to <strong className="text-zinc-800 dark:text-zinc-200">{email}</strong>. Enter it below.
-            </p>
-            <form onSubmit={verifyOtp} className="flex flex-col gap-4">
-              <input
-                type="text"
-                required
-                autoFocus
-                inputMode="numeric"
-                placeholder="123456"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                className="h-12 w-full rounded-xl border border-zinc-200 px-4 text-center text-2xl tracking-widest text-zinc-900 placeholder-zinc-300 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-zinc-400"
-              />
-              {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              )}
-              <button
-                type="submit"
-                disabled={loading || otp.length < 6}
-                className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-900 text-base font-semibold text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                {loading ? "Verifying…" : "Verify and sign in"}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStep("email"); setOtp(""); setError(null); }}
-                className="text-sm text-zinc-500 underline underline-offset-2 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-              >
-                Use a different email
-              </button>
-            </form>
-          </>
-        )}
-
-        <p className="mt-10 text-center text-sm text-zinc-400 dark:text-zinc-600">
-          <a href="/" className="hover:text-zinc-700 dark:hover:text-zinc-300">
-            Back to home
-          </a>
-        </p>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function Spinner() {
+  return (
+    <span className="flex items-center justify-center gap-2">
+      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+      Loading…
+    </span>
   );
 }

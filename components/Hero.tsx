@@ -65,7 +65,7 @@ export default function Hero() {
 
         <p className="text-white/60 text-sm mt-4">
           Already have an account?{' '}
-          <Link href="/paywall" className="text-white font-medium underline underline-offset-2 hover:text-white/80">
+          <Link href="/signin" className="text-white font-medium underline underline-offset-2 hover:text-white/80">
             Sign in
           </Link>
         </p>
