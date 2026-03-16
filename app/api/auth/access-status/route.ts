@@ -67,9 +67,16 @@ export async function GET(_req: NextRequest) {
     });
   }
 
-  console.log('[access-status] DB row found — status:', data.subscription_status, '| trial_ends_at:', data.trial_ends_at);
+  const status = data.subscription_status ?? 'none';
+  const grantsAccess = status === 'trialing' || status === 'active';
+  console.log(
+    `[access-status] DB row found | status: ${status} | trial_ends_at: ${data.trial_ends_at ?? 'null'} | current_period_end: ${data.current_period_end ?? 'null'} | grants_access: ${grantsAccess}`
+  );
+  if (grantsAccess) {
+    console.log(`[access-status] granting access — status is ${status}`);
+  }
   return NextResponse.json({
-    status: data.subscription_status ?? 'none',
+    status,
     trial_ends_at: data.trial_ends_at ?? null,
     current_period_end: data.current_period_end ?? null,
   });

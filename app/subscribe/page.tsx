@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -109,6 +109,10 @@ function SubscribeContent() {
   const [error, setError] = useState<string | null>(null);
   // True when server returned no_stripe_customer — needs support, not retry
   const [noCustomer, setNoCustomer] = useState(false);
+
+  // Auto-retry: counts down in payment_pending and fires handleRecheck once automatically
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+  const autoRetried = useRef(false);
 
   // Direct session verification — bypasses webhook timing.
   // Defined at component scope so it can be called from both init() and handleRecheck().
@@ -247,14 +251,32 @@ function SubscribeContent() {
     init();
   }, [checkoutSuccess, portalReturn, sessionId, router]);
 
+  // Auto-retry: when stuck in payment_pending, count down 15s and fire one automatic recheck.
+  // This covers the case where the Stripe subscription is briefly in 'incomplete' state
+  // (payment processing) and becomes 'active' a few seconds after the redirect.
+  useEffect(() => {
+    if (phase !== 'payment_pending' || autoRetried.current) return;
+    autoRetried.current = true;
+    let remaining = 15;
+    setRetryCountdown(remaining);
+    const interval = setInterval(() => {
+      remaining -= 1;
+      setRetryCountdown(remaining > 0 ? remaining : null);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        handleRecheck();
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   // Manual recheck from payment_pending state.
-  // Retries check-session first (if we have a sessionId) so it can write the DB,
-  // then falls back to a single access-status poll.
+  // Mirrors the same check-session + polling combo used during init().
   async function handleRecheck() {
     setPhase('verifying_payment');
     try {
-      // Re-run direct Stripe session verification — this is the only path that can
-      // write the users table when the webhook hasn't fired yet.
+      // Direct session check — writes DB without needing a webhook
       if (sessionId?.startsWith('cs_')) {
         const granted = await checkSessionDirect(sessionId);
         if (granted) {
@@ -263,18 +285,21 @@ function SubscribeContent() {
         }
       }
 
-      // Fallback: check if DB was written by the webhook in the meantime
-      const res = await fetch('/api/auth/access-status');
-      if (res.ok) {
-        const data: ServerAccessData = await res.json();
-        if (hasGrantedAccess(data)) {
-          cacheServerAccess({
-            status: data.status as AccessStatus,
-            trial_ends_at: data.trial_ends_at,
-            current_period_end: data.current_period_end,
-          });
-          router.replace('/decision');
-          return;
+      // Poll access-status — catches webhook updates that may have arrived
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+        const res = await fetch('/api/auth/access-status');
+        if (res.ok) {
+          const data: ServerAccessData = await res.json();
+          if (hasGrantedAccess(data)) {
+            cacheServerAccess({
+              status: data.status as AccessStatus,
+              trial_ends_at: data.trial_ends_at,
+              current_period_end: data.current_period_end,
+            });
+            router.replace('/decision');
+            return;
+          }
         }
       }
     } catch {
@@ -365,7 +390,9 @@ function SubscribeContent() {
                 Check access now
               </button>
               <p className="text-xs text-[#999999] leading-relaxed mb-3">
-                Still processing? Wait 10–15 seconds and try again. You can also close this page and come back — your access will be ready once it activates.
+                {retryCountdown !== null
+                  ? `Checking automatically in ${retryCountdown}s…`
+                  : 'Still processing? Click above to check again. You can also close this page and come back — your access will be ready once it activates.'}
               </p>
               <Link
                 href="/paywall"
