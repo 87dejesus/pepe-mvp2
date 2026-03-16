@@ -51,6 +51,14 @@ export default function Hero() {
       {/* ── Overlay text — bottom of video area ─────────────────────────────── */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-6 pb-10 flex flex-col items-center">
         <div className="w-full max-w-lg bg-[#0A2540]/80 backdrop-blur-sm rounded-2xl px-7 py-7 mb-7 text-center">
+          <Image
+            src="/brand/heed-mascot.png"
+            alt="Heed"
+            width={72}
+            height={72}
+            className="object-contain mx-auto mb-4 sm:w-20 sm:h-20"
+            priority
+          />
           <p className="text-white font-bold text-2xl sm:text-3xl leading-snug mb-3">
             Feeling the pressure of apartment hunting?
           </p>
