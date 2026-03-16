@@ -90,7 +90,7 @@ export default function SourcePage() {
         </div>
 
         {/* Source grid — 2 columns, icons rendered inline */}
-        <div className="grid grid-cols-2 gap-4 px-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 px-4 mb-4">
           {SOURCES.map(({ id, label, Icon, color }) => (
             <button
               key={id}
@@ -123,7 +123,7 @@ export default function SourcePage() {
         <button
           onClick={handleContinue}
           disabled={!canContinue || loading}
-          className={`w-full h-14 rounded-xl font-semibold text-base transition-all ${
+          className={`mt-auto w-full h-14 rounded-xl font-semibold text-base transition-all ${
             canContinue && !loading
               ? 'bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]'
               : 'bg-white/[0.07] text-white/25 cursor-not-allowed'

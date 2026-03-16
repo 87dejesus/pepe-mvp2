@@ -122,7 +122,7 @@ export default function PreviewPage() {
 
         <button
           onClick={() => router.push('/onboarding/pricing')}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mt-6"
+          className="mt-auto w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mt-4"
         >
           Explore my options
         </button>

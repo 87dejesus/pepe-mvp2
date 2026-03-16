@@ -165,7 +165,7 @@ export default function FlowPage() {
     <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
+      <div className="flex-1 flex flex-col px-5 pb-6 max-w-lg mx-auto w-full">
 
         {/* Progress bar */}
         <div className="mb-7 pt-3">
@@ -317,7 +317,7 @@ export default function FlowPage() {
         </div>
 
         {/* Navigation */}
-        <div className="flex gap-3 mt-auto pt-6">
+        <div className="flex gap-3 mt-auto pt-4">
           {step > 1 && (
             <button
               onClick={handleBack}

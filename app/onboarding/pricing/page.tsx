@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { OnboardingProgress } from '@/components/OnboardingProgress';
+import { readAccess, hasAccess } from '@/lib/access';
 
 // ── Plan definitions ────────────────────────────────────────────────────────
 
@@ -49,10 +51,30 @@ export default function PricingPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<PlanKey>('annual');
 
-  function handleCTA() {
+  async function handleCTA() {
     const plan = PLANS[selected];
-    // Always authenticate first — save plan choice and go to /paywall
     localStorage.setItem('heed_selected_price_id', plan.priceId);
+
+    // Guard: skip paywall if the user already has valid access
+    const access = readAccess();
+    if (hasAccess(access)) {
+      router.push('/onboarding/post-auth');
+      return;
+    }
+
+    // Secondary check: Supabase session — authenticated user with expired cache
+    // should re-verify server-side rather than be sent to purchase again
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      router.push('/onboarding/post-auth');
+      return;
+    }
+
+    // New unauthenticated user — send to paywall for auth + subscription
     router.push('/paywall');
   }
 
@@ -154,16 +176,17 @@ export default function PricingPage() {
         </div>
 
         {/* CTA */}
-        <button
-          onClick={handleCTA}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-3"
-        >
-          {`Start free trial — ${PLANS[selected].label}`}
-        </button>
-
-        <p className="text-white/30 text-xs text-center leading-relaxed">
-          No credit card required today. Cancel anytime.
-        </p>
+        <div className="mt-auto pt-4">
+          <button
+            onClick={handleCTA}
+            className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-3"
+          >
+            {`Start free trial — ${PLANS[selected].label}`}
+          </button>
+          <p className="text-white/30 text-xs text-center leading-relaxed">
+            No credit card required today. Cancel anytime.
+          </p>
+        </div>
       </div>
     </div>
   );

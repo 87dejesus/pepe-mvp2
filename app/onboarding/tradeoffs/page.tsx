@@ -54,7 +54,7 @@ export default function TradeoffsPage() {
         </div>
 
         {/* Trade-off cards */}
-        <div className="flex flex-col gap-3 flex-1 mb-6">
+        <div className="flex flex-col gap-3 mb-4">
           {TRADEOFFS.map((t) => (
             <div
               key={t.title}
@@ -71,7 +71,7 @@ export default function TradeoffsPage() {
 
         <button
           onClick={() => router.push('/onboarding/decision')}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
+          className="mt-auto w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
         >
           I understand
         </button>

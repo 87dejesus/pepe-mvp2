@@ -68,14 +68,14 @@ export default function DecisionPage() {
           </div>
         </div>
 
-        <p className="text-white/40 text-sm text-center mb-8 leading-relaxed px-2">
+        <p className="text-white/40 text-sm text-center mb-4 leading-relaxed px-2">
           Heed turns the noise into a clear signal — so you decide once,
           confidently.
         </p>
 
         <button
           onClick={() => router.push('/onboarding/preview')}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
+          className="mt-auto w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
         >
           Show me how it works
         </button>
