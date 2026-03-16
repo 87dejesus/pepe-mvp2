@@ -355,11 +355,11 @@ function SubscribeContent() {
   // ── Phase renders ─────────────────────────────────────────────────────────
 
   if (phase === 'loading') {
-    return <LoadingScreen message="Loading…" />;
+    return <LoadingScreen message="Checking your access…" />;
   }
 
   if (phase === 'verifying_payment') {
-    return <LoadingScreen message={portalReturn ? 'Verifying payment update…' : 'Verifying payment…'} />;
+    return <LoadingScreen message={portalReturn ? 'Restoring your access…' : 'Confirming your access…'} />;
   }
 
   if (phase === 'payment_pending') {
@@ -370,7 +370,7 @@ function SubscribeContent() {
     const pendingBody =
       pendingContext === 'portal'
         ? "Your payment method was updated. Stripe is retrying your invoice — this usually takes a few seconds."
-        : "Your checkout was received but access confirmation is taking longer than usual. Click below to check — it typically resolves in a few seconds.";
+        : "Your payment was received. Access confirmation is taking a moment longer than usual — click below to check. You will not be charged again.";
 
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">

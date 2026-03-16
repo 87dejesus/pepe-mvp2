@@ -49,6 +49,7 @@ async function goToStripeCheckout(priceId: string): Promise<void> {
 
 export default function PostAuthPage() {
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('Checking your account…');
 
   useEffect(() => {
     async function route() {
@@ -72,6 +73,7 @@ export default function PostAuthPage() {
           localStorage.removeItem('heed_selected_price_id');
           cacheServerAccess({ ...accessData, status: accessData.status as Exclude<AccessStatus, 'new_user'> });
           console.log('[post-auth] → /decision (status:', accessData.status + ')');
+          setMessage('Welcome back — restoring your access…');
           window.location.href = '/decision';
           return;
         }
@@ -84,12 +86,14 @@ export default function PostAuthPage() {
             localStorage.removeItem('heed_selected_price_id');
             cacheServerAccess({ ...accessData, status: accessData.status as Exclude<AccessStatus, 'new_user'> });
             console.log('[post-auth] → /decision (canceled, in grace period)');
+            setMessage('Welcome back — restoring your access…');
             window.location.href = '/decision';
           } else {
             // Expired cancel — let them resubscribe via Stripe if they picked a plan
             const priceId = localStorage.getItem('heed_selected_price_id');
             console.log('[post-auth] canceled+expired — priceId:', priceId ?? '(none)');
             if (priceId) {
+              setMessage('Redirecting to checkout…');
               await goToStripeCheckout(priceId);
             } else {
               console.log('[post-auth] → /subscribe?reason=canceled');
@@ -113,11 +117,13 @@ export default function PostAuthPage() {
 
           if (priceId) {
             // Came from /onboarding/pricing — go straight to paid Stripe checkout
+            setMessage('Redirecting to checkout…');
             await goToStripeCheckout(priceId);
             return;
           }
 
           // No plan selected — start free trial
+          setMessage('Starting your free trial…');
           console.log('[post-auth] new_user — calling /api/auth/start-trial...');
           const trialRes = await fetch('/api/auth/start-trial', { method: 'POST' });
           console.log('[post-auth] start-trial HTTP status:', trialRes.status);
@@ -144,6 +150,7 @@ export default function PostAuthPage() {
         const priceId = localStorage.getItem('heed_selected_price_id');
         console.log('[post-auth] status=none — priceId:', priceId ?? '(none)');
         if (priceId) {
+          setMessage('Redirecting to checkout…');
           await goToStripeCheckout(priceId);
         } else {
           console.log('[post-auth] → /subscribe?reason=trial_ended (status:', accessData.status + ')');
@@ -178,7 +185,7 @@ export default function PostAuthPage() {
     <div className="min-h-[100dvh] flex items-center justify-center bg-[#0A2540]">
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-white/60 text-sm">Setting up your account…</p>
+        <p className="text-white/60 text-sm">{message}</p>
       </div>
     </div>
   );

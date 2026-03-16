@@ -181,7 +181,7 @@ function calculateMatchScore(listing: Listing, answers: Answers): number {
   return Math.min(100, Math.round(score));
 }
 
-// Determine recommendation (>80 = Apply Today)
+// Determine recommendation (>80 = ACT_NOW)
 function getRecommendation(score: number): 'ACT_NOW' | 'WAIT' {
   return score >= 80 ? 'ACT_NOW' : 'WAIT';
 }
@@ -1139,7 +1139,7 @@ function DecisionClientInner() {
                   : 'bg-white/[0.12] border border-white/20 text-white hover:bg-white/[0.18]'
               }`}
             >
-              Apply Today
+              See Listing Details
             </button>
             <button
               onClick={handleWait}

@@ -163,6 +163,9 @@ function PaywallContent() {
             <p className="text-[#666666] text-sm mt-2">
               Stop scrolling. The Steady One helps you commit — or consciously wait.
             </p>
+            <p className="text-xs text-[#999999] mt-1.5">
+              Already a member? Enter your email to sign back in.
+            </p>
           </div>
 
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
@@ -216,6 +219,9 @@ function PaywallContent() {
                 >
                   {loading ? <Spinner /> : 'Continue'}
                 </button>
+                <p className="text-[10px] text-[#999999] text-center mt-2">
+                  Already subscribed or trialing? Signing in never creates a new charge.
+                </p>
               </form>
             )}
 
@@ -224,9 +230,9 @@ function PaywallContent() {
                 <div className="text-center space-y-1">
                   <p className="font-semibold text-[#0A2540]">Check your inbox</p>
                   <p className="text-sm text-[#666666]">
-                    We sent a 6-digit verification code to{' '}
+                    We sent a 6-digit code to{' '}
                     <span className="font-medium text-[#0A2540]">{normalizedEmail}</span>.
-                    Enter it below to verify your email and continue.
+                    Enter it to sign in — your existing access will be restored automatically.
                   </p>
                 </div>
                 <input
@@ -306,7 +312,7 @@ function PaywallContent() {
           )}
 
           <p className="text-[10px] text-[#999999] text-center mt-2 leading-relaxed">
-            Admin access is for owner only — all other users are charged $4.49/wk after the 3-day trial.
+            New users get 3 days free, then $4.49/wk. Returning members are never charged again just for signing in.
           </p>
 
           <div className="text-center mt-4 pb-safe">
