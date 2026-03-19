@@ -194,10 +194,11 @@ export default function FlowPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-between bg-[#0A2540]">
+    <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
       <Header />
 
-      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
+      {/* Scroll area — padded at bottom so content clears the fixed nav */}
+      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full" style={{ paddingBottom: '120px' }}>
 
         {/* Progress bar */}
         <div className="mb-7 pt-3">
@@ -347,13 +348,16 @@ export default function FlowPage() {
             </div>
           )}
         </div>
-
-        {/* Bottom padding so last option isn't flush against nav */}
-        <div className="pb-4" />
       </div>
 
-      {/* Navigation — outside the scroll area, always visible at bottom */}
-      <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full flex gap-3">
+      {/* Gradient fade above fixed nav */}
+      <div className="pointer-events-none fixed bottom-[88px] left-0 right-0 h-8 bg-gradient-to-t from-[#0A2540] to-transparent z-10" />
+
+      {/* Navigation — fixed to bottom with safe area inset */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-20 px-5 pt-3 max-w-lg mx-auto w-full flex gap-3 bg-[#0A2540]"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+      >
         {step > 1 && (
           <button
             onClick={handleBack}

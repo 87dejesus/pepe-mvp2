@@ -10,12 +10,12 @@ export default function Hero() {
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.muted = true; // set directly — React's muted prop doesn't always write the HTML attribute
-    v.play().catch(() => {}); // attempt autoplay, silently ignore if browser blocks
+    v.muted = true;
+    v.play().catch(() => {});
   }, []);
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#0A2540]" style={{ minHeight: '92dvh' }}>
+    <section className="relative w-full bg-[#0A2540]" style={{ height: '100dvh' }}>
 
       {/* ── Video ────────────────────────────────────────────────────────────── */}
       <video
@@ -26,15 +26,12 @@ export default function Hero() {
         loop
         playsInline
         disablePictureInPicture
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover overflow-hidden"
         style={{ pointerEvents: 'none' }}
       />
 
       {/* ── Dark scrim ───────────────────────────────────────────────────────── */}
-      <div className="absolute inset-0 bg-[#0A2540]/50" />
-
-      {/* ── Gradient: transparent top → solid navy bottom ───────────────────── */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0A2540]" />
+      <div className="absolute inset-0 bg-[#0A2540]/40" />
 
       {/* ── Logo — top right ─────────────────────────────────────────────────── */}
       <div className="absolute top-4 right-4 z-20">
@@ -50,7 +47,7 @@ export default function Hero() {
 
       {/* ── Overlay text — bottom of video area ─────────────────────────────── */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-6 pb-10 flex flex-col items-center">
-        <div className="w-full max-w-lg bg-[#0A2540]/20 backdrop-blur-sm rounded-2xl px-7 py-7 mb-7 text-center">
+        <div className="w-full max-w-lg bg-black/30 backdrop-blur-md rounded-2xl px-7 py-7 mb-7 text-center">
           <Image
             src="/brand/heed-mascot.png"
             alt="Heed"
