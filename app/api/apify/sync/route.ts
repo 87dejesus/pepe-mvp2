@@ -57,6 +57,14 @@ function detectBorough(city: string, state: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function parsePets(text: string): string {
+  if (!text) return 'Unknown';
+  const t = text.toLowerCase();
+  if (/no\s*pets?|pets?\s*not\s*allowed/i.test(t)) return 'No';
+  if (/pets?\s*(ok|allowed|welcome|friendly)|cats?\s*ok|dogs?\s*ok/i.test(t)) return 'Yes';
+  return 'Unknown';
+}
+
 function parseAmenities(flex?: string): string[] {
   if (!flex || /price\s*(cut|red)/i.test(flex)) return [];
   return flex.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
@@ -194,7 +202,7 @@ function normalizeItem(item: ApifyItem): ApifyListing | null {
     description,
     image_url,
     original_url,
-    pets: 'unknown',
+    pets: parsePets(description),
     status: 'Active',
     amenities: parseAmenities(flex),
     images: [],
@@ -216,7 +224,55 @@ export async function POST() {
   const db = createClient(supabaseUrl, supabaseKey);
 
   // 1. Fetch raw items from Apify dataset
+  // ── Fixture mode (USE_FIXTURE=true in .env.local) ──────────────────────────
+  const USE_FIXTURE = process.env.USE_FIXTURE === 'true';
+  const FIXTURE_DATA: ApifyItem[] = [
+    {
+      zpid: 'fixture-1',
+      unformattedPrice: 2800,
+      beds: 2,
+      baths: 1,
+      imgSrc: 'https://picsum.photos/seed/apt1/600/400',
+      detailUrl: 'https://www.zillow.com/homes/fixture-1',
+      address: '123 Bedford Ave',
+      addressCity: 'Brooklyn',
+      addressState: 'NY',
+      statusType: 'FOR_RENT',
+      flexFieldText: 'Hardwood floors, renovated kitchen. Pets allowed — cats and dogs welcome.',
+    },
+    {
+      zpid: 'fixture-2',
+      unformattedPrice: 3200,
+      beds: 1,
+      baths: 1,
+      imgSrc: 'https://picsum.photos/seed/apt2/600/400',
+      detailUrl: 'https://www.zillow.com/homes/fixture-2',
+      address: '456 Court St',
+      addressCity: 'Brooklyn',
+      addressState: 'NY',
+      statusType: 'FOR_RENT',
+      flexFieldText: 'No pets allowed. Doorman building, gym included.',
+    },
+    {
+      zpid: 'fixture-3',
+      unformattedPrice: 2200,
+      beds: 0,
+      baths: 1,
+      imgSrc: 'https://picsum.photos/seed/apt3/600/400',
+      detailUrl: 'https://www.zillow.com/homes/fixture-3',
+      address: '789 Atlantic Ave',
+      addressCity: 'Brooklyn',
+      addressState: 'NY',
+      statusType: 'FOR_RENT',
+      flexFieldText: 'Studio with exposed brick. Laundry in building.',
+    },
+  ];
+
   let raw: ApifyItem[] = [];
+  if (USE_FIXTURE) {
+    raw = FIXTURE_DATA;
+    console.log('[Steady Debug] USE_FIXTURE=true — skipping Apify, using fixture data');
+  } else {
   try {
     const apifyUrl = buildApifyUrl(); // throws if APIFY_TOKEN is missing
     const res = await fetch(apifyUrl, { cache: 'no-store' });
@@ -228,6 +284,7 @@ export async function POST() {
     console.error('[Steady Debug] Apify fetch failed:', msg);
     // Return empty so DecisionClient falls back to Supabase/mocks
     return NextResponse.json({ error: msg, listings: [], synced: 0 }, { status: 200 });
+  }
   }
 
   // 2. Rental detection — drop for-sale listings before any further processing

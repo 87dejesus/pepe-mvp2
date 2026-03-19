@@ -194,7 +194,7 @@ export default function FlowPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
+    <div className="min-h-[100dvh] flex flex-col justify-between bg-[#0A2540]">
       <Header />
 
       <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">

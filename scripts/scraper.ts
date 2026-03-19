@@ -12,7 +12,7 @@
  *   npx tsx scripts/scraper.ts <url> --headed           # Visible browser (debug)
  *
  * Env vars:
- *   PROXY_URL          - Full proxy URL (http://user:pass@host:port)
+ *   PROXY_URL          - Full proxy URL[](http://user:pass@host:port)
  *   PROXY_HOST/USER/PASS - Alternative proxy config
  *   NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
  */
@@ -71,27 +71,20 @@ const NYC_URLS: Record<string, Record<string, string>> = {
 // ============================================
 
 const USER_AGENTS = [
-  // Chrome 131-133 (Windows/Mac/Linux)
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-  // Firefox 134-135
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
   "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
-  // Safari 18
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
-  // Edge 131-132
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0",
-  // Opera
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/117.0.0.0",
-  // Chrome on Android (mobile viewport diversity)
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
 ];
 
@@ -135,25 +128,38 @@ const MAX_RETRIES = 3;
 
 const cleanPrice = (s: string) => parseInt(s.replace(/[^\d]/g, ""), 10) || 0;
 
-const normalizeBorough = (t: string) => {
-  const l = t.toLowerCase();
-  if (l.includes("manhattan") || l.includes("midtown") || l.includes("harlem") ||
-      l.includes("upper east") || l.includes("upper west") || l.includes("chelsea") ||
-      l.includes("soho") || l.includes("tribeca") || l.includes("village") ||
-      l.includes("lower east") || l.includes("financial") || l.includes("murray hill") ||
-      l.includes("gramercy") || l.includes("hell's kitchen") || l.includes("hells kitchen")) return "Manhattan";
-  if (l.includes("brooklyn") || l.includes("williamsburg") || l.includes("bushwick") ||
-      l.includes("bed-stuy") || l.includes("park slope") || l.includes("greenpoint") ||
-      l.includes("crown heights") || l.includes("flatbush") || l.includes("dumbo") ||
-      l.includes("cobble hill") || l.includes("prospect")) return "Brooklyn";
-  if (l.includes("queens") || l.includes("astoria") || l.includes("flushing") ||
-      l.includes("jamaica") || l.includes("long island city") || l.includes("lic") ||
-      l.includes("jackson heights") || l.includes("sunnyside")) return "Queens";
-  if (l.includes("bronx") || l.includes("fordham") || l.includes("riverdale") ||
-      l.includes("mott haven")) return "Bronx";
-  if (l.includes("staten")) return "Staten Island";
-  return "Manhattan";
+const normalizeBorough = (text: string): string => {
+  const lower = text.toLowerCase();
+
+  if (lower.includes("manhattan") || lower.includes("midtown") || lower.includes("soho") || lower.includes("tribeca") || lower.includes("upper east") || lower.includes("upper west") || lower.includes("lower east") || lower.includes("financial district") || lower.includes("gramercy") || lower.includes("hell's kitchen")) {
+    return "Manhattan";
+  }
+
+  if (lower.includes("brooklyn") || lower.includes("williamsburg") || lower.includes("bed-stuy") || lower.includes("park slope") || lower.includes("bushwick") || lower.includes("crown heights") || lower.includes("flatbush") || lower.includes("prospect park")) {
+    return "Brooklyn";
+  }
+
+  if (lower.includes("queens") || lower.includes("astoria") || lower.includes("ridgewood") || lower.includes("jackson heights") || lower.includes("flushing") || lower.includes("long island city")) {
+    return "Queens";
+  }
+
+  if (lower.includes("bronx") || lower.includes("fordham") || lower.includes("mott haven")) {
+    return "Bronx";
+  }
+
+  if (lower.includes("staten island")) {
+    return "Staten Island";
+  }
+
+  return "Unknown";  // fallback - better than forcing "Manhattan"
 };
+
+function parsePets(description: string): 'Allowed' | 'Not Allowed' | 'Unknown' {
+  const text = (description || '').toLowerCase();
+  if (/no\s+pets?|pets?\s+not\s+allowed|pet[\s-]?free/.test(text)) return 'Not Allowed';
+  if (/pets?\s+allowed|pet[\s-]?friendly|cats?\s+(?:ok|allowed|welcome)|dogs?\s+(?:ok|allowed|welcome)|pets?\s+ok|pet\s+deposit/.test(text)) return 'Allowed';
+  return 'Unknown';
+}
 
 const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -234,7 +240,6 @@ class ListingScraper {
   };
 
   private getProxyConfig() {
-    // Support PROXY_URL format: http://user:pass@host:port
     if (PROXY_URL) {
       try {
         const url = new URL(PROXY_URL);
@@ -331,12 +336,10 @@ class ListingScraper {
       permissions: ["geolocation"],
     });
 
-    // Stealth: Override navigator properties
     await this.context.addInitScript(() => {
       Object.defineProperty(navigator, "webdriver", { get: () => false });
       Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
       Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
-      // Hide automation indicators
       const originalQuery = window.navigator.permissions.query;
       window.navigator.permissions.query = (parameters: any) =>
         parameters.name === 'notifications'
@@ -361,7 +364,6 @@ class ListingScraper {
 
     log.block(`Detected block on ${source}. Retry ${attempt + 1}/${MAX_RETRIES} after ${BLOCK_RETRY_DELAY_MS / 1000}s...`);
 
-    // Close and recreate with new identity (new UA, new proxy session)
     await this.close();
     await new Promise(resolve => setTimeout(resolve, BLOCK_RETRY_DELAY_MS));
     await this.init(source);
@@ -391,7 +393,6 @@ class ListingScraper {
     await this.page.waitForTimeout(1000 + Math.random() * 2000);
   }
 
-  // --- STREETEASY ---
   async scrapeStreetEasy(url: string, attempt: number = 0): Promise<any[]> {
     if (!this.page) return [];
 
@@ -418,7 +419,6 @@ class ListingScraper {
         return [];
       }
 
-      // Check for CAPTCHA
       const pageContent = await this.page.content();
       const isBlocked = pageContent.includes("Press & Hold") ||
                         pageContent.includes("captcha") ||
@@ -458,12 +458,10 @@ class ListingScraper {
           const linkEl = card.querySelector('a') as HTMLAnchorElement;
           const cardText = card.textContent || '';
 
-          // Extract bedrooms from card text
           const brMatch = cardText.match(/(\d+)\s*(?:bed|br)/i);
           const isStudio = cardText.toLowerCase().includes('studio');
           const bedrooms = brMatch ? parseInt(brMatch[1]) : (isStudio ? 0 : 1);
 
-          // Extract bathrooms
           const baMatch = cardText.match(/(\d+(?:\.\d+)?)\s*(?:bath|ba)/i);
           const bathrooms = baMatch ? parseFloat(baMatch[1]) : 1;
 
@@ -495,7 +493,6 @@ class ListingScraper {
     }
   }
 
-  // --- CRAIGSLIST ---
   async scrapeCraigslist(url: string, attempt: number = 0): Promise<any[]> {
     if (!this.page) return [];
 
@@ -529,15 +526,12 @@ class ListingScraper {
       await this.autoScroll();
 
       const listings = await this.page.evaluate(() => {
-        // Method 1: Gallery cards
         let cards = Array.from(document.querySelectorAll('.cl-search-result.gallery-card'));
 
-        // Method 2: Any cl-search-result
         if (cards.length === 0) {
           cards = Array.from(document.querySelectorAll('.cl-search-result'));
         }
 
-        // Method 3: Links fallback
         if (cards.length === 0) {
           const links = Array.from(document.querySelectorAll('a[href*="/apa/"]'));
           return links.slice(0, 50).map(link => {
@@ -623,7 +617,6 @@ async function save(listings: any[], existingUrls: Set<string>): Promise<number>
   const valid = listings.filter(l => cleanPrice(l.price) > 0);
   const unique = Array.from(new Map(valid.map(item => [item.original_url, item])).values());
 
-  // Dedup against existing database
   const newListings = unique.filter(l => !existingUrls.has(l.original_url));
   const duplicateCount = unique.length - newListings.length;
 
@@ -649,7 +642,7 @@ async function save(listings: any[], existingUrls: Set<string>): Promise<number>
     image_url: l.image_url,
     original_url: l.original_url,
     status: 'Active',
-    pets: 'Unknown',
+    pets: parsePets(l.description),
   }));
 
   const { error } = await supabase.from("listings").insert(rows);
@@ -659,7 +652,6 @@ async function save(listings: any[], existingUrls: Set<string>): Promise<number>
     return 0;
   }
 
-  // Add saved URLs to the set so later batches don't re-insert
   newListings.forEach(l => existingUrls.add(l.original_url));
   log.success(`Saved ${newListings.length} listings successfully`);
   return newListings.length;
@@ -704,7 +696,6 @@ async function main() {
 
   try {
     if (isAuto) {
-      // Auto mode: scrape all borough URLs for selected sources
       const sources = sourceFlag ? [sourceFlag] : ["craigslist", "streeteasy"];
 
       for (const source of sources) {
@@ -739,14 +730,12 @@ async function main() {
             totalForSource += limited.length;
           }
 
-          // Inter-borough delay
           await randomDelay(8000, 20000);
         }
 
         await scraper.close();
       }
     } else {
-      // Single URL mode
       const source = urlArg!.includes("streeteasy") ? "streeteasy" : "craigslist";
       await scraper.init(source);
       await randomDelay();
@@ -770,7 +759,6 @@ async function main() {
     await scraper.close();
   }
 
-  // Summary
   console.log("\n" + "=".repeat(60));
   console.log("SCRAPER v3.0 SUMMARY");
   console.log("=".repeat(60));
