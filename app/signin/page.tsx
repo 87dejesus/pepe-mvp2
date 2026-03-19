@@ -1,10 +1,12 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { cacheServerAccess } from '@/lib/access';
+
+const OTP_COOLDOWN_SECONDS = 60;
 
 type Step = 'email' | 'otp';
 
@@ -23,8 +25,27 @@ function SignInContent() {
   const [error, setError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [nextResendAt, setNextResendAt] = useState<number | null>(null);
+  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
 
   const normalizedEmail = email.trim().toLowerCase();
+
+  // Countdown timer for resend cooldown
+  useEffect(() => {
+    if (!nextResendAt) return;
+    const tick = () => {
+      const left = Math.ceil((nextResendAt - Date.now()) / 1000);
+      if (left <= 0) {
+        setResendSecondsLeft(0);
+        setNextResendAt(null);
+      } else {
+        setResendSecondsLeft(left);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [nextResendAt]);
 
   async function handleContinue(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +61,7 @@ function SignInContent() {
       });
       if (error) throw error;
       setStep('otp');
+      setNextResendAt(Date.now() + OTP_COOLDOWN_SECONDS * 1000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       // shouldCreateUser: false returns a specific error for unknown emails
@@ -107,6 +129,7 @@ function SignInContent() {
       });
       if (error) throw error;
       setResendSent(true);
+      setNextResendAt(Date.now() + OTP_COOLDOWN_SECONDS * 1000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       setError(`Resend failed: ${msg}`);
@@ -211,10 +234,10 @@ function SignInContent() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    disabled={resendLoading}
-                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50"
+                    disabled={resendLoading || resendSecondsLeft > 0}
+                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50 disabled:no-underline"
                   >
-                    {resendLoading ? 'Sending…' : 'Resend code'}
+                    {resendLoading ? 'Sending…' : resendSecondsLeft > 0 ? `Resend in ${resendSecondsLeft}s` : 'Resend code'}
                   </button>
                   <span className="text-[#E5E5E5]">|</span>
                   <button

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Header from "@/components/Header";
+import { createBrowserClient } from "@supabase/ssr";
+import { readAccess, hasAccess } from "@/lib/access";
 
 const LS_KEY = "heed_answers_v2";
 
@@ -69,10 +71,40 @@ export default function FlowPage() {
   }
 
   useEffect(() => {
-    if (showDiagnosis) {
-      const timer = setTimeout(() => { window.location.href = "/onboarding/source"; }, 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!showDiagnosis) return;
+
+    const timer = setTimeout(async () => {
+      // Returning users: skip the full onboarding funnel if they already have access.
+      // Fast path — check the 10-min server-verified cache (no network).
+      try {
+        const cached = readAccess();
+        if (hasAccess(cached)) {
+          // Cache says trialing or active → go straight to results
+          window.location.href = "/decision";
+          return;
+        }
+
+        // Slower path — check live Supabase session (handles expired cache).
+        // If the user is authenticated, post-auth will re-check access-status
+        // and route correctly (trialing/active → /decision, new_user → trial start).
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          window.location.href = "/onboarding/post-auth";
+          return;
+        }
+      } catch {
+        // On any error fall through to the normal new-user onboarding flow
+      }
+
+      // New (unauthenticated) user → full onboarding funnel
+      window.location.href = "/onboarding/source";
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [showDiagnosis]);
 
   // ── Diagnosis screen ────────────────────────────────────────────────────────
