@@ -193,190 +193,252 @@ export default function FlowPage() {
     7: "When are you planning to move?",
   };
 
+  // ── Heed hint text ──────────────────────────────────────────────────────────
+  function getHint(): { text: string; color: string } {
+    if (step === 2) return { text: "got it!", color: "rgba(0,166,81,0.7)" };
+    if (step === 6) return { text: "good to know!", color: "rgba(0,166,81,0.7)" };
+    if (canContinue()) return { text: "solid choice!", color: "rgba(0,166,81,0.7)" };
+    return { text: "waiting for your pick...", color: "rgba(255,255,255,0.25)" };
+  }
+
+  const hint = getHint();
+
   return (
-    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: '#0A2540', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', backgroundColor: '#0A2540', overflow: 'hidden' }}>
       <Header />
 
-      {/* Scroll area — padded at bottom so content clears the fixed nav */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 120 }} className="max-w-lg mx-auto w-full">
-
-        {/* Progress bar */}
-        <div className="mb-7 pt-3">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-white/50 font-medium">Step {step} of 7</span>
-            <span className="text-xs text-white/35">{Math.round((step / 7) * 100)}%</span>
-          </div>
-          <div className="h-px bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#00A651] rounded-full transition-all duration-300"
-              style={{ width: `${(step / 7) * 100}%` }}
-            />
-          </div>
+      {/* Progress bar section */}
+      <div style={{ padding: '16px 20px 10px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Step {step} of 7</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{Math.round((step / 7) * 100)}%</span>
         </div>
-
-        {/* Heed bubble + question */}
-        <div className={`flex items-start gap-3 mb-5 transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-          <Image
-            src="/brand/heed-mascot.png"
-            alt="Heed mascot"
-            width={52}
-            height={52}
-            className="object-contain shrink-0 mt-0.5"
+        <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 99, overflow: 'hidden' }}>
+          <div
+            style={{
+              height: '100%',
+              backgroundColor: '#00A651',
+              borderRadius: 99,
+              width: `${(step / 7) * 100}%`,
+              transition: 'width 0.3s',
+            }}
           />
-          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-4 flex-1">
-            <p className="text-base font-semibold text-[#0A2540] leading-snug">
-              {questions[step]}
-            </p>
-            {step === 6 && (
-              <p className="text-[11px] text-[#0A2540]/50 mt-0.5">Select all that apply — optional</p>
-            )}
-          </div>
-        </div>
-
-        {/* Options area */}
-        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-
-          {/* Step 1 — Boroughs */}
-          {step === 1 && (
-            <div>
-              {["Manhattan", "Brooklyn", "Queens", "Bronx"].map((b) => (
-                <OptionCard key={b} selected={boroughs.includes(b)} onClick={() => setBoroughs(toggleArray(boroughs, b))} type="checkbox">
-                  {b}
-                </OptionCard>
-              ))}
-            </div>
-          )}
-
-          {/* Step 2 — Budget */}
-          {step === 2 && (
-            <div className="bg-white/[0.07] border border-white/20 rounded-xl p-5">
-              <div className="text-4xl font-bold text-white text-center mb-5 tabular-nums">
-                ${budget.toLocaleString()}
-                <span className="text-base font-normal text-white/40 ml-1">/mo</span>
-              </div>
-              <input
-                type="range"
-                min={1000}
-                max={15000}
-                step={100}
-                value={budget}
-                onChange={(e) => setBudget(Number(e.target.value))}
-                className="w-full cursor-pointer accent-[#00A651]"
-              />
-              <div className="flex justify-between text-xs text-white/35 mt-3 font-medium">
-                <span>$1,000</span>
-                <span>$15,000</span>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3 — Bedrooms */}
-          {step === 3 && (
-            <div>
-              {[
-                { value: "0", label: "Studio" },
-                { value: "1", label: "1 Bedroom" },
-                { value: "2", label: "2 Bedrooms" },
-                { value: "3+", label: "3+ Bedrooms" },
-              ].map((opt) => (
-                <OptionCard key={opt.value} selected={bedrooms === opt.value} onClick={() => setBedrooms(opt.value)}>
-                  {opt.label}
-                </OptionCard>
-              ))}
-            </div>
-          )}
-
-          {/* Step 4 — Bathrooms */}
-          {step === 4 && (
-            <div>
-              {[
-                { value: "1", label: "1 Bathroom" },
-                { value: "1.5", label: "1.5 Bathrooms" },
-                { value: "2+", label: "2+ Bathrooms" },
-              ].map((opt) => (
-                <OptionCard key={opt.value} selected={bathrooms === opt.value} onClick={() => setBathrooms(opt.value)}>
-                  {opt.label}
-                </OptionCard>
-              ))}
-            </div>
-          )}
-
-          {/* Step 5 — Pets */}
-          {step === 5 && (
-            <div>
-              {[
-                { value: "none", label: "No pets" },
-                { value: "cats", label: "Cats" },
-                { value: "dogs", label: "Dogs" },
-                { value: "both", label: "Cats and dogs" },
-              ].map((opt) => (
-                <OptionCard key={opt.value} selected={pets === opt.value} onClick={() => setPets(opt.value)}>
-                  {opt.label}
-                </OptionCard>
-              ))}
-            </div>
-          )}
-
-          {/* Step 6 — Amenities */}
-          {step === 6 && (
-            <div>
-              {[
-                { value: "washer_dryer", label: "Washer/dryer in unit" },
-                { value: "elevator", label: "Elevator" },
-                { value: "doorman", label: "Doorman" },
-                { value: "gym", label: "Gym" },
-              ].map((opt) => (
-                <OptionCard key={opt.value} selected={amenities.includes(opt.value)} onClick={() => setAmenities(toggleArray(amenities, opt.value))} type="checkbox">
-                  {opt.label}
-                </OptionCard>
-              ))}
-            </div>
-          )}
-
-          {/* Step 7 — Timing */}
-          {step === 7 && (
-            <div>
-              {[
-                { value: "asap", label: "ASAP — I need to move soon" },
-                { value: "30days", label: "Within 30 days" },
-                { value: "researching", label: "Just researching for now" },
-              ].map((opt) => (
-                <OptionCard key={opt.value} selected={timing === opt.value} onClick={() => setTiming(opt.value)}>
-                  {opt.label}
-                </OptionCard>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Gradient fade above fixed nav */}
-      <div style={{ position: 'fixed', bottom: 88, left: 0, right: 0, height: 32, background: 'linear-gradient(to top, #0A2540, transparent)', zIndex: 10, pointerEvents: 'none' }} />
-
-      {/* Navigation — fixed to bottom with safe area inset */}
+      {/* Question box */}
       <div
-        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '12px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', backgroundColor: '#0A2540' }}
-        className="max-w-lg mx-auto w-full flex gap-3"
+        style={{
+          margin: '0 20px 16px',
+          backgroundColor: 'white',
+          borderRadius: 14,
+          padding: '14px 16px',
+          flexShrink: 0,
+          opacity: isTransitioning ? 0 : 1,
+          transition: 'opacity 0.2s',
+        }}
       >
-        {step > 1 && (
-          <button
-            onClick={handleBack}
-            className="h-14 px-5 rounded-xl bg-white/[0.07] border border-white/20 text-white/75 font-medium hover:bg-white/[0.11] transition-all"
-          >
-            Back
-          </button>
+        <p style={{ fontSize: 15, fontWeight: 600, color: '#0A2540', lineHeight: 1.35, margin: 0 }}>
+          {questions[step]}
+        </p>
+        {step === 6 && (
+          <p style={{ fontSize: 11, color: 'rgba(10,37,64,0.5)', marginTop: 2, marginBottom: 0 }}>
+            Select all that apply — optional
+          </p>
         )}
-        <button
-          onClick={handleNext}
-          disabled={!canContinue()}
-          className={`flex-1 h-14 rounded-xl font-semibold text-base transition-all ${
-            canContinue()
-              ? "bg-[#00A651] text-white hover:bg-[#00913f] active:scale-[0.98]"
-              : "bg-white/[0.07] text-white/25 cursor-not-allowed"
-          }`}
-        >
-          {step === 7 ? "Find My Match" : "Continue"}
-        </button>
+      </div>
+
+      {/* Options list */}
+      <div
+        style={{
+          padding: '0 20px',
+          flexShrink: 0,
+          opacity: isTransitioning ? 0 : 1,
+          transition: 'opacity 0.2s',
+        }}
+      >
+        {/* Step 1 — Boroughs */}
+        {step === 1 && (
+          <div>
+            {["Manhattan", "Brooklyn", "Queens", "Bronx"].map((b) => (
+              <OptionCard key={b} selected={boroughs.includes(b)} onClick={() => setBoroughs(toggleArray(boroughs, b))} type="checkbox">
+                {b}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+
+        {/* Step 2 — Budget */}
+        {step === 2 && (
+          <div className="bg-white/[0.07] border border-white/20 rounded-xl p-5">
+            <div className="text-4xl font-bold text-white text-center mb-5 tabular-nums">
+              ${budget.toLocaleString()}
+              <span className="text-base font-normal text-white/40 ml-1">/mo</span>
+            </div>
+            <input
+              type="range"
+              min={1000}
+              max={15000}
+              step={100}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="w-full cursor-pointer accent-[#00A651]"
+            />
+            <div className="flex justify-between text-xs text-white/35 mt-3 font-medium">
+              <span>$1,000</span>
+              <span>$15,000</span>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3 — Bedrooms */}
+        {step === 3 && (
+          <div>
+            {[
+              { value: "0", label: "Studio" },
+              { value: "1", label: "1 Bedroom" },
+              { value: "2", label: "2 Bedrooms" },
+              { value: "3+", label: "3+ Bedrooms" },
+            ].map((opt) => (
+              <OptionCard key={opt.value} selected={bedrooms === opt.value} onClick={() => setBedrooms(opt.value)}>
+                {opt.label}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+
+        {/* Step 4 — Bathrooms */}
+        {step === 4 && (
+          <div>
+            {[
+              { value: "1", label: "1 Bathroom" },
+              { value: "1.5", label: "1.5 Bathrooms" },
+              { value: "2+", label: "2+ Bathrooms" },
+            ].map((opt) => (
+              <OptionCard key={opt.value} selected={bathrooms === opt.value} onClick={() => setBathrooms(opt.value)}>
+                {opt.label}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+
+        {/* Step 5 — Pets */}
+        {step === 5 && (
+          <div>
+            {[
+              { value: "none", label: "No pets" },
+              { value: "cats", label: "Cats" },
+              { value: "dogs", label: "Dogs" },
+              { value: "both", label: "Cats and dogs" },
+            ].map((opt) => (
+              <OptionCard key={opt.value} selected={pets === opt.value} onClick={() => setPets(opt.value)}>
+                {opt.label}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+
+        {/* Step 6 — Amenities */}
+        {step === 6 && (
+          <div>
+            {[
+              { value: "washer_dryer", label: "Washer/dryer in unit" },
+              { value: "elevator", label: "Elevator" },
+              { value: "doorman", label: "Doorman" },
+              { value: "gym", label: "Gym" },
+            ].map((opt) => (
+              <OptionCard key={opt.value} selected={amenities.includes(opt.value)} onClick={() => setAmenities(toggleArray(amenities, opt.value))} type="checkbox">
+                {opt.label}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+
+        {/* Step 7 — Timing */}
+        {step === 7 && (
+          <div>
+            {[
+              { value: "asap", label: "ASAP — I need to move soon" },
+              { value: "30days", label: "Within 30 days" },
+              { value: "researching", label: "Just researching for now" },
+            ].map((opt) => (
+              <OptionCard key={opt.value} selected={timing === opt.value} onClick={() => setTiming(opt.value)}>
+                {opt.label}
+              </OptionCard>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Heed area — fills remaining space */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '8px 0',
+        }}
+      >
+        <Image
+          src="/brand/heed-mascot.png"
+          alt="Heed mascot"
+          width={72}
+          height={72}
+          className="object-contain"
+          unoptimized
+        />
+        <span style={{ fontSize: 12, color: hint.color, transition: 'color 0.2s' }}>
+          {hint.text}
+        </span>
+      </div>
+
+      {/* Bottom button area */}
+      <div style={{ padding: '8px 20px 28px', flexShrink: 0, backgroundColor: '#0A2540' }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              style={{
+                width: 'auto',
+                paddingLeft: 16,
+                paddingRight: 16,
+                height: 52,
+                borderRadius: 12,
+                backgroundColor: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.6)',
+                cursor: 'pointer',
+                fontSize: 18,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ←
+            </button>
+          )}
+          <button
+            onClick={handleNext}
+            disabled={!canContinue()}
+            style={{
+              flex: 1,
+              height: 52,
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: 15,
+              border: 'none',
+              cursor: canContinue() ? 'pointer' : 'not-allowed',
+              backgroundColor: canContinue() ? '#00A651' : 'rgba(255,255,255,0.07)',
+              color: canContinue() ? 'white' : 'rgba(255,255,255,0.25)',
+              transition: 'background-color 0.2s, color 0.2s',
+            }}
+          >
+            {step === 7 ? "Find My Match" : "Continue"}
+          </button>
+        </div>
       </div>
     </div>
   );
