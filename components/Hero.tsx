@@ -11,6 +11,9 @@ export default function Hero() {
     const v = videoRef.current;
     if (!v) return;
     v.muted = true;
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    v.load();
     v.play().catch(() => {});
   }, []);
 
@@ -25,7 +28,9 @@ export default function Hero() {
         muted
         loop
         playsInline
+        preload="auto"
         disablePictureInPicture
+        {...{ 'webkit-playsinline': 'true', 'x5-playsinline': 'true' }}
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
       />
 
@@ -46,7 +51,7 @@ export default function Hero() {
 
       {/* ── Overlay text — bottom of video area ─────────────────────────────── */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '0 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 512, backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', borderRadius: 16, padding: '28px', marginBottom: 28, textAlign: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 512, backgroundColor: 'rgba(10,37,64,0.25)', borderRadius: 16, padding: '28px', marginBottom: 28, textAlign: 'center' }}>
           <Image
             src="/brand/heed-mascot.png"
             alt="Heed"
