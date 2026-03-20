@@ -57,12 +57,32 @@ function detectBorough(city: string, state: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parsePets(text: string): string {
-  if (!text) return 'Unknown';
-  const t = text.toLowerCase();
-  if (/no\s*pets?|pets?\s*not\s*allowed/i.test(t)) return 'No';
-  if (/pets?\s*(ok|allowed|welcome|friendly)|cats?\s*ok|dogs?\s*ok/i.test(t)) return 'Yes';
+function parsePets(item: ApifyItem): string {
+  const fields = [item.pets, item.petPolicy, item.petsAllowed, item.dogs, item.cats];
+  for (const f of fields) {
+    if (f === true)  return 'Allowed';
+    if (f === false) return 'Not allowed';
+    if (typeof f === 'string' && f.trim()) {
+      const t = f.toLowerCase();
+      if (/yes|allowed|ok|welcome/i.test(t))       return 'Allowed';
+      if (/no|not\s*allowed|none/i.test(t))         return 'Not allowed';
+    }
+  }
   return 'Unknown';
+}
+
+function cleanNeighborhood(item: ApifyItem, borough: string): string {
+  // 1. Prefer addressNeighborhood if clean
+  const nb = (item.addressNeighborhood ?? '').trim();
+  if (nb && nb.length <= 60) return nb;
+
+  // 2. Try addressCity with cleanliness checks
+  const raw = (item.addressCity ?? '').trim();
+  if (!raw) return borough;
+  if (raw.includes('$')) return borough;           // price blob
+  const firstLine = raw.includes('\n') ? raw.split('\n')[0].trim() : raw;
+  if (firstLine.length > 60) return borough;       // title blob
+  return firstLine || borough;
 }
 
 function parseAmenities(flex?: string): string[] {
@@ -90,10 +110,16 @@ type ApifyItem = {
   address?: string;
   addressCity?: string;
   addressState?: string;
+  addressNeighborhood?: string;
   statusText?: string;
   statusType?: string;        // "FOR_SALE" | "FOR_RENT"
   rawHomeStatusCd?: string;   // "ForSale" | "ForRent"
   flexFieldText?: string;
+  pets?: string | boolean;
+  petPolicy?: string;
+  petsAllowed?: string | boolean;
+  dogs?: string | boolean;
+  cats?: string | boolean;
   hdpData?: {
     homeInfo?: {
       bedrooms?: number;
@@ -162,7 +188,7 @@ function normalizeItem(item: ApifyItem): ApifyListing | null {
   const city = item.addressCity ?? '';
   const state = item.addressState ?? '';
   const borough = detectBorough(city, state);
-  const neighborhood = city;
+  const neighborhood = cleanNeighborhood(item, borough);
 
   // Beds / baths (prefer top-level shorthand, fall back to hdpData)
   const homeInfo = item.hdpData?.homeInfo;
@@ -202,7 +228,7 @@ function normalizeItem(item: ApifyItem): ApifyListing | null {
     description,
     image_url,
     original_url,
-    pets: parsePets(description),
+    pets: parsePets(item),
     status: 'Active',
     amenities: parseAmenities(flex),
     images: [],

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 type Listing = {
   id: string;
@@ -143,6 +144,7 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
 function buildBullets(
   listing: Listing,
   answers: Answers,
+  warnings: string[],
 ): { color: string; text: string }[] {
   const bullets: { color: string; text: string }[] = [];
 
@@ -171,7 +173,14 @@ function buildBullets(
     bullets.push({ color: '#f59e0b', text: `${formatBedrooms(listing.bedrooms)} (you wanted ${wantedLabel})` });
   }
 
-  // 3. Transit (neutral)
+  // 3. Pets
+  if (listing.pets === 'Allowed') {
+    bullets.push({ color: '#00A651', text: "Pet friendly — no need to hide your furry friend" });
+  } else if (listing.pets === 'Not allowed') {
+    bullets.push({ color: '#ef4444', text: "No pets allowed — confirm before applying" });
+  }
+
+  // 4. Transit (neutral)
   bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
 
   // 4. Dynamic red bullet from real listing data
@@ -200,7 +209,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
   const heedTake = buildHeedTake(listing, answers, matchScore, warnings);
-  const bullets = buildBullets(listing, answers);
+  const bullets = buildBullets(listing, answers, warnings);
   const showGuarantor = answers.budget <= 2500;
   const boroughLabel = listing.neighborhood || listing.borough || 'your area';
   const verdictText = recommendation === 'ACT_NOW'
@@ -307,9 +316,14 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           <span style={{ backgroundColor: '#f0f0f0', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#444' }}>
             {formatBathrooms(listing.bathrooms)}
           </span>
-          {listing.pets?.toLowerCase() === 'yes' && (
-            <span style={{ backgroundColor: '#e8f5ee', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#00A651', fontWeight: 600 }}>
-              Pets OK
+          {listing.pets === 'Allowed' && (
+            <span style={{ backgroundColor: '#EAF3DE', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#3B6D11', fontWeight: 600 }}>
+              🐾 Pet friendly
+            </span>
+          )}
+          {listing.pets === 'Not allowed' && (
+            <span style={{ backgroundColor: '#FCEBEB', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#A32D2D', fontWeight: 600 }}>
+              🚫 No pets
             </span>
           )}
         </div>
@@ -345,27 +359,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         >
           {/* Header row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                backgroundColor: '#0A2540',
-                overflow: 'hidden',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <img
-                src="/brand/heed-mascot.png"
-                alt="Heed"
-                width={32}
-                height={32}
-                style={{ objectFit: 'contain' }}
-              />
-            </div>
+            <Image src="/brand/heed-mascot.png" alt="Heed" width={36} height={36} style={{ objectFit: 'contain', flexShrink: 0 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: '#0A2540' }}>Heed&apos;s Take</span>
           </div>
 

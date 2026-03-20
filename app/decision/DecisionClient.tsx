@@ -7,7 +7,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import DecisionListingCard from '@/components/DecisionListingCard';
-import AffiliateOffers from '@/components/AffiliateOffers';
 import Header from '@/components/Header';
 import { trialDaysLeft, readAccess, cacheServerAccess, invalidateAccessCache, type AccessState, type AccessStatus } from '@/lib/access';
 
@@ -1112,12 +1111,6 @@ function DecisionClientInner() {
               matchScore={matchScore}
               recommendation={recommendation}
               warnings={currentWarnings}
-            />
-            <AffiliateOffers
-              budget={answers.budget}
-              matchScore={matchScore}
-              showLowCreditForced={showLowCreditCard}
-              finalCount={listings.length}
             />
           </div>
         )}
