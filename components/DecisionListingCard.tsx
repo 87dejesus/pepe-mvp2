@@ -174,8 +174,16 @@ function buildBullets(
   // 3. Transit (neutral)
   bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
 
-  // 4. Passing cost
-  bullets.push({ color: '#ef4444', text: 'Passing means restarting your search for this area' });
+  // 4. Dynamic red bullet from real listing data
+  const price2 = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
+  if (price2 < answers.budget * 0.9) {
+    bullets.push({ color: '#ef4444', text: `If you pass: next comparable unit in ${listing.borough || 'this area'} likely costs more` });
+  } else if (detectIncentives(listing.description)) {
+    bullets.push({ color: '#ef4444', text: 'Incentive may not be available on the next listing' });
+  } else if (warnings.length > 0) {
+    bullets.push({ color: '#ef4444', text: 'This listing has flags — but so might the next one' });
+  }
+  // Default: no red bullet
 
   return bullets;
 }
@@ -339,8 +347,8 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <div
               style={{
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 backgroundColor: '#0A2540',
                 overflow: 'hidden',
@@ -353,8 +361,8 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
               <img
                 src="/brand/heed-mascot.png"
                 alt="Heed"
-                width={28}
-                height={28}
+                width={32}
+                height={32}
                 style={{ objectFit: 'contain' }}
               />
             </div>
