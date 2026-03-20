@@ -1,7 +1,7 @@
 /**
  * POST /api/apify/sync
  *
- * Fetches listings from the Apify Zillow ZIP Code Search dataset,
+ * Runs the Apify Apartments.com scraper (epctex/apartments-scraper-api),
  * normalizes each item to the app's Listing schema, upserts to Supabase,
  * and returns the normalized listings to the calling client.
  *
@@ -9,6 +9,8 @@
  *   NEXT_PUBLIC_SUPABASE_URL        (required)
  *   SUPABASE_SERVICE_ROLE_KEY       (preferred — allows write without RLS)
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback — needs INSERT RLS policy)
+ *   APIFY_TOKEN                     (required for live runs)
+ *   APIFY_ACTOR_ID                  (optional — overrides default actor)
  */
 
 import { NextResponse } from 'next/server';
@@ -16,14 +18,36 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-// Add APIFY_TOKEN to Vercel env vars (server-only, no NEXT_PUBLIC_ prefix).
-// Add APIFY_DATASET_ID to override the default dataset.
-const APIFY_DATASET_ID = process.env.APIFY_DATASET_ID ?? 'BYtjrj1gsjQozwHyT';
+const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'epctex~apartments-scraper-api';
 
-function buildApifyUrl(): string {
+async function runApifyActor(): Promise<ApartmentsItem[]> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
-  return `https://api.apify.com/v2/datasets/${APIFY_DATASET_ID}/items?token=${token}&clean=true`;
+
+  const url = `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${token}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      startUrls: [
+        'https://www.apartments.com/new-york-ny/',
+        'https://www.apartments.com/brooklyn-ny/',
+        'https://www.apartments.com/bronx-ny/',
+        'https://www.apartments.com/queens-ny/',
+        'https://www.apartments.com/staten-island-ny/',
+      ],
+      includeReviews: false,
+      includeVisuals: false,
+      includeInteriorAmenities: true,
+      includeWalkScore: false,
+      maxItems: 200,
+    }),
+    cache: 'no-store',
+  });
+
+  if (!res.ok) throw new Error(`Apify HTTP ${res.status}: ${res.statusText}`);
+  return (await res.json()) as ApartmentsItem[];
 }
 
 // ─── Borough detection ────────────────────────────────────────────────────────
@@ -37,7 +61,7 @@ const BOROUGH_MAP: Record<string, string> = {
   'staten island': 'Staten Island',
 };
 
-// Queens is tricky — Zillow lists neighborhood names as the city
+// Queens is tricky — Apartments.com lists neighborhood names as the city
 const QUEENS_CITIES = new Set([
   'astoria', 'long island city', 'lic', 'flushing', 'jackson heights',
   'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst',
@@ -57,27 +81,24 @@ function detectBorough(city: string, state: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parsePets(item: ApifyItem): string {
-  const fields = [item.pets, item.petPolicy, item.petsAllowed, item.dogs, item.cats];
-  for (const f of fields) {
-    if (f === true)  return 'Allowed';
-    if (f === false) return 'Not allowed';
-    if (typeof f === 'string' && f.trim()) {
-      const t = f.toLowerCase();
-      if (/yes|allowed|ok|welcome/i.test(t))       return 'Allowed';
-      if (/no|not\s*allowed|none/i.test(t))         return 'Not allowed';
-    }
+function parsePets(item: ApartmentsItem): string {
+  if (item.petFriendly === true)  return 'Allowed';
+  if (item.petFriendly === false) return 'Not allowed';
+  if (item.petPolicy) {
+    const t = item.petPolicy.toLowerCase();
+    if (/yes|allowed|ok|welcome/i.test(t))  return 'Allowed';
+    if (/no|not\s*allowed|none/i.test(t))   return 'Not allowed';
   }
   return 'Unknown';
 }
 
-function cleanNeighborhood(item: ApifyItem, borough: string): string {
-  // 1. Prefer addressNeighborhood if clean
-  const nb = (item.addressNeighborhood ?? '').trim();
+function cleanNeighborhood(item: ApartmentsItem, borough: string): string {
+  // 1. Prefer location.neighborhood if present and clean
+  const nb = (item['location.neighborhood'] ?? '').trim();
   if (nb && nb.length <= 60) return nb;
 
-  // 2. Try addressCity with cleanliness checks
-  const raw = (item.addressCity ?? '').trim();
+  // 2. Try location.city with cleanliness checks
+  const raw = (item['location.city'] ?? '').trim();
   if (!raw) return borough;
   if (raw.includes('$')) return borough;           // price blob
   const firstLine = raw.includes('\n') ? raw.split('\n')[0].trim() : raw;
@@ -85,75 +106,51 @@ function cleanNeighborhood(item: ApifyItem, borough: string): string {
   return firstLine || borough;
 }
 
-function parseAmenities(flex?: string): string[] {
-  if (!flex || /price\s*(cut|red)/i.test(flex)) return [];
-  return flex.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+function parseBedrooms(beds?: string): number {
+  if (!beds) return 0;
+  const b = beds.toLowerCase().trim();
+  if (b.includes('studio')) return 0;
+  // Take the minimum from ranges like "1 bd - 2 bd"
+  const match = b.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
 }
 
-function toNumber(val: unknown): number {
-  if (typeof val === 'number') return val;
-  const n = parseInt(String(val ?? '').replace(/[^0-9]/g, ''), 10);
-  return isNaN(n) ? 0 : n;
+function parseBathrooms(baths?: string): number {
+  if (!baths) return 1;
+  // Take the minimum from ranges like "1 - 2 ba"
+  const match = baths.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+function parseAmenities(list?: string[]): string[] {
+  if (!list) return [];
+  return list.map((s) => s.trim()).filter(Boolean);
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ApifyItem = {
-  zpid?: string | number;
-  id?: string | number;
-  unformattedPrice?: number;
-  price?: string | number;
-  beds?: number;
-  baths?: number;
-  imgSrc?: string;
-  detailUrl?: string;
-  address?: string;
-  addressCity?: string;
-  addressState?: string;
-  addressNeighborhood?: string;
-  statusText?: string;
-  statusType?: string;        // "FOR_SALE" | "FOR_RENT"
-  rawHomeStatusCd?: string;   // "ForSale" | "ForRent"
-  flexFieldText?: string;
-  pets?: string | boolean;
+type ApartmentsItem = {
+  id?: string;
+  propertyName?: string;
+  url?: string;
+  'location.fullAddress'?: string;
+  'location.city'?: string;
+  'location.state'?: string;
+  'location.neighborhood'?: string;
+  'location.postalCode'?: string;
+  'rent.min'?: number;
+  'rent.max'?: number;
+  beds?: string;
+  baths?: string;
+  sqft?: string;
+  description?: string;
+  'contact.phone'?: string;
+  amenities?: string[];
   petPolicy?: string;
-  petsAllowed?: string | boolean;
-  dogs?: string | boolean;
-  cats?: string | boolean;
-  hdpData?: {
-    homeInfo?: {
-      bedrooms?: number;
-      bathrooms?: number;
-      livingArea?: number;
-      priceReduction?: string;
-      homeType?: string;
-    };
-  };
+  petFriendly?: boolean;
+  images?: string[];
+  rating?: number;
 };
-
-// ─── Rental detection ─────────────────────────────────────────────────────────
-// Zillow datasets can mix for-sale and for-rent listings.
-// Prefer explicit status fields; fall back to price + text heuristics.
-
-function isRentalItem(item: ApifyItem): boolean {
-  // 1. Explicit Zillow status — most reliable signal
-  const statusType = (item.statusType ?? '').toUpperCase();
-  const rawStatus  = (item.rawHomeStatusCd ?? '').toLowerCase();
-  if (statusType === 'FOR_RENT' || rawStatus === 'forrent') return true;
-  if (statusType === 'FOR_SALE' || rawStatus === 'forsale') return false;
-
-  // 2. Text signals in statusText / flexFieldText
-  const text = [(item.statusText ?? ''), (item.flexFieldText ?? '')].join(' ').toLowerCase();
-  if (/for\s*sale|sold|sale\s*price|condo\s*for\s*sale|house\s*for\s*sale/i.test(text)) return false;
-  if (/for\s*rent|rent|lease|monthly|per\s*month/i.test(text)) return true;
-
-  // 3. Price heuristic — sale prices are typically 5–6 figures
-  const price = toNumber(item.unformattedPrice ?? item.price);
-  if (price > 15000) return false;  // almost certainly a sale price
-  if (price >= 500 && price <= 15000) return true;  // plausible monthly rent
-
-  return false; // unknown — exclude
-}
 
 // Fields safe to INSERT into Supabase listings table
 type DbRow = {
@@ -179,59 +176,45 @@ export type ApifyListing = DbRow & {
 
 // ─── Normalizer ───────────────────────────────────────────────────────────────
 
-function normalizeItem(item: ApifyItem): ApifyListing | null {
+function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   // Price
-  const price = toNumber(item.unformattedPrice ?? item.price);
+  const price = item['rent.min'] ?? 0;
   if (price <= 0) return null;
 
   // Location
-  const city = item.addressCity ?? '';
-  const state = item.addressState ?? '';
-  const borough = detectBorough(city, state);
+  const city  = item['location.city']  ?? '';
+  const state = item['location.state'] ?? '';
+  const borough      = detectBorough(city, state);
   const neighborhood = cleanNeighborhood(item, borough);
 
-  // Beds / baths (prefer top-level shorthand, fall back to hdpData)
-  const homeInfo = item.hdpData?.homeInfo;
-  const bedrooms = item.beds ?? homeInfo?.bedrooms ?? 0;
-  const bathrooms = item.baths ?? homeInfo?.bathrooms ?? 1;
+  // Beds / baths
+  const bedrooms  = parseBedrooms(item.beds);
+  const bathrooms = parseBathrooms(item.baths);
 
-  // Description
-  const flex = item.flexFieldText;
-  const descParts: string[] = [];
-  if (item.statusText) descParts.push(item.statusText);
-  if (flex && !/price\s*(cut|red)/i.test(flex)) descParts.push(flex);
-  if (homeInfo?.livingArea) descParts.push(`${homeInfo.livingArea.toLocaleString()} sq ft`);
-  if (homeInfo?.priceReduction) descParts.push(`Price reduced: ${homeInfo.priceReduction}`);
-  const description = descParts.join('. ');
-
-  // Listing URL — detailUrl from Apify is already fully-qualified for Zillow
-  const rawUrl = item.detailUrl ?? '';
-  const original_url = rawUrl.startsWith('http')
-    ? rawUrl
-    : rawUrl ? `https://www.zillow.com${rawUrl}` : '';
+  // URLs / image
+  const original_url = item.url ?? '';
   if (!original_url) return null;
 
-  // Image
-  const image_url = item.imgSrc ?? '';
+  const image_url = item.images?.[0] ?? '';
   if (!image_url) return null;
 
-  const id = String(item.zpid ?? item.id ?? `apify-${Math.random().toString(36).slice(2)}`);
+  const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
 
   return {
     id,
-    address: item.address ?? '',
+    address:      item['location.fullAddress'] ?? '',
     neighborhood,
     borough,
     price,
     bedrooms,
     bathrooms,
-    description,
+    description:  item.description ?? '',
     image_url,
     original_url,
-    pets: parsePets(item),
-    status: 'Active',
-    amenities: parseAmenities(flex),
-    images: [],
+    pets:         parsePets(item),
+    status:       'Active',
+    amenities:    parseAmenities(item.amenities),
+    images:       item.images ?? [],
   };
 }
 
@@ -249,95 +232,89 @@ export async function POST() {
 
   const db = createClient(supabaseUrl, supabaseKey);
 
-  // 1. Fetch raw items from Apify dataset
+  // 1. Fetch raw items from Apify actor
   // ── Fixture mode (USE_FIXTURE=true in .env.local) ──────────────────────────
   const USE_FIXTURE = process.env.USE_FIXTURE === 'true';
-  const FIXTURE_DATA: ApifyItem[] = [
+  const FIXTURE_DATA: ApartmentsItem[] = [
     {
-      zpid: 'fixture-1',
-      unformattedPrice: 2800,
-      beds: 2,
-      baths: 1,
-      imgSrc: 'https://picsum.photos/seed/apt1/600/400',
-      detailUrl: 'https://www.zillow.com/homes/fixture-1',
-      address: '123 Bedford Ave',
-      addressCity: 'Brooklyn',
-      addressState: 'NY',
-      statusType: 'FOR_RENT',
-      flexFieldText: 'Hardwood floors, renovated kitchen. Pets allowed — cats and dogs welcome.',
+      id: 'fixture-1',
+      url: 'https://www.apartments.com/fixture-1',
+      'location.fullAddress': '123 Bedford Ave, Brooklyn, NY 11211',
+      'location.city': 'Brooklyn',
+      'location.state': 'NY',
+      'location.neighborhood': 'Williamsburg',
+      'rent.min': 2800,
+      beds: '2 bd',
+      baths: '1 ba',
+      description: 'Hardwood floors, renovated kitchen.',
+      petFriendly: true,
+      amenities: ['Hardwood floors', 'Renovated kitchen'],
+      images: ['https://picsum.photos/seed/apt1/600/400'],
     },
     {
-      zpid: 'fixture-2',
-      unformattedPrice: 3200,
-      beds: 1,
-      baths: 1,
-      imgSrc: 'https://picsum.photos/seed/apt2/600/400',
-      detailUrl: 'https://www.zillow.com/homes/fixture-2',
-      address: '456 Court St',
-      addressCity: 'Brooklyn',
-      addressState: 'NY',
-      statusType: 'FOR_RENT',
-      flexFieldText: 'No pets allowed. Doorman building, gym included.',
+      id: 'fixture-2',
+      url: 'https://www.apartments.com/fixture-2',
+      'location.fullAddress': '456 Court St, Brooklyn, NY 11231',
+      'location.city': 'Brooklyn',
+      'location.state': 'NY',
+      'location.neighborhood': 'Cobble Hill',
+      'rent.min': 3200,
+      beds: '1 bd',
+      baths: '1 ba',
+      description: 'Doorman building, gym included.',
+      petFriendly: false,
+      amenities: ['Doorman', 'Gym'],
+      images: ['https://picsum.photos/seed/apt2/600/400'],
     },
     {
-      zpid: 'fixture-3',
-      unformattedPrice: 2200,
-      beds: 0,
-      baths: 1,
-      imgSrc: 'https://picsum.photos/seed/apt3/600/400',
-      detailUrl: 'https://www.zillow.com/homes/fixture-3',
-      address: '789 Atlantic Ave',
-      addressCity: 'Brooklyn',
-      addressState: 'NY',
-      statusType: 'FOR_RENT',
-      flexFieldText: 'Studio with exposed brick. Laundry in building.',
+      id: 'fixture-3',
+      url: 'https://www.apartments.com/fixture-3',
+      'location.fullAddress': '789 Atlantic Ave, Brooklyn, NY 11238',
+      'location.city': 'Brooklyn',
+      'location.state': 'NY',
+      'location.neighborhood': 'Boerum Hill',
+      'rent.min': 2200,
+      beds: 'Studio',
+      baths: '1 ba',
+      description: 'Studio with exposed brick. Laundry in building.',
+      petFriendly: undefined,
+      amenities: ['Exposed brick', 'Laundry in building'],
+      images: ['https://picsum.photos/seed/apt3/600/400'],
     },
   ];
 
-  let raw: ApifyItem[] = [];
+  let raw: ApartmentsItem[] = [];
   if (USE_FIXTURE) {
     raw = FIXTURE_DATA;
     console.log('[Steady Debug] USE_FIXTURE=true — skipping Apify, using fixture data');
   } else {
-  try {
-    const apifyUrl = buildApifyUrl(); // throws if APIFY_TOKEN is missing
-    const res = await fetch(apifyUrl, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Apify HTTP ${res.status}: ${res.statusText}`);
-    raw = (await res.json()) as ApifyItem[];
-    console.log(`[Steady Debug] Apify: fetched ${raw.length} raw items`);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Steady Debug] Apify fetch failed:', msg);
-    // Return empty so DecisionClient falls back to Supabase/mocks
-    return NextResponse.json({ error: msg, listings: [], synced: 0 }, { status: 200 });
-  }
+    try {
+      raw = await runApifyActor();
+      console.log(`[Steady Debug] Apify: fetched ${raw.length} raw items from Apartments.com actor`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[Steady Debug] Apify actor run failed:', msg);
+      // Return empty so DecisionClient falls back to Supabase/mocks
+      return NextResponse.json({ error: msg, listings: [], synced: 0 }, { status: 200 });
+    }
   }
 
-  // 2. Rental detection — drop for-sale listings before any further processing
-  const rentalItems = raw.filter(isRentalItem);
-  console.log(`[Steady Debug] Apify: ${rentalItems.length}/${raw.length} are rentals (${raw.length - rentalItems.length} for-sale dropped)`);
-  // Debug: log statusType breakdown so we can diagnose scraper config
-  const statusCounts = raw.reduce<Record<string, number>>((acc, item) => {
-    const key = item.statusType ?? item.rawHomeStatusCd ?? 'unknown';
-    acc[key] = (acc[key] ?? 0) + 1;
-    return acc;
-  }, {});
-  console.log('[Steady Debug] Apify statusType breakdown:', JSON.stringify(statusCounts));
-
-  // 3. Normalize — filter out items missing price, URL, or image
-  const normalized: ApifyListing[] = rentalItems
+  // 2. Normalize — filter out items missing price, URL, or image
+  // (No rental filtering needed — Apartments.com only has rentals)
+  const normalized: ApifyListing[] = raw
     .map(normalizeItem)
     .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${rentalItems.length} rental items`);
+  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
 
-  // 4. Upsert to Supabase (DB-safe fields only — no id/amenities/images)
+  // 3. Upsert to Supabase (DB-safe fields only — no id/amenities/images)
+  //    neighborhood, pets, description excluded to protect manually curated data
   let synced = 0;
   let dbError: string | null = null;
 
   if (normalized.length > 0) {
     const dbRows: DbRow[] = normalized.map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ id: _id, amenities: _am, images: _im, ...rest }) => rest
+      ({ id: _id, amenities: _am, images: _im, neighborhood: _n, pets: _p, description: _d, ...rest }) => rest
     );
 
     const { error } = await db
