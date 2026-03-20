@@ -312,7 +312,7 @@ export async function POST() {
   let dbError: string | null = null;
 
   if (normalized.length > 0) {
-    const dbRows: DbRow[] = normalized.map(
+    const dbRows: Omit<DbRow, 'neighborhood' | 'pets' | 'description'>[] = normalized.map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ id: _id, amenities: _am, images: _im, neighborhood: _n, pets: _p, description: _d, ...rest }) => rest
     );
