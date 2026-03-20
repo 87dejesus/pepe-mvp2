@@ -385,8 +385,8 @@ export default function FlowPage() {
         <Image
           src="/brand/heed-mascot.png"
           alt="Heed mascot"
-          width={72}
-          height={72}
+          width={140}
+          height={140}
           className="object-contain"
           unoptimized
         />
