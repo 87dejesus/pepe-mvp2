@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 
 type Listing = {
   id: string;
@@ -140,6 +139,47 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
   return `${intro} ${parts.join(', ')}.`;
 }
 
+// Generate 3–4 color-coded bullets from listing data
+function buildBullets(
+  listing: Listing,
+  answers: Answers,
+): { color: string; text: string }[] {
+  const bullets: { color: string; text: string }[] = [];
+
+  // 1. Budget
+  const price = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
+  if (price <= answers.budget) {
+    const savings = answers.budget - price;
+    if (savings > 100) {
+      bullets.push({ color: '#00A651', text: `$${savings.toLocaleString()}/mo under your budget` });
+    } else {
+      bullets.push({ color: '#00A651', text: 'Fits your budget' });
+    }
+  } else {
+    const over = price - answers.budget;
+    bullets.push({ color: '#ef4444', text: `$${over.toLocaleString()}/mo over your budget` });
+  }
+
+  // 2. Bedroom match
+  const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
+  const needed = bedroomMap[answers.bedrooms] ?? 1;
+  const isExactBed = answers.bedrooms === '3+' ? listing.bedrooms >= 3 : listing.bedrooms === needed;
+  if (isExactBed) {
+    bullets.push({ color: '#00A651', text: `Exact match — ${formatBedrooms(listing.bedrooms)}` });
+  } else {
+    const wantedLabel = answers.bedrooms === '0' ? 'Studio' : `${answers.bedrooms} bed`;
+    bullets.push({ color: '#f59e0b', text: `${formatBedrooms(listing.bedrooms)} (you wanted ${wantedLabel})` });
+  }
+
+  // 3. Transit (neutral)
+  bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
+
+  // 4. Passing cost
+  bullets.push({ color: '#ef4444', text: 'Passing means restarting your search for this area' });
+
+  return bullets;
+}
+
 export default function DecisionListingCard({ listing, answers, matchScore, recommendation, warnings = [] }: Props) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -152,124 +192,345 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
   const rawImageUrl = listing.image_url || listing.images?.[0] || '';
   const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
   const heedTake = buildHeedTake(listing, answers, matchScore, warnings);
-  const transitNote = getTransitNote(listing.borough);
+  const bullets = buildBullets(listing, answers);
+  const showGuarantor = answers.budget <= 2500;
+  const boroughLabel = listing.neighborhood || listing.borough || 'your area';
+  const verdictText = recommendation === 'ACT_NOW'
+    ? 'Strong match — this one fits your criteria well.'
+    : 'Good option — compare a few more before deciding.';
 
   return (
     <div
-      className={`bg-white border border-[#E5E5E5] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.28)] flex-1 flex flex-col overflow-hidden transition-opacity duration-150 ${
-        isTransitioning ? 'opacity-0' : 'opacity-100'
-      }`}
+      style={{
+        opacity: isTransitioning ? 0 : 1,
+        transition: 'opacity 0.15s',
+        backgroundColor: 'white',
+        borderRadius: '0 0 16px 16px',
+        overflow: 'hidden',
+        marginBottom: 16,
+      }}
     >
-      {/* Image Section */}
-      <div className="relative aspect-[4/3] bg-[#F8F6F3] border-b border-[#E5E5E5] shrink-0">
+      {/* ── Image section ─────────────────────────────────────────── */}
+      <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
         {hasValidImage ? (
           <img
             key={`img-${listing.id}`}
             src={rawImageUrl}
             alt={listing.neighborhood}
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-[#F8F6F3] text-[#666666]">
-            <svg className="w-12 h-12 mb-2 text-[#E5E5E5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#1a3a5c',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.25 }}>
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 21V12h6v9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-xs font-medium text-[#666666]">No photo — check full listing</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>No photo — check full listing</span>
           </div>
         )}
 
-        {/* Price Tag - Top Right */}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-[#0A2540] font-bold text-sm px-3 py-1 rounded-full border border-[#E5E5E5] shadow-sm whitespace-nowrap">
-          ${listing.price?.toLocaleString()}/mo
-        </div>
-
-        {/* Match quality indicator - Top Left */}
+        {/* Strong match badge — top left */}
         {recommendation === 'ACT_NOW' && (
-          <div className="absolute top-3 left-3 bg-[#00A651] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              backgroundColor: '#00A651',
+              color: 'white',
+              borderRadius: 20,
+              padding: '4px 10px',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.3px',
+            }}
+          >
             Strong match
           </div>
         )}
+
+        {/* Price badge — top right */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'white',
+            color: '#0A2540',
+            borderRadius: 20,
+            padding: '4px 10px',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          ${listing.price?.toLocaleString()}/mo
+        </div>
       </div>
 
-      {/* Content Section */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        {/* Neighborhood */}
-        <h2 className="text-xl sm:text-2xl font-bold text-[#0A2540] leading-tight">
-          {listing.neighborhood || 'Unknown'}
-        </h2>
+      {/* ── Content section ───────────────────────────────────────── */}
+      <div style={{ padding: 16, backgroundColor: 'white' }}>
 
-        {/* Borough + Specs Row */}
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          {listing.borough && listing.borough !== listing.neighborhood && (
-            <span className="text-sm font-medium text-[#666666]">
-              {listing.borough}
-            </span>
-          )}
-          <span className="bg-[#F8F6F3] border border-[#E5E5E5] rounded-full px-3 py-1 text-xs text-[#666666]">
+        {/* Title row */}
+        <div style={{ marginBottom: 10 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0A2540', margin: 0, marginBottom: 2, lineHeight: 1.2 }}>
+            {listing.neighborhood || 'Unknown'}
+          </h2>
+          <p style={{ fontSize: 12, color: '#888', margin: 0 }}>
+            {[listing.borough, formatBedrooms(listing.bedrooms), formatBathrooms(listing.bathrooms)].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+
+        {/* Pills row */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          <span style={{ backgroundColor: '#f0f0f0', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#444' }}>
             {formatBedrooms(listing.bedrooms)}
           </span>
-          <span className="bg-[#F8F6F3] border border-[#E5E5E5] rounded-full px-3 py-1 text-xs text-[#666666]">
+          <span style={{ backgroundColor: '#f0f0f0', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#444' }}>
             {formatBathrooms(listing.bathrooms)}
           </span>
           {listing.pets?.toLowerCase() === 'yes' && (
-            <span className="bg-[#00A651]/10 border border-[#00A651]/30 rounded-full px-3 py-1 text-xs text-[#00A651] font-medium">
+            <span style={{ backgroundColor: '#e8f5ee', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#00A651', fontWeight: 600 }}>
               Pets OK
             </span>
           )}
         </div>
 
-        {/* Warnings (from relaxed filters) */}
-        {warnings.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {warnings.map((w, i) => (
-              <span key={i} className="text-xs font-medium px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full">
-                {w}
-              </span>
+        {/* Match score */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+            <span style={{ fontSize: 11, color: '#888' }}>Match score</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#00A651' }}>{matchScore}%</span>
+          </div>
+          <div style={{ height: 4, backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                borderRadius: 4,
+                width: `${matchScore}%`,
+                backgroundColor: matchScore >= 80 ? '#00A651' : matchScore >= 50 ? '#f59e0b' : '#ef4444',
+                transition: 'width 0.5s',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ── Heed's Take ─────────────────────────────────────────── */}
+        <div
+          style={{
+            backgroundColor: '#f8f9fb',
+            border: '1px solid #e8edf3',
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 12,
+          }}
+        >
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                backgroundColor: '#0A2540',
+                overflow: 'hidden',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <img
+                src="/brand/heed-mascot.png"
+                alt="Heed"
+                width={28}
+                height={28}
+                style={{ objectFit: 'contain' }}
+              />
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#0A2540' }}>Heed&apos;s Take</span>
+          </div>
+
+          {/* Commentary */}
+          <p style={{ fontSize: 12, color: '#333', lineHeight: 1.5, margin: 0, marginBottom: 8 }}>
+            {heedTake}
+          </p>
+
+          {/* Divider */}
+          <div style={{ height: 1, backgroundColor: '#e8edf3', marginBottom: 8 }} />
+
+          {/* Bullet points */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
+            {bullets.map((b, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                <div
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    backgroundColor: b.color,
+                    flexShrink: 0,
+                    marginTop: 4,
+                  }}
+                />
+                <span style={{ fontSize: 11, color: '#555', lineHeight: 1.45 }}>{b.text}</span>
+              </div>
             ))}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, backgroundColor: '#e8edf3', marginBottom: 8 }} />
+
+          {/* Pressure alert — only if warnings exist */}
+          {warnings.length > 0 && (
+            <div
+              style={{
+                backgroundColor: '#fff5f2',
+                border: '1px solid #f5c4b3',
+                borderRadius: 8,
+                padding: '8px 10px',
+                marginBottom: 8,
+              }}
+            >
+              {warnings.map((w, i) => (
+                <p key={i} style={{ fontSize: 11, color: '#c0522a', margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+                  ⚠ {w}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {/* Verdict row */}
+          <div
+            style={{
+              backgroundColor: '#EAF3DE',
+              border: '1px solid #C0DD97',
+              borderRadius: 8,
+              padding: '8px 10px',
+            }}
+          >
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#3a7a2a', margin: 0 }}>
+              {verdictText}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Referral section ──────────────────────────────────────── */}
+
+        {/* Storage card — always show */}
+        <div
+          style={{
+            backgroundColor: '#f8f9fb',
+            border: '1px solid #e8edf3',
+            borderRadius: 12,
+            padding: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginBottom: showGuarantor ? 8 : 0,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', color: '#aaa', textTransform: 'uppercase', display: 'block', marginBottom: 3 }}>
+              STORAGE
+            </span>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#0A2540', margin: 0, marginBottom: 2, lineHeight: 1.3 }}>
+              Need storage during your move?
+            </p>
+            <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
+              Climate-controlled units near {boroughLabel}
+            </p>
+          </div>
+          <button
+            onClick={() => window.open('https://www.makespace.com', '_blank')}
+            style={{
+              backgroundColor: '#0A2540',
+              color: 'white',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontSize: 12,
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            Find →
+          </button>
+        </div>
+
+        {/* Guarantor card — only if budget <= 2500 */}
+        {showGuarantor && (
+          <div
+            style={{
+              backgroundColor: '#f8f9fb',
+              border: '1px solid #e8edf3',
+              borderRadius: 12,
+              padding: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', color: '#aaa', textTransform: 'uppercase', display: 'block', marginBottom: 3 }}>
+                GUARANTOR
+              </span>
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#0A2540', margin: 0, marginBottom: 2, lineHeight: 1.3 }}>
+                Need income verification help?
+              </p>
+              <p style={{ fontSize: 11, color: '#888', margin: 0 }}>
+                Qualify faster with a guarantor service
+              </p>
+            </div>
+            <button
+              onClick={() => window.open('https://www.insurent.com', '_blank')}
+              style={{
+                backgroundColor: '#0A2540',
+                color: 'white',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: 12,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Learn →
+            </button>
           </div>
         )}
 
-        {/* Match Score Bar */}
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs font-medium text-[#666666]">Match score</span>
-            <span className="text-sm font-bold text-[#0A2540]">{matchScore}%</span>
-          </div>
-          <div className="w-full h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                matchScore >= 80 ? 'bg-[#00A651]' : matchScore >= 50 ? 'bg-amber-400' : 'bg-red-400'
-              }`}
-              style={{ width: `${matchScore}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Heed's Take */}
-        <div className="mt-4 bg-[#F8F6F3] border-l-4 border-[#00A651] pl-4 py-3 pr-3 rounded-r-lg flex-1">
-          <div className="flex items-start gap-3">
-            <img
-              src="/brand/heed-mascot.png"
-              alt="Heed mascot"
-              width={40}
-              height={40}
-              className="object-contain shrink-0"
-            />
-            <div>
-              <p className="text-xs font-semibold mb-1 text-[#0A2540]">Heed&apos;s Take</p>
-              <p className="text-sm text-[#666666] leading-relaxed">
-                {heedTake}
-              </p>
-              <p className="text-xs text-[#666666]/60 mt-2 pt-2 border-t border-[#E5E5E5]">
-                {transitNote}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Description */}
         {listing.description && (
-          <p className="text-xs text-[#666666] mt-3 line-clamp-2 border-t border-[#E5E5E5] pt-3">
+          <p
+            style={{
+              fontSize: 12,
+              color: '#666',
+              lineHeight: 1.6,
+              marginTop: 10,
+              marginBottom: 0,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
             {listing.description}
           </p>
         )}

@@ -3,35 +3,46 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { OnboardingProgress } from '@/components/OnboardingProgress';
 
 export default function DecisionPage() {
   const router = useRouter();
 
+  const pct = Math.round((10 / 12) * 100);
+
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0A2540]">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', backgroundColor: '#0A2540', overflow: 'hidden' }}>
       <Header />
 
-      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
-        <OnboardingProgress step={10} />
+      {/* Progress bar section */}
+      <div style={{ padding: '12px 20px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Step 10 of 12</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{pct}%</span>
+        </div>
+        <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 99, overflow: 'hidden' }}>
+          <div
+            style={{
+              height: '100%',
+              backgroundColor: '#00A651',
+              borderRadius: 99,
+              width: `${pct}%`,
+              transition: 'width 0.5s',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Content section */}
+      <div style={{ padding: '14px 20px 0', flexShrink: 0 }}>
 
         {/* Heed speech bubble */}
-        <div className="flex items-start gap-3 mb-8">
-          <Image
-            src="/brand/heed-mascot.png"
-            alt="Heed"
-            width={40}
-            height={40}
-            className="object-contain shrink-0 mt-0.5"
-          />
-          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
-            <p className="text-sm font-semibold text-[#0A2540] leading-snug">
-              Finding apartments is easy. Deciding is the hard part.
-            </p>
-          </div>
+        <div style={{ backgroundColor: 'white', borderRadius: 12, padding: '12px 14px', marginBottom: 14 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#0A2540', lineHeight: 1.35, margin: 0 }}>
+            Finding apartments is easy. Deciding is the hard part.
+          </p>
         </div>
 
-        {/* Two-column comparison */}
+        {/* Two-column comparison cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {/* SEARCH */}
           <div className="bg-white/[0.05] border border-white/15 rounded-2xl p-5 flex flex-col items-center text-center">
@@ -68,18 +79,52 @@ export default function DecisionPage() {
           </div>
         </div>
 
-        <p className="text-white/40 text-sm text-center mb-4 leading-relaxed px-2">
+        {/* Tagline */}
+        <p className="text-white/40 text-sm text-center leading-relaxed px-2">
           Heed turns the noise into a clear signal — so you decide once,
           confidently.
         </p>
-
-        <div className="pb-4" />
       </div>
 
-      <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full">
+      {/* Heed area — fills remaining space */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+        }}
+      >
+        <Image
+          src="/brand/heed-mascot.png"
+          alt="Heed mascot"
+          width={120}
+          height={120}
+          className="object-contain"
+          unoptimized
+        />
+        <span style={{ fontSize: 12, color: 'rgba(0,166,81,0.7)' }}>
+          I&apos;ve got your back.
+        </span>
+      </div>
+
+      {/* Bottom button */}
+      <div style={{ padding: '8px 20px 20px', flexShrink: 0, backgroundColor: '#0A2540' }}>
         <button
           onClick={() => router.push('/onboarding/preview')}
-          className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
+          style={{
+            width: '100%',
+            height: 52,
+            borderRadius: 12,
+            backgroundColor: '#00A651',
+            color: 'white',
+            fontWeight: 700,
+            fontSize: 15,
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
           Show me how it works
         </button>
