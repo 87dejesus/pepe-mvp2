@@ -194,11 +194,11 @@ export default function FlowPage() {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#0A2540]">
+    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: '#0A2540', overflow: 'hidden' }}>
       <Header />
 
       {/* Scroll area — padded at bottom so content clears the fixed nav */}
-      <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full" style={{ paddingBottom: '120px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 120 }} className="max-w-lg mx-auto w-full">
 
         {/* Progress bar */}
         <div className="mb-7 pt-3">
@@ -351,12 +351,12 @@ export default function FlowPage() {
       </div>
 
       {/* Gradient fade above fixed nav */}
-      <div className="pointer-events-none fixed bottom-[88px] left-0 right-0 h-8 bg-gradient-to-t from-[#0A2540] to-transparent z-10" />
+      <div style={{ position: 'fixed', bottom: 88, left: 0, right: 0, height: 32, background: 'linear-gradient(to top, #0A2540, transparent)', zIndex: 10, pointerEvents: 'none' }} />
 
       {/* Navigation — fixed to bottom with safe area inset */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-20 px-5 pt-3 max-w-lg mx-auto w-full flex gap-3 bg-[#0A2540]"
-        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '12px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))', backgroundColor: '#0A2540' }}
+        className="max-w-lg mx-auto w-full flex gap-3"
       >
         {step > 1 && (
           <button

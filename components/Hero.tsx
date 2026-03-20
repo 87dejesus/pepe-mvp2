@@ -15,7 +15,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative w-full bg-[#0A2540]" style={{ height: '100dvh' }}>
+    <section style={{ position: 'relative', width: '100%', height: '100dvh', backgroundColor: '#0A2540' }}>
 
       {/* ── Video ────────────────────────────────────────────────────────────── */}
       <video
@@ -26,12 +26,11 @@ export default function Hero() {
         loop
         playsInline
         disablePictureInPicture
-        className="absolute inset-0 w-full h-full object-cover overflow-hidden"
-        style={{ pointerEvents: 'none' }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
       />
 
       {/* ── Dark scrim ───────────────────────────────────────────────────────── */}
-      <div className="absolute inset-0 bg-[#0A2540]/40" />
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(10,37,64,0.4)' }} />
 
       {/* ── Logo — top right ─────────────────────────────────────────────────── */}
       <div className="absolute top-4 right-4 z-20">
@@ -46,8 +45,8 @@ export default function Hero() {
       </div>
 
       {/* ── Overlay text — bottom of video area ─────────────────────────────── */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-6 pb-10 flex flex-col items-center">
-        <div className="w-full max-w-lg bg-black/30 backdrop-blur-md rounded-2xl px-7 py-7 mb-7 text-center">
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '0 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 512, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(12px)', borderRadius: 16, padding: '28px', marginBottom: 28, textAlign: 'center' }}>
           <Image
             src="/brand/heed-mascot.png"
             alt="Heed"
