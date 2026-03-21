@@ -373,5 +373,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ listings: normalized, synced, dbError });
+  return NextResponse.json({ listings: normalized, synced, dbError, _debug_raw_sample: raw[0] ?? null });
 }
