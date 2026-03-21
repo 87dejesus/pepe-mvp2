@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 .claude/settings.local.json
 nul
+
+# Sentry Config File
+.env.sentry-build-plugin
