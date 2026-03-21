@@ -24,30 +24,58 @@ async function runApifyActor(): Promise<ApartmentsItem[]> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
-  const url = `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${token}`;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      startUrls: [
-        'https://www.apartments.com/new-york-ny/',
-        'https://www.apartments.com/brooklyn-ny/',
-        'https://www.apartments.com/bronx-ny/',
-        'https://www.apartments.com/queens-ny/',
-        'https://www.apartments.com/staten-island-ny/',
-      ],
-      includeReviews: false,
-      includeVisuals: false,
-      includeInteriorAmenities: true,
-      includeWalkScore: false,
-      maxItems: 200,
-    }),
-    cache: 'no-store',
+  const body = JSON.stringify({
+    startUrls: [
+      'https://www.apartments.com/new-york-ny/',
+      'https://www.apartments.com/brooklyn-ny/',
+      'https://www.apartments.com/bronx-ny/',
+      'https://www.apartments.com/queens-ny/',
+      'https://www.apartments.com/staten-island-ny/',
+    ],
+    includeReviews: false,
+    includeVisuals: false,
+    includeInteriorAmenities: true,
+    includeWalkScore: false,
+    maxItems: 200,
   });
 
-  if (!res.ok) throw new Error(`Apify HTTP ${res.status}: ${res.statusText}`);
-  return (await res.json()) as ApartmentsItem[];
+  // 1. Start the run asynchronously
+  const startRes = await fetch(
+    `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs?token=${token}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, cache: 'no-store' }
+  );
+  if (!startRes.ok) throw new Error(`Apify start HTTP ${startRes.status}: ${startRes.statusText}`);
+  const startData = await startRes.json();
+  const runId: string = startData?.data?.id;
+  if (!runId) throw new Error('Apify run start did not return a runId');
+  console.log(`[Steady Debug] Apify run started: ${runId}`);
+
+  // 2. Poll until SUCCEEDED or FAILED (max 10 attempts × 5s = 50s)
+  const MAX_ATTEMPTS = 10;
+  const POLL_INTERVAL_MS = 5000;
+  let status = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    const pollRes = await fetch(
+      `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`,
+      { cache: 'no-store' }
+    );
+    if (!pollRes.ok) throw new Error(`Apify poll HTTP ${pollRes.status}: ${pollRes.statusText}`);
+    const pollData = await pollRes.json();
+    status = pollData?.data?.status ?? '';
+    console.log(`[Steady Debug] Apify run ${runId} — attempt ${attempt}/${MAX_ATTEMPTS}: ${status}`);
+    if (status === 'SUCCEEDED' || status === 'FAILED') break;
+  }
+
+  if (status !== 'SUCCEEDED') throw new Error(`Apify run ${runId} ended with status: ${status}`);
+
+  // 3. Fetch dataset items
+  const itemsRes = await fetch(
+    `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true`,
+    { cache: 'no-store' }
+  );
+  if (!itemsRes.ok) throw new Error(`Apify items HTTP ${itemsRes.status}: ${itemsRes.statusText}`);
+  return (await itemsRes.json()) as ApartmentsItem[];
 }
 
 // ─── Borough detection ────────────────────────────────────────────────────────
