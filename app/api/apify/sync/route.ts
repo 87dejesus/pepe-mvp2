@@ -347,9 +347,16 @@ export async function POST() {
       ({ id: _id, amenities: _am, images: _im, neighborhood: _n, pets: _p, description: _d, ...rest }) => rest
     );
 
+    const seenUrls = new Set<string>();
+    const uniqueDbRows = dbRows.filter(row => {
+      if (seenUrls.has(row.original_url)) return false;
+      seenUrls.add(row.original_url);
+      return true;
+    });
+
     const { error } = await db
       .from('listings')
-      .upsert(dbRows, {
+      .upsert(uniqueDbRows, {
         onConflict: 'original_url',  // requires UNIQUE constraint on listings(original_url)
         ignoreDuplicates: false,     // update existing rows with fresh data
       });
@@ -359,7 +366,7 @@ export async function POST() {
       dbError = error.message;
       // Non-fatal: we still return the listings to the client
     } else {
-      synced = dbRows.length;
+      synced = uniqueDbRows.length;
       console.log(`[Steady Debug] Apify: upserted ${synced} listings to Supabase`);
     }
   }
