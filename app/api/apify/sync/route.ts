@@ -123,11 +123,11 @@ function parsePets(item: ApartmentsItem): string {
 
 function cleanNeighborhood(item: ApartmentsItem, borough: string): string {
   // 1. Prefer location.neighborhood if present and clean
-  const nb = (item['location.neighborhood'] ?? '').trim();
+  const nb = (item.location?.neighborhood ?? '').trim();
   if (nb && nb.length <= 60) return nb;
 
   // 2. Try location.city with cleanliness checks
-  const raw = (item['location.city'] ?? '').trim();
+  const raw = (item.location?.city ?? '').trim();
   if (!raw) return borough;
   if (raw.includes('$')) return borough;           // price blob
   const firstLine = raw.includes('\n') ? raw.split('\n')[0].trim() : raw;
@@ -151,9 +151,9 @@ function parseBathrooms(baths?: string): number {
   return match ? parseInt(match[1], 10) : 1;
 }
 
-function parseAmenities(list?: string[]): string[] {
+function parseAmenities(list?: Array<{ title: string; value: string[] }>): string[] {
   if (!list) return [];
-  return list.map((s) => s.trim()).filter(Boolean);
+  return list.flatMap((group) => group.value).map((s) => s.trim()).filter(Boolean);
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -162,19 +162,21 @@ type ApartmentsItem = {
   id?: string;
   propertyName?: string;
   url?: string;
-  'location.fullAddress'?: string;
-  'location.city'?: string;
-  'location.state'?: string;
-  'location.neighborhood'?: string;
-  'location.postalCode'?: string;
-  'rent.min'?: number;
-  'rent.max'?: number;
+  location?: {
+    fullAddress?: string;
+    city?: string;
+    state?: string;
+    neighborhood?: string;
+    postalCode?: string;
+    streetAddress?: string;
+  };
+  rent?: { min?: number; max?: number };
   beds?: string;
   baths?: string;
   sqft?: string;
   description?: string;
-  'contact.phone'?: string;
-  amenities?: string[];
+  contact?: { phone?: string; name?: string };
+  amenities?: Array<{ title: string; value: string[] }>;
   petPolicy?: string;
   petFriendly?: boolean;
   images?: string[];
@@ -207,12 +209,12 @@ export type ApifyListing = DbRow & {
 
 function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   // Price
-  const price = item['rent.min'] ?? 0;
+  const price = item.rent?.min ?? 0;
   if (price <= 0) return null;
 
   // Location
-  const city  = item['location.city']  ?? '';
-  const state = item['location.state'] ?? '';
+  const city  = item.location?.city  ?? '';
+  const state = item.location?.state ?? '';
   const borough      = detectBorough(city, state);
   const neighborhood = cleanNeighborhood(item, borough);
 
@@ -220,18 +222,17 @@ function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   const bedrooms  = parseBedrooms(item.beds);
   const bathrooms = parseBathrooms(item.baths);
 
-  // URLs / image
+  // URL (required); image is optional
   const original_url = item.url ?? '';
   if (!original_url) return null;
 
   const image_url = item.images?.[0] ?? '';
-  if (!image_url) return null;
 
   const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
 
   return {
     id,
-    address:      item['location.fullAddress'] ?? '',
+    address:      item.location?.fullAddress ?? '',
     neighborhood,
     borough,
     price,
@@ -338,10 +339,10 @@ export async function POST() {
   console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
   console.log('[Steady Debug] Items that failed normalization (first 3):',
     raw.slice(0, 3).map(item => ({
-      price: item['rent.min'],
-      url: item['url'],
-      image: item['images']?.[0],
-      id: item['id']
+      price: item.rent?.min,
+      url: item.url,
+      image: item.images?.[0],
+      id: item.id,
     }))
   );
 
