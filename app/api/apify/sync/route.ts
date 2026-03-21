@@ -330,10 +330,20 @@ export async function POST() {
 
   // 2. Normalize — filter out items missing price, URL, or image
   // (No rental filtering needed — Apartments.com only has rentals)
+  console.log('[Steady Debug] Total raw items fetched:', raw.length);
+  console.log('[Steady Debug] Sample raw item:', JSON.stringify(raw[0], null, 2));
   const normalized: ApifyListing[] = raw
     .map(normalizeItem)
     .filter((x): x is ApifyListing => x !== null);
   console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
+  console.log('[Steady Debug] Items that failed normalization (first 3):',
+    raw.slice(0, 3).map(item => ({
+      price: item['rent.min'],
+      url: item['url'],
+      image: item['images']?.[0],
+      id: item['id']
+    }))
+  );
 
   // 3. Upsert to Supabase (DB-safe fields only — no id/amenities/images)
   //    neighborhood, pets, description excluded to protect manually curated data
