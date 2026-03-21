@@ -259,6 +259,10 @@ function normalizeItem(item: ApartmentsItem): ApifyListing | null {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   // Prefer service role key (bypass RLS for writes); fall back to anon key
