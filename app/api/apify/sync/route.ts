@@ -278,7 +278,7 @@ export async function POST() {
       baths: '1 ba',
       description: 'Hardwood floors, renovated kitchen.',
       petFriendly: true,
-      amenities: ['Hardwood floors', 'Renovated kitchen'],
+      amenities: [{ title: 'Features', value: ['Hardwood floors', 'Renovated kitchen'] }],
       images: ['https://picsum.photos/seed/apt1/600/400'],
     },
     {
@@ -293,7 +293,7 @@ export async function POST() {
       baths: '1 ba',
       description: 'Doorman building, gym included.',
       petFriendly: false,
-      amenities: ['Doorman', 'Gym'],
+      amenities: [{ title: 'Features', value: ['Doorman', 'Gym'] }],
       images: ['https://picsum.photos/seed/apt2/600/400'],
     },
     {
@@ -308,7 +308,7 @@ export async function POST() {
       baths: '1 ba',
       description: 'Studio with exposed brick. Laundry in building.',
       petFriendly: undefined,
-      amenities: ['Exposed brick', 'Laundry in building'],
+      amenities: [{ title: 'Features', value: ['Exposed brick', 'Laundry in building'] }],
       images: ['https://picsum.photos/seed/apt3/600/400'],
     },
   ];
