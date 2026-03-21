@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'epctex~apartments-scraper-api';
 
@@ -51,7 +52,7 @@ async function runApifyActor(): Promise<ApartmentsItem[]> {
   console.log(`[Steady Debug] Apify run started: ${runId}`);
 
   // 2. Poll until SUCCEEDED or FAILED (max 10 attempts × 5s = 50s)
-  const MAX_ATTEMPTS = 10;
+  const MAX_ATTEMPTS = 50;
   const POLL_INTERVAL_MS = 5000;
   let status = '';
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
