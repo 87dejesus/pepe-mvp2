@@ -403,18 +403,13 @@ async function fetchListingsFromApify(): Promise<Listing[]> {
     const all = raw ?? [];
 
     console.log(`[Steady Debug] fetchListingsFromApify: ${all.length} returned, ${synced} saved to DB${dbError ? ` (DB err: ${dbError})` : ''}`);
-    console.log(`[DEBUG] First 5 prices from API:`, all.slice(0, 5).map(l => parsePrice(l.price)));
-    console.log(`[DEBUG] First 5 descriptions:`, all.slice(0, 5).map(l => (l.description ?? '').slice(0, 60)));
 
     // Client-side rental filter
     const validRentals = all.filter(isRental);
-    console.log(`[DEBUG] Valid rentals after isRental: ${validRentals.length}/${all.length}`);
-
     if (validRentals.length > 0) return validRentals;
 
     // Fallback: if all listings failed rental check, show 10 cheapest with a photo
     if (all.length > 0) {
-      console.log('[DEBUG] isRental returned 0 — falling back to 10 cheapest with image');
       return all
         .filter(l => l.image_url && l.original_url)
         .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
@@ -625,13 +620,11 @@ function DecisionClientInner() {
     async function fetchData() {
       console.log('[Steady Debug] Fetching listings with answers:', answers);
 
-      // === SOURCE 1: Apify live data (also syncs to Supabase as side-effect) ===
-      let rawData: Listing[] = await fetchListingsFromApify();
-      let source = 'apify';
+      let rawData: Listing[] = [];
+      let source = '';
 
-      // === SOURCE 2: Supabase fallback (previously synced or scraped data) ===
-      if (rawData.length === 0 && supabaseClient) {
-        console.log('[Steady Debug] Apify returned 0 — querying Supabase...');
+      // === SOURCE 1: Supabase — instant, uses previously synced data ===
+      if (supabaseClient) {
         const { data, error } = await supabaseClient
           .from('listings')
           .select('*')
@@ -644,6 +637,13 @@ function DecisionClientInner() {
         }
       }
 
+      // === SOURCE 2: Apify fallback — live scrape, only if Supabase is empty ===
+      if (rawData.length === 0) {
+        console.log('[Steady Debug] Supabase returned 0 — fetching from Apify...');
+        rawData = await fetchListingsFromApify();
+        source = 'apify';
+      }
+
       // === SOURCE 3: Mock fallback ===
       if (rawData.length === 0) {
         rawData = MOCK_LISTINGS;
@@ -651,10 +651,6 @@ function DecisionClientInner() {
         console.log('[Steady Debug] All sources empty — using 10 mock listings as fallback');
       }
       console.log(`[Steady Debug] Raw listings: ${rawData.length} (source: ${source})`);
-      console.log(`Found ${rawData.length} active listings`);
-      console.log(`[DEBUG] Raw Apify listings: ${rawData.length}`);
-      console.log(`[DEBUG] First 5 prices:`, rawData.slice(0, 5).map(l => parsePrice(l.price)));
-      console.log(`[DEBUG] Boroughs found:`, rawData.slice(0, 5).map(l => l.borough || l.neighborhood));
 
       const stats: FilterStats = {
         total: rawData.length,
