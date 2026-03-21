@@ -97,7 +97,15 @@ const QUEENS_CITIES = new Set([
   'jamaica', 'ridgewood', 'bayside', 'kew gardens', 'queens village',
   'ozone park', 'south ozone park', 'howard beach', 'corona',
   'richmond hill', 'maspeth', 'middle village', 'queens',
+  'arverne', 'rockaway park', 'far rockaway', 'floral park', 'douglaston',
+  'little neck', 'glen oaks', 'bellerose', 'hollis', 'st. albans',
+  'springfield gardens', 'laurelton', 'rosedale', 'cambria heights',
+  'fresh meadows', 'hillcrest', 'briarwood', 'jamaica hills', 'woodhaven',
+  'glendale', 'college point', 'whitestone', 'beechhurst',
+  'malba', 'murray hill', 'auburndale', 'oakland gardens', 'broadway flushing',
 ]);
+
+const VALID_BOROUGHS = new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']);
 
 function detectBorough(city: string, state: string): string {
   if (!city) return 'Unknown';
@@ -216,6 +224,7 @@ function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   const city  = item.location?.city  ?? '';
   const state = item.location?.state ?? '';
   const borough      = detectBorough(city, state);
+  if (!VALID_BOROUGHS.has(borough)) return null;
   const neighborhood = cleanNeighborhood(item, borough);
 
   // Beds / baths
