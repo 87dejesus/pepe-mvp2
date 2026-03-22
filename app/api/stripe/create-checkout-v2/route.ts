@@ -22,7 +22,7 @@ import { STRIPE_PRICES } from '@/lib/stripe-prices';
 export const dynamic = 'force-dynamic';
 
 // Allow-list — no arbitrary price IDs from the client
-const ALLOWED_PRICE_IDS = new Set([STRIPE_PRICES.access30days]);
+const ALLOWED_PRICE_IDS = new Set<string>([STRIPE_PRICES.access30days]);
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_')) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   // Validate price ID against allow-list
   const body = await req.json().catch(() => ({})) as { priceId?: unknown };
-  const priceId = typeof body.priceId === 'string' ? body.priceId : null;
+  const priceId = typeof body.priceId === 'string' ? (body.priceId as string) : null;
 
   if (!priceId || !ALLOWED_PRICE_IDS.has(priceId)) {
     return NextResponse.json({ error: 'Invalid price ID.' }, { status: 400 });
