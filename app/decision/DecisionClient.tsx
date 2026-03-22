@@ -858,6 +858,12 @@ function DecisionClientInner() {
     }
   };
 
+  async function handleManageSubscription() {
+    const res = await fetch('/api/stripe/create-portal-session', { method: 'POST' });
+    const data = await res.json() as { url?: string };
+    if (data.url) window.location.href = data.url;
+  }
+
   // Access gate — enforces all access rules after server check completes
   useEffect(() => {
     if (!accessChecked || isAdmin) return;
@@ -1094,6 +1100,14 @@ function DecisionClientInner() {
               <span className="ml-2 text-xs text-white/35">(relaxed)</span>
             )}
           </span>
+          {!isAdmin && (accessState.status === 'active' || accessState.status === 'trialing') && (
+            <button
+              onClick={handleManageSubscription}
+              className="text-[11px] text-white/40 hover:text-white/70 transition-colors"
+            >
+              Manage
+            </button>
+          )}
         </div>
       </header>
 
