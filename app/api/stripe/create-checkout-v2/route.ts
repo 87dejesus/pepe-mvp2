@@ -17,14 +17,12 @@ import {
   createSupabaseServerRouteClient,
   createSupabaseServiceClient,
 } from '@/lib/supabase-server';
+import { STRIPE_PRICES } from '@/lib/stripe-prices';
 
 export const dynamic = 'force-dynamic';
 
-// Hard-coded allow-list — no arbitrary price IDs from the client
-const ALLOWED_PRICE_IDS = new Set([
-  'price_1T635F08QwenlVoWj7gLcF8j', // Weekly $4.49/week
-  'price_1TAVgd08QwenlVoWKqgaX44W', // Annual $49.99/year
-]);
+// Allow-list — no arbitrary price IDs from the client
+const ALLOWED_PRICE_IDS = new Set([STRIPE_PRICES.access30days]);
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_')) {

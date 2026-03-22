@@ -1,59 +1,25 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { OnboardingProgress } from '@/components/OnboardingProgress';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { readAccess, hasAccess } from '@/lib/access';
+import { STRIPE_PRICES } from '@/lib/stripe-prices';
 
-// ── Plan definitions ────────────────────────────────────────────────────────
-
-type PlanKey = 'weekly' | 'annual';
-
-const PLANS: Record<
-  PlanKey,
-  {
-    priceId: string;
-    label: string;
-    price: string;
-    period: string;
-    weeklyEquiv: string | null;
-    description: string;
-    badge: string | null;
-  }
-> = {
-  weekly: {
-    priceId: 'price_1T635F08QwenlVoWj7gLcF8j',
-    label: 'Weekly',
-    price: '$4.49',
-    period: '/week',
-    weeklyEquiv: null,
-    description: 'Perfect for right now — decide fast, but thoughtfully.',
-    badge: null,
-  },
-  annual: {
-    priceId: 'price_1TAVgd08QwenlVoWKqgaX44W',
-    label: 'Annual',
-    price: '$49.99',
-    period: '/year',
-    weeklyEquiv: '≈ $0.96/week',
-    description:
-      "Heed stays with you all year, ready for any future move without last-minute panic. Save ~79%.",
-    badge: 'Best value – No rush, more peace',
-  },
-};
-
-// ── Component ───────────────────────────────────────────────────────────────
+const FEATURES = [
+  'Match score based on your real constraints',
+  'Apply Today vs Wait Thoughtfully — no false urgency',
+  'Incentive detection: free months, no-fee deals',
+  "Heed's take on every listing",
+];
 
 export default function PricingPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<PlanKey>('annual');
 
   async function handleCTA() {
-    const plan = PLANS[selected];
-    localStorage.setItem('heed_selected_price_id', plan.priceId);
+    localStorage.setItem('heed_selected_price_id', STRIPE_PRICES.access30days);
 
     // Guard 1: fast local cache check (no network, within 10-min TTL)
     const access = readAccess();
@@ -101,7 +67,7 @@ export default function PricingPage() {
           />
           <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
             <p className="text-sm font-semibold text-[#0A2540] leading-snug">
-              Start your free trial
+              One decision. One payment.
             </p>
             <p className="text-[11px] text-[#0A2540]/50 mt-0.5">
               No rush. No panic. Just clarity when you need it most.
@@ -109,75 +75,26 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Trial callout banner */}
-        <div className="bg-[#00A651]/[0.12] border border-[#00A651]/30 rounded-xl px-4 py-3 mb-5 text-center">
-          <p className="text-[#00A651] font-semibold text-sm">
-            3-day free trial — no charge today
+        {/* Plan card */}
+        <div className="rounded-2xl border border-white/20 bg-white/[0.05] p-5 mb-5">
+          {/* Price row */}
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-3xl font-bold text-white">$9.49</span>
+            <span className="text-white/50 text-sm">· 30-day access</span>
+          </div>
+          <p className="text-white/40 text-xs mb-5">
+            No auto-renewal. No surprise charges.
           </p>
-        </div>
 
-        {/* Plan cards — stacked on mobile, side-by-side on sm+ */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          {(Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][]).map(
-            ([key, plan]) => (
-              <button
-                key={key}
-                onClick={() => setSelected(key)}
-                className={`relative flex-1 rounded-2xl border p-5 text-left transition-all ${
-                  selected === key
-                    ? 'border-[#00A651]/60 bg-[#00A651]/[0.10]'
-                    : 'border-white/20 bg-white/[0.05] hover:bg-white/[0.08]'
-                }`}
-              >
-                {/* Badge */}
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-[#00A651] text-white text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap shadow-lg">
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-
-                {/* Radio indicator */}
-                <div
-                  className={`w-4 h-4 rounded-full border-2 mb-3 flex items-center justify-center transition-all ${
-                    selected === key
-                      ? 'border-[#00A651] bg-[#00A651]'
-                      : 'border-white/30'
-                  }`}
-                >
-                  {selected === key && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                  )}
-                </div>
-
-                {/* Label */}
-                <p
-                  className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${
-                    selected === key ? 'text-[#00A651]' : 'text-white/40'
-                  }`}
-                >
-                  {plan.label}
-                </p>
-
-                {/* Price */}
-                <div className="flex items-baseline gap-1 mb-0.5">
-                  <span className="text-2xl font-bold text-white">
-                    {plan.price}
-                  </span>
-                  <span className="text-white/50 text-sm">{plan.period}</span>
-                </div>
-                {plan.weeklyEquiv && (
-                  <p className="text-white/40 text-xs mb-2">{plan.weeklyEquiv}</p>
-                )}
-
-                {/* Description */}
-                <p className="text-white/55 text-xs leading-relaxed mt-1">
-                  {plan.description}
-                </p>
-              </button>
-            )
-          )}
+          {/* Feature list */}
+          <ul className="space-y-3">
+            {FEATURES.map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
+                <span className="text-[#00A651] font-bold mt-0.5 shrink-0">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="pb-4" />
@@ -188,10 +105,10 @@ export default function PricingPage() {
           onClick={handleCTA}
           className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all mb-2"
         >
-          {`Start free trial — ${PLANS[selected].label}`}
+          Start free — then $9.49
         </button>
         <p className="text-white/30 text-xs text-center leading-relaxed">
-          No credit card required today. Cancel anytime.
+          3 days free, then $9.49 for 30-day access. No auto-renewal.
         </p>
       </div>
     </div>
