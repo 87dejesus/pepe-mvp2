@@ -371,6 +371,26 @@ export async function POST() {
     } else {
       synced = uniqueDbRows.length;
       console.log(`[Steady Debug] Apify: upserted ${synced} listings to Supabase`);
+
+      // Patch rows where neighborhood is NULL — set it to borough as fallback.
+      // Runs after upsert so newly inserted rows with null neighborhood are fixed too.
+      const { data: nullRows } = await db
+        .from('listings')
+        .select('borough')
+        .is('neighborhood', null)
+        .not('borough', 'is', null);
+
+      if (nullRows && nullRows.length > 0) {
+        const boroughs = [...new Set(nullRows.map((r: { borough: string }) => r.borough))];
+        for (const b of boroughs) {
+          await db
+            .from('listings')
+            .update({ neighborhood: b })
+            .is('neighborhood', null)
+            .eq('borough', b);
+        }
+        console.log(`[Steady Debug] Patched null neighborhoods for boroughs: ${boroughs.join(', ')}`);
+      }
     }
   }
 
