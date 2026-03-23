@@ -235,13 +235,20 @@ function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   const original_url = item.url ?? '';
   if (!original_url) return null;
 
+  // Skip listings where address is missing or contains a price blob instead of a real address
+  const address = (item.location?.fullAddress ?? '').trim();
+  if (!address || /^\$[\d,]+/.test(address)) {
+    console.log(`[Steady Debug] Skipped malformed listing: ${JSON.stringify(item)}`);
+    return null;
+  }
+
   const image_url = item.images?.[0] ?? '';
 
   const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
 
   return {
     id,
-    address:      item.location?.fullAddress ?? '',
+    address,
     neighborhood,
     borough,
     price,
