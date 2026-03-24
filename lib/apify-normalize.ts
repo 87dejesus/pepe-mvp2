@@ -163,11 +163,20 @@ export function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   }
 
   const image_url = (() => {
-    const img = (item.images?.[0] ?? '').trim();
-    if (!img || !img.startsWith('https://') || img.includes('add7ffb')) return null;
-    return img;
+    const candidates = [
+      item.images?.[0],
+      item.photos?.[0],
+      (item as any).imageUrl,
+      (item as any).thumbnailUrl,
+      (item as any).mainImage,
+      (item as any).heroImage,
+    ];
+    for (const c of candidates) {
+      const img = (c ?? '').trim();
+      if (img.startsWith('https://') && !img.includes('add7ffb')) return img;
+    }
+    return '';
   })();
-  if (!image_url) return null;
   const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
 
   return {
