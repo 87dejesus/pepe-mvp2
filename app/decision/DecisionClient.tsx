@@ -749,13 +749,22 @@ function DecisionClientInner() {
 
         console.log(`[FINAL FILTER] Strict: ${strict.length} | Relaxed: ${relaxed.length} | Showing: ${finalList.length}`);
 
-        // === PASS 3: Last-resort — 10 cheapest listings matching borough + bedrooms only ===
+        // === PASS 3: Last-resort — borough + bedrooms, prefer listings with photo/url ===
         if (finalList.length === 0 && rawWithMatch.length > 0) {
-          console.log('[DEBUG] All passes returned 0 — showing 10 cheapest by borough + bedrooms as last resort');
-          finalList = rawWithMatch
-            .filter(l => l.boroughMatch && l.bedrooms === needed)
+          console.log('[DEBUG] All passes returned 0 — trying borough + bedrooms + photo as last resort');
+          const withPhoto = rawWithMatch
+            .filter(l => l.boroughMatch && l.bedrooms === needed && l.original_url && !isPlaceholder(l))
             .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
             .slice(0, 10);
+          if (withPhoto.length > 0) {
+            finalList = withPhoto;
+          } else {
+            console.log('[DEBUG] No photo matches — falling back to borough + bedrooms only');
+            finalList = rawWithMatch
+              .filter(l => l.boroughMatch && l.bedrooms === needed)
+              .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+              .slice(0, 10);
+          }
           stats.relaxedUsed = true;
         }
       }
