@@ -165,7 +165,6 @@ export function normalizeItem(item: ApartmentsItem): ApifyListing | null {
   const image_url = (() => {
     const candidates = [
       item.images?.[0],
-      item.photos?.[0],
       (item as any).imageUrl,
       (item as any).thumbnailUrl,
       (item as any).mainImage,
