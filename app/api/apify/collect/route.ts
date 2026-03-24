@@ -103,6 +103,7 @@ async function collect() {
     .map(normalizeItem)
     .filter((x): x is ApifyListing => x !== null);
   console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
+  console.log('[Normalize Debug]', JSON.stringify(normalized.slice(0,5).map((i:any) => ({id: i.id, image_url: i.image_url, address: i.address}))));
 
   // 5. Upsert to Supabase (neighborhood, pets, description excluded to protect curated data)
   let synced = 0;
