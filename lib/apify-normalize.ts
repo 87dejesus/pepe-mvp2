@@ -162,7 +162,12 @@ export function normalizeItem(item: ApartmentsItem): ApifyListing | null {
     return null;
   }
 
-  const image_url = item.images?.[0] ?? '';
+  const image_url = (() => {
+    const img = (item.images?.[0] ?? '').trim();
+    if (!img || !img.startsWith('https://') || img.includes('add7ffb')) return null;
+    return img;
+  })();
+  if (!image_url) return null;
   const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
 
   return {

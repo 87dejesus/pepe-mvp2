@@ -628,7 +628,8 @@ function DecisionClientInner() {
         const { data, error } = await supabaseClient
           .from('listings')
           .select('*')
-          .eq('status', 'Active');
+          .eq('status', 'Active')
+          .neq('image_url', '');
         if (error) {
           console.error('[Steady Debug] Supabase error:', error);
         } else if (data && data.length > 0) {
