@@ -40,12 +40,17 @@ async function startApifyRun(): Promise<string> {
       'https://www.apartments.com/bronx-ny/',
       'https://www.apartments.com/queens-ny/',
       'https://www.apartments.com/staten-island-ny/',
+      'https://www.apartments.com/new-york-ny/studio-apartments/',
+      'https://www.apartments.com/brooklyn-ny/studio-apartments/',
+      'https://www.apartments.com/bronx-ny/studio-apartments/',
+      'https://www.apartments.com/queens-ny/studio-apartments/',
+      'https://www.apartments.com/staten-island-ny/studio-apartments/',
     ],
     includeReviews: false,
     includeVisuals: false,
     includeInteriorAmenities: true,
     includeWalkScore: false,
-    maxItems: 200,
+    maxItems: 300,
   });
 
   const res = await fetch(

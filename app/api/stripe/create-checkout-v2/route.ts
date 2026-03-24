@@ -13,10 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import Stripe from 'stripe';
-import {
-  createSupabaseServerRouteClient,
-  createSupabaseServiceClient,
-} from '@/lib/supabase-server';
+import { createSupabaseServerRouteClient } from '@/lib/supabase-server';
 import { STRIPE_PRICES } from '@/lib/stripe-prices';
 
 export const dynamic = 'force-dynamic';
@@ -50,28 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid price ID.' }, { status: 400 });
   }
 
-  // Trial eligibility — same rule as create-checkout:
-  // grant Stripe trial only if the user has never consumed the OTP/server trial.
-  const db = createSupabaseServiceClient();
-  const { data: userRow, error: dbError } = await db
-    .from('users')
-    .select('trial_ends_at')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (dbError) {
-    console.error('[Stripe v2] Failed to check trial eligibility:', dbError.message);
-    return NextResponse.json({ error: 'Could not verify trial eligibility.' }, { status: 500 });
-  }
-
-  const trialAlreadyUsed = !!userRow?.trial_ends_at;
-  const stripeTrial = trialAlreadyUsed ? undefined : { trial_period_days: 3 };
-
-  console.log(
-    `[Stripe v2] User ${user.id} | priceId: ${priceId} | trial: ${
-      trialAlreadyUsed ? 'SKIPPED (already used)' : 'GRANTED'
-    }`
-  );
+  console.log(`[Stripe v2] User ${user.id} | priceId: ${priceId}`);
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2026-02-25.clover' as Stripe.LatestApiVersion,
@@ -81,14 +57,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: 'payment',
       payment_method_types: ['card'],
       customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        ...stripeTrial,
-        metadata: { supabase_user_id: user.id },
-      },
       metadata: { supabase_user_id: user.id },
       locale: 'en',
       success_url: `${origin}/subscribe?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,

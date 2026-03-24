@@ -212,8 +212,8 @@ function PaywallContent() {
 
           <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-[#0A2540]">$4.49</span>
-              <span className="text-[#666666] text-sm">/ week</span>
+              <span className="text-3xl font-bold text-[#0A2540]">$9.49</span>
+              <span className="text-[#666666] text-sm">/ 30 days</span>
             </div>
             <p className="text-[#00A651] font-semibold text-sm mb-4">
               3 days free — no charge during trial
@@ -335,7 +335,7 @@ function PaywallContent() {
           )}
 
           <p className="text-[10px] text-[#999999] text-center mt-2 leading-relaxed">
-            New users get 3 days free, then $4.49/wk. Returning members are never charged again just for signing in.
+            New users get 3 days free, then $9.49 / 30 days. Returning members are never charged again just for signing in.
           </p>
 
           <div className="text-center mt-4 pb-safe">

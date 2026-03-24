@@ -180,6 +180,9 @@ export async function POST(req: NextRequest) {
           ourStatus = mapStripeStatus(sub.status);
           trialEndsAt = safeTimestamp(sub.trial_end, 'trial_end');
           currentPeriodEnd = getPeriodEnd(sub, 'checkout.completed');
+        } else {
+          // one-time payment — grant 30 days from now
+          currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         }
 
         console.log(

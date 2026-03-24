@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import Stripe from 'stripe';
-import { createSupabaseServerRouteClient, createSupabaseServiceClient } from '@/lib/supabase-server';
+import { createSupabaseServerRouteClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,34 +54,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const cancelReason = typeof body.reason === 'string' && body.reason ? `?reason=${body.reason}` : '';
 
-  // ── Trial eligibility check ──────────────────────────────────────────────────
-  // Rule: grant a Stripe trial (trial_period_days: 3) ONLY if the user has never
-  // consumed the server-side OTP trial. The OTP trial sets trial_ends_at in the
-  // users table via /api/auth/start-trial. Any non-null trial_ends_at means the
-  // user already had their free trial — no second trial via Stripe.
-  //
-  // This covers all cases:
-  //   - No row in users table      → trial_ends_at is null → Stripe trial granted
-  //   - Row with trial_ends_at null → trial never used      → Stripe trial granted
-  //   - Row with trial_ends_at set  → OTP trial consumed    → NO Stripe trial
-  const db = createSupabaseServiceClient();
-  const { data: userRow, error: dbError } = await db
-    .from('users')
-    .select('trial_ends_at')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (dbError) {
-    console.error('[Stripe] Failed to check trial eligibility:', dbError.message);
-    return NextResponse.json({ error: 'Could not verify trial eligibility.' }, { status: 500 });
-  }
-
-  const trialAlreadyUsed = !!userRow?.trial_ends_at;
-  const stripeTrial = trialAlreadyUsed ? undefined : { trial_period_days: 3 };
-
-  console.log(
-    `[Stripe] User ${userId} — trial_ends_at: ${userRow?.trial_ends_at ?? 'null'} → Stripe trial: ${trialAlreadyUsed ? 'SKIPPED' : 'GRANTED'}`
-  );
+  console.log(`[Stripe] User ${userId} — creating payment checkout`);
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2026-02-25.clover' as Stripe.LatestApiVersion,
@@ -91,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: 'payment',
       payment_method_types: ['card'],
       customer_email: email,
       line_items: [
@@ -100,13 +73,6 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      subscription_data: {
-        ...stripeTrial,
-        metadata: {
-          supabase_user_id: userId,
-        },
-      },
-      // Pass userId in session metadata too (for checkout.session.completed event)
       metadata: {
         supabase_user_id: userId,
       },
