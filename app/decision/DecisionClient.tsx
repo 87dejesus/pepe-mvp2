@@ -752,6 +752,7 @@ function DecisionClientInner() {
         // === PASS 3: Last-resort — borough + bedrooms, prefer listings with photo/url ===
         if (finalList.length === 0 && rawWithMatch.length > 0) {
           console.log('[DEBUG] All passes returned 0 — trying borough + bedrooms + photo as last resort');
+          console.log('[Pass3 Debug] total listings:', rawWithMatch.length, '| borough+bed match:', rawWithMatch.filter(l => l.boroughMatch && l.bedrooms === needed).length, '| with photo:', rawWithMatch.filter(l => l.boroughMatch && l.bedrooms === needed && l.original_url && !isPlaceholder(l)).length, '| sample no-photo:', rawWithMatch.filter(l => l.boroughMatch && l.bedrooms === needed).slice(0,3).map(l => ({image_url: l.image_url, original_url: l.original_url})));
           const withPhoto = rawWithMatch
             .filter(l => l.boroughMatch && l.bedrooms === needed && l.original_url && !isPlaceholder(l))
             .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
