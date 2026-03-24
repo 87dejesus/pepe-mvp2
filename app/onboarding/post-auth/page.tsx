@@ -154,7 +154,7 @@ export default function PostAuthPage() {
           await goToStripeCheckout(priceId);
         } else {
           console.log('[post-auth] → /subscribe?reason=trial_ended (status:', accessData.status + ')');
-          window.location.href = '/subscribe?reason=trial_ended';
+          window.location.href = '/onboarding/pricing';
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

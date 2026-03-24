@@ -29,11 +29,11 @@ function hasGrantedAccess(data: ServerAccessData): boolean {
 const REASON_COPY: Record<string, { heading: string; body: string }> = {
   trial_ended: {
     heading: 'Your free trial has ended',
-    body: "Your 3-day trial is up. Subscribe to keep access to Heed's NYC apartment analysis — $4.49/week.",
+    body: "Your 3-day trial is up. Subscribe to keep access to Heed's NYC apartment analysis — $9.49 / 30 days.",
   },
   canceled: {
     heading: 'Your subscription has ended',
-    body: 'Your access period has expired. Re-subscribe at $4.49/week to continue using Heed.',
+    body: 'Your access period has expired. Re-subscribe at $9.49 / 30 days to continue using Heed.',
   },
   payment_failed: {
     heading: 'Update your payment method',
@@ -43,7 +43,7 @@ const REASON_COPY: Record<string, { heading: string; body: string }> = {
 
 const DEFAULT_COPY = {
   heading: 'Subscribe to continue',
-  body: "Get full access to Heed's NYC apartment analysis for $4.49/week.",
+  body: "Get full access to Heed's NYC apartment analysis for $9.49 / 30 days.",
 };
 
 const FEATURES = [
@@ -519,8 +519,8 @@ function SubscribeContent() {
             </ul>
 
             <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-3xl font-bold text-[#0A2540]">$4.49</span>
-              <span className="text-[#666666] text-sm">/ week · cancel anytime</span>
+              <span className="text-3xl font-bold text-[#0A2540]">$9.49</span>
+              <span className="text-[#666666] text-sm">/ 30 days</span>
             </div>
 
             <button
