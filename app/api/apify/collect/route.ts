@@ -96,7 +96,6 @@ async function collect() {
   }
   const raw: ApartmentsItem[] = await itemsRes.json();
   console.log(`[Steady Debug] Apify: fetched ${raw.length} raw items`);
-  console.log('[Apify Raw Full]', JSON.stringify(raw[0]));
 
   // 4. Normalize
   const normalized: ApifyListing[] = raw
