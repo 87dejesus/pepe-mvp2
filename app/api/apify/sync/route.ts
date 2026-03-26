@@ -35,6 +35,17 @@ async function startApifyRun(): Promise<string> {
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
+    // Actor-specific rental flags (confirmed from working Mar-12 run)
+    searchForRent: true,
+    searchForSale: false,
+    forSaleByAgent: false,
+    forSaleByOwner: false,
+    forRent: false,
+    sold: false,
+    daysOnZillow: '',
+    priceMin: 1000,
+    priceMax: 15000,
+    maxItems: 300,
     // NYC rental ZIP codes — Manhattan, Brooklyn, Bronx, Queens, Staten Island
     zipCodes: [
       // Manhattan
@@ -54,8 +65,6 @@ async function startApifyRun(): Promise<string> {
       '10301','10302','10303','10304','10305','10306','10307','10308','10309','10310',
       '10311','10312','10314',
     ],
-    type: 'rent',
-    maxItems: 300,
   });
 
   const res = await fetch(
