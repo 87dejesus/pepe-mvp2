@@ -56,8 +56,6 @@ async function startApifyRun(): Promise<string> {
       '10451','10456','10458','10468',
       // Queens (4)
       '11101','11373','11375','11385',
-      // Staten Island (2)
-      '10301','10306',
     ],
   });
 
