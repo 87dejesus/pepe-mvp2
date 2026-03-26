@@ -11,6 +11,7 @@
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
  *   APIFY_ACTOR_ID                  (optional — overrides default actor)
+ *                                  Set to: maxcopell~zillow-zip-search in Vercel
  *
  * SQL — run once in Supabase before deploying:
  *   CREATE TABLE sync_runs (
@@ -27,29 +28,33 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'epctex~apartments-scraper-api';
+const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'maxcopell~zillow-zip-search';
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    startUrls: [
-      'https://www.apartments.com/new-york-ny/',
-      'https://www.apartments.com/brooklyn-ny/',
-      'https://www.apartments.com/bronx-ny/',
-      'https://www.apartments.com/queens-ny/',
-      'https://www.apartments.com/staten-island-ny/',
-      'https://www.apartments.com/new-york-ny/studio-apartments/',
-      'https://www.apartments.com/brooklyn-ny/studio-apartments/',
-      'https://www.apartments.com/bronx-ny/studio-apartments/',
-      'https://www.apartments.com/queens-ny/studio-apartments/',
-      'https://www.apartments.com/staten-island-ny/studio-apartments/',
+    // NYC rental ZIP codes — Manhattan, Brooklyn, Bronx, Queens, Staten Island
+    zipCodes: [
+      // Manhattan
+      '10001','10002','10003','10009','10011','10014','10016','10019','10025','10028','10036',
+      // Brooklyn
+      '11201','11205','11206','11211','11215','11216','11217','11218','11221','11222',
+      '11225','11226','11231','11238',
+      // Bronx
+      '10451','10452','10453','10454','10455','10456','10457','10458','10460','10461',
+      '10462','10463','10464','10465','10466','10467','10468','10469','10470','10471',
+      '10472','10473','10474','10475',
+      // Queens
+      '11101','11102','11103','11104','11105','11106','11354','11355','11356','11357',
+      '11358','11367','11368','11369','11370','11371','11372','11373','11374','11375',
+      '11377','11378','11379','11385',
+      // Staten Island
+      '10301','10302','10303','10304','10305','10306','10307','10308','10309','10310',
+      '10311','10312','10314',
     ],
-    includeReviews: false,
-    includeVisuals: false,
-    includeInteriorAmenities: true,
-    includeWalkScore: false,
+    type: 'rent',
     maxItems: 300,
   });
 

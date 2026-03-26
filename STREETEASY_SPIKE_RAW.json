@@ -1,0 +1,1620 @@
+[
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4925403",
+      "areaName": "Fort George",
+      "availableAt": "2026-02-26",
+      "bedroomCount": 1,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.862766,
+        "longitude": -73.92939
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "a5b8c7ee4f1070f26b389d64c41ffb81"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "dee7f178a20de7bcfb2bbcfd42bcbf6f"
+        }
+      },
+      "leaseTermMonths": 12,
+      "livingAreaSize": 648,
+      "mediaAssetCount": 22,
+      "monthsFree": 2.5,
+      "noFee": false,
+      "netEffectivePrice": 2909,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "a5b8c7ee4f1070f26b389d64c41ffb81"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e32750a6778a89deb582a538a184c774"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4c223a87ad18393659a314d93cf9e04c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "3305392d0554dd1dd3cd4fbd2893268a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "6d5e7b24ad1da9252b4a9bb4db276703"
+        },
+        {
+          "__typename": "Photo",
+          "key": "fb2438ce41220adf60fb3ceb21f1158a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "aec645b275d1104acd8b4ff09dffa8ac"
+        },
+        {
+          "__typename": "Photo",
+          "key": "1dc779aabf5ff0bdfe9bbcd431362512"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d49f0368f746c433da02d7f991cedf91"
+        },
+        {
+          "__typename": "Photo",
+          "key": "959044982006f766d66065419b8c40e7"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d030ee83ef385827483f7873348f7b3b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8ab030eda3ffdcb814dae0be6839b710"
+        },
+        {
+          "__typename": "Photo",
+          "key": "20c37132d72925f89a6c7d5ad3a7966f"
+        },
+        {
+          "__typename": "Photo",
+          "key": "444134238c4b87f7a01ddccf636a96cf"
+        },
+        {
+          "__typename": "Photo",
+          "key": "765d5800926390fd3a2933de4fe9b1e0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "82552d42f3943d141b9485d98e110526"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2a51af08c2b3913c9d25b2982c264be5"
+        },
+        {
+          "__typename": "Photo",
+          "key": "87d576da3d92dc48c2f2e947d2e28df9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c99820027516b7ade8495311bd0e1ee8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a881cd5361add065eac38115c5c0ec45"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c89d5587075c4f1e0bc8c139a9c3b94f"
+        }
+      ],
+      "price": 3675,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Rose Associates, Inc.",
+      "sourceType": "FEED",
+      "status": "ACTIVE",
+      "street": "4650 Broadway",
+      "tier": null,
+      "unit": "1806",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/forty-six-fifty/1806"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4975358",
+      "areaName": "Mott Haven",
+      "availableAt": "2026-04-01",
+      "bedroomCount": 2,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.810097,
+        "longitude": -73.930534
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "cbd9f2d417167dc8804d70db32d1db54"
+        },
+        "floorPlan": null
+      },
+      "leaseTermMonths": null,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 28,
+      "monthsFree": 0,
+      "noFee": false,
+      "netEffectivePrice": 0,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "cbd9f2d417167dc8804d70db32d1db54"
+        },
+        {
+          "__typename": "Photo",
+          "key": "6a5c4df557cbd405b42347d07f1f386e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "670bd3b36e072231c8d1af3099fa0900"
+        },
+        {
+          "__typename": "Photo",
+          "key": "fa81eb0f320253746bccd34664ac8002"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9f281fe8e2868885b990ee7ebd701c15"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2d50e72f912067948fc0a24d5636dd2c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dab78b53e9a4ae14ad936b1b07a2a35b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "334c612fb87d7d81ad1f2b5ceeec2b50"
+        },
+        {
+          "__typename": "Photo",
+          "key": "df85b9ddd6e17fc3643d4dbe047fa8e7"
+        },
+        {
+          "__typename": "Photo",
+          "key": "acb69211836a97f666319414adfb6d14"
+        },
+        {
+          "__typename": "Photo",
+          "key": "30e69f97eb7966d751979db0ebcc63e6"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ff79b228de60f55fb5f74441db594bce"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7b80f38d9365a9f459ab7a103b693989"
+        },
+        {
+          "__typename": "Photo",
+          "key": "abf64db38a94e31a47edb33d88c7ace2"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2529f9e2c54a317e8ce1e9f02e7cafc9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "434fe8cdbcfd790acd06dc96bfa3504a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "1c89e31b441fb3b85a6d52a21ce40f89"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d77926e618006fdf0c91098bf8ac46a1"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ec058a9050a301bb034581f7a86f73ab"
+        },
+        {
+          "__typename": "Photo",
+          "key": "30b3cdaad4fb9ca8174060f41bf89f87"
+        },
+        {
+          "__typename": "Photo",
+          "key": "839914797fd1d540b31ef82910879a28"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9a403ec3ad5cb76e135467e253b0560e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "68c3fefe36d43cb81fd921d6672288e6"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ca048d476c6b3c50a27703ed95aebfaf"
+        },
+        {
+          "__typename": "Photo",
+          "key": "96d08658a024bee3a65ed42f39e488ea"
+        },
+        {
+          "__typename": "Photo",
+          "key": "38f37dd9fcaa91806f571976c3f9aeb3"
+        },
+        {
+          "__typename": "Photo",
+          "key": "5eaf1160e28b857957a66a0b31c1f723"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b55202c9ec1c6675d346dcfe09587c44"
+        }
+      ],
+      "price": 3166,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Rentopia",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "224 East 135th Street",
+      "tier": null,
+      "unit": "1801N",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/the-arches-nyc/1801n"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4966206",
+      "areaName": "Crown Heights",
+      "availableAt": "2026-03-10",
+      "bedroomCount": 2,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 2,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.679726,
+        "longitude": -73.959435
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": true,
+      "hasVideos": true,
+      "isNewDevelopment": true,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "c60da8850aaf921c02e6114c3cde17f9"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "04456169429693db6951db31be23034c"
+        }
+      },
+      "leaseTermMonths": 13,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 42,
+      "monthsFree": 1,
+      "noFee": false,
+      "netEffectivePrice": 6185,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "c60da8850aaf921c02e6114c3cde17f9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c5c4885b61152ff7fd1366f3dbdc772e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "387351eabb3d1fc49b60c739f0126fd9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "62b167798fe223ebefdde7b3bf3b6229"
+        },
+        {
+          "__typename": "Photo",
+          "key": "bfc96a5eac557060095232b471a60e4d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d4221b8301183b8452812a1fdebf9258"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a9d044bab34405433509692a7fb98cbe"
+        },
+        {
+          "__typename": "Photo",
+          "key": "11e78effc2683e8bdb56d47bfad91cac"
+        },
+        {
+          "__typename": "Photo",
+          "key": "505d2ebb64894248b27a4595095e6a00"
+        },
+        {
+          "__typename": "Photo",
+          "key": "897d80ea154a4140d4307952ed619fa2"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dc89a1bca35947bc9d4f983ffe73d154"
+        },
+        {
+          "__typename": "Photo",
+          "key": "5e7629bbca0ece84a5e2a22acb73e55d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7cd350045f6a30ab5ee5a5d19afe64e6"
+        },
+        {
+          "__typename": "Photo",
+          "key": "fa59ca87c0087cd86c0c60e6c52a2fea"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ae86b1d7f899820f9317bcbca0b8c52e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ac25cd77178d85361def07e418b2e0ce"
+        },
+        {
+          "__typename": "Photo",
+          "key": "852b1757b1286bdecd505bdace1e793e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c43ba0c84f643a089b90fdded615d096"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b8a8b5250e4d10719eaa46cc43d7dda2"
+        },
+        {
+          "__typename": "Photo",
+          "key": "484bf32219f0a58566fa24dc44e9335a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "fda050363fe2e67ed14f585de047f698"
+        },
+        {
+          "__typename": "Photo",
+          "key": "95380c52a3494c6360ffd13c69aed3fc"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c85aa922b3aa62113c81776bea0cdc74"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4c5c87c2d05488f6aa1dba43165dd2de"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b492a6eb4a3d15ae2a2bb6e91c9d0c9f"
+        },
+        {
+          "__typename": "Photo",
+          "key": "611d6f474cbc6584374e8db484d686ce"
+        },
+        {
+          "__typename": "Photo",
+          "key": "227b7ec614b0069b5cb1688ed9e2e1b5"
+        },
+        {
+          "__typename": "Photo",
+          "key": "cd86bb31d7c3fba2739159fd333f4518"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b71de18f5fc41a52ef308656c88ab052"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a6b119d429c2261aa549082ab9475973"
+        },
+        {
+          "__typename": "Photo",
+          "key": "54fa6aaf300cd62f9de26c96b2be7668"
+        },
+        {
+          "__typename": "Photo",
+          "key": "11484bc74b6a8687197bde0e2754a2cd"
+        },
+        {
+          "__typename": "Photo",
+          "key": "86d39ad15ec062ac7012f5fce7049c39"
+        },
+        {
+          "__typename": "Photo",
+          "key": "28f5d21d36e6630e695d5ba11c96d13b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "81da8b040ed0a1e63856fe34cc850ee4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e24465321b3d9dc1fc4db4871c114c9b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b5f50f4daeff7385cfb4e85b7b9df47e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c803849bb238a3fbc65fdc261963c75d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "00ce92aacfcd660ffd568e4c0dd9a1a0"
+        }
+      ],
+      "price": 6700,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "MNS",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "1042 Atlantic Avenue",
+      "tier": null,
+      "unit": "11H",
+      "upcomingOpenHouse": {
+        "__typename": "OpenHouseDigest",
+        "startTime": "2026-03-26T15:00:00.000-04:00",
+        "endTime": "2026-03-26T19:00:00.000-04:00",
+        "appointmentOnly": false
+      },
+      "urlPath": "/building/prosper-brooklyn/11h"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4994216",
+      "areaName": "Fort Greene",
+      "availableAt": "2026-03-19",
+      "bedroomCount": 2,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.68865,
+        "longitude": -73.9794
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": true,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "bdd0b73c2fef5a86d98344f4f9f90d53"
+        },
+        "floorPlan": null
+      },
+      "leaseTermMonths": null,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 30,
+      "monthsFree": 0,
+      "noFee": false,
+      "netEffectivePrice": 0,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "bdd0b73c2fef5a86d98344f4f9f90d53"
+        },
+        {
+          "__typename": "Photo",
+          "key": "18b721b3cfda8bae66a0139ee775033b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7b1890468205ff5cd309a95c2e0bebaa"
+        },
+        {
+          "__typename": "Photo",
+          "key": "44cb363a924c28729a794cb9b7633a80"
+        },
+        {
+          "__typename": "Photo",
+          "key": "eedaf3cb634726d3e618e295a02eaa6d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "45f4bad50a53a39276057d139312c352"
+        },
+        {
+          "__typename": "Photo",
+          "key": "da8c73372eb4c208f0a6ed77d8712c82"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9b4603b56e9a194e74fd1c4243b694b8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "27750351d3320b9bc52191efbc229566"
+        },
+        {
+          "__typename": "Photo",
+          "key": "438ab6786c4ea585cb3b3aeac8915ff9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dbed5c5d2930ccc5fdad6279717cf906"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c44243d6c9f27a7322ca324a2fa92f66"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4954cbb1c7724bd469579ae31ac2245c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b4088eadd5ea2a69c2dddfcd4b881eaf"
+        },
+        {
+          "__typename": "Photo",
+          "key": "bbf55458d5b5acb0f8add9f1d5cd8dfd"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4f8f4d81bc06d6bc9e9a9953b2f55d4a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e57b969136603017a2a626bf79e1127a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "0974c89c8842efcb7682f09202c62dba"
+        },
+        {
+          "__typename": "Photo",
+          "key": "92d3f949a04b57be1496b5b9f3a7c856"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9b7177f2ec875f1f85994404a7dbb555"
+        },
+        {
+          "__typename": "Photo",
+          "key": "20875773c2ebe39f478a1697db7ffb57"
+        },
+        {
+          "__typename": "Photo",
+          "key": "965dd0d20f6c5629cc5a0cb3789ad769"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4733542305b0f4a0bca03ae7e0410f82"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2470d18d14610fb3315cbae86fad9213"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8983dfbeec99fd50c76c793dadf8f746"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b9f3c36a33ec11d272291f2e3d3b7d03"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c2d87c8abb04d6fad4fdf0535cd7b9ed"
+        },
+        {
+          "__typename": "Photo",
+          "key": "612b053a857d7b9ef3116417f87f8715"
+        },
+        {
+          "__typename": "Photo",
+          "key": "764e4e1a7e86c25b64b381ff4f48e679"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7e238b480d0d7da53e504814c2faae14"
+        }
+      ],
+      "price": 6026,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Bushburg",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "20 Rockwell Place",
+      "tier": null,
+      "unit": "3203V",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/the-rocklyn/3203v"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4964267",
+      "areaName": "Coney Island",
+      "availableAt": "2026-02-08",
+      "bedroomCount": 1,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.5761,
+        "longitude": -73.98294
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "bc82278ac1f7d4ec2bb1c847727df7af"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "eb436760f054b9bcbe7e7ae0d15dbf77"
+        }
+      },
+      "leaseTermMonths": 15,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 26,
+      "monthsFree": 3,
+      "noFee": false,
+      "netEffectivePrice": 2596,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "bc82278ac1f7d4ec2bb1c847727df7af"
+        },
+        {
+          "__typename": "Photo",
+          "key": "0f0c7796208316edca8e726e83cd10b4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a32e8aeec63932cd7586f742ccc02640"
+        },
+        {
+          "__typename": "Photo",
+          "key": "df49f2589ebbd661627711605829f946"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b61ad82598171953e151ce7183da72ee"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ad7d5b7d10a0e31e8873b5ce7c64a52e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e32cf1f1ed7108b8ad384a0f5d3b66fa"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8abd2d03a2e25358d99e37c0292d9c1b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c128e5ef5b0f4d8e967a7ac1bc8440e3"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7272c203b378f5b3b8978b59d7b78569"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dbd73814a216d8465df16d400cd2a699"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4118858caea08b4c063d0fb24ab99ecd"
+        },
+        {
+          "__typename": "Photo",
+          "key": "cd0c051d72f560a760743cbcbd1dca25"
+        },
+        {
+          "__typename": "Photo",
+          "key": "93e068447ac264568faa5b60651e27cd"
+        },
+        {
+          "__typename": "Photo",
+          "key": "f9774d9c085bc5d047575b8b427337f4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "231366dacc7006c45e989db530a3e14e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8c35da140bf9e02ee9145a96dba3ce7e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "3d717f1061b5981f11572364584f75b7"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d25a49008653b70e2330d5f49473cdb8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "0cf25f24252d909b29227f9c9c708e16"
+        },
+        {
+          "__typename": "Photo",
+          "key": "281c3df0aeae2383433a6366d8b5fd68"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8e9435a8c9c7790472f860153c9faf5c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b262c6ea395e16f4d308629b071e0bae"
+        },
+        {
+          "__typename": "Photo",
+          "key": "18550280dce3a934978635c89284fb85"
+        },
+        {
+          "__typename": "Photo",
+          "key": "daeab2156e4cb1c4d931fce864e2c31e"
+        }
+      ],
+      "price": 3245,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Corcoran",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "1515 Surf Avenue",
+      "tier": null,
+      "unit": "1329",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/1515-surf/1329"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4963887",
+      "areaName": "Greenpoint",
+      "availableAt": "2025-07-25",
+      "bedroomCount": 1,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.734966,
+        "longitude": -73.960884
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": true,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "4acff29fc98682e9a66401fcd9ff2b38"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "369a1b53aafbcbda7af6541d7fbf03b7"
+        }
+      },
+      "leaseTermMonths": 18,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 44,
+      "monthsFree": 1.5,
+      "noFee": false,
+      "netEffectivePrice": 4988,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "4acff29fc98682e9a66401fcd9ff2b38"
+        },
+        {
+          "__typename": "Photo",
+          "key": "bc1cc0946c8a67d4a47b2221e836e552"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8d1d7e13c3c3cc6fce0454b32c063584"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9984cece31d8061306816c603835cd38"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a2b213dee09352917eb58bd23cc4c915"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2b88b4dd6fbca08b4bb02203c9ec1441"
+        },
+        {
+          "__typename": "Photo",
+          "key": "068e20e048eec85a838b499884d5c503"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ad3fcfc21b2daef4b05ce32753360d88"
+        },
+        {
+          "__typename": "Photo",
+          "key": "f49f0c919889dc299621c869619cf514"
+        },
+        {
+          "__typename": "Photo",
+          "key": "19c8183f4faa58bde49fb70edf32b051"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7bff5193860e8a41b37e6059c9c69346"
+        },
+        {
+          "__typename": "Photo",
+          "key": "201187ffa91a41016c5d5d5c3d600217"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d4173640a6e5bec53f3c9d6ec68d4c45"
+        },
+        {
+          "__typename": "Photo",
+          "key": "6d7d1d4f6de377826297715f6bbc9761"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9c15b59dbc4e883107a4571af625750d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "00889f35f193dc928c5400a1b84473b8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c17f03d5b68d50761d1d3a1d4673f645"
+        },
+        {
+          "__typename": "Photo",
+          "key": "697d7d2fa25ba5bccc84ceb7bf904093"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d26ef3304ebf1362a5cf3e971fbc75a4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "cb3251c6cd2e005b77bea2cd46584785"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9e2153ca12ac2ffb99ddad439b1cb70f"
+        },
+        {
+          "__typename": "Photo",
+          "key": "78ae400d835999024b3deacbd29daa0f"
+        },
+        {
+          "__typename": "Photo",
+          "key": "594c35bf28c5e0c6db369a085bb45c79"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b91d50c24bafb25afd4eb722dac279fb"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a642043df53c9ed3fb6a9e5902ca5d60"
+        },
+        {
+          "__typename": "Photo",
+          "key": "69eab4b353f0e98a7088a57beb0994a8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "f181a496fc025711dd2aab13a3787dff"
+        },
+        {
+          "__typename": "Photo",
+          "key": "3addc38d22013713bc2e09e39f6af737"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2b3bcce6f696e2486ba36ff35d1bada3"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4f9f75d7629107c13d95fa42d832f248"
+        },
+        {
+          "__typename": "Photo",
+          "key": "824fa405dcd18e0b513cda38e053f893"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2c98758274c6d9373a914715c3c80d0c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e26daa2043966dc0e6e59694f21333af"
+        },
+        {
+          "__typename": "Photo",
+          "key": "6faacfcfbcb816683195ce1b8f8e270a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ce61a7320946c0f3a8b498fa75238240"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9878addf6c964bf3af027ac012a958a6"
+        },
+        {
+          "__typename": "Photo",
+          "key": "27fd71039314f9a94298b5a6d98dfdfd"
+        },
+        {
+          "__typename": "Photo",
+          "key": "6018ff5868a68b6a25746223ea9bc806"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e8d9213318b817d8b8e9dbdd2711af4e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dd2aaf0cbeec03eb73f338ef3517a7e8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "0a69a38f78111f3db94371382e6a21f5"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b996b4c7bd94b886f9e3ccb334fad993"
+        }
+      ],
+      "price": 5441,
+      "interestingPriceDelta": -150,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Brookfield NYC",
+      "sourceType": "FEED",
+      "status": "ACTIVE",
+      "street": "1 Eagle Street",
+      "tier": null,
+      "unit": "2-1422",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/eagle-west/21422"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4987518",
+      "areaName": "Sutton Place",
+      "availableAt": "2026-05-19",
+      "bedroomCount": 2,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 2,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.758835,
+        "longitude": -73.96572
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "96e105fa0cd7b0d2c783d88fba4dbfc4"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "9e1062e892346df1c8f906bec58f7529"
+        }
+      },
+      "leaseTermMonths": null,
+      "livingAreaSize": 1138,
+      "mediaAssetCount": 26,
+      "monthsFree": 0,
+      "noFee": false,
+      "netEffectivePrice": 0,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "96e105fa0cd7b0d2c783d88fba4dbfc4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "84bdce73adb33ad34f0fe5fd2eb0b7af"
+        },
+        {
+          "__typename": "Photo",
+          "key": "31e443a7263c724c432560af29626f36"
+        },
+        {
+          "__typename": "Photo",
+          "key": "79aa2bf94a13e9944775c00ff31865f0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c33cfb96d9956edbcef219cb2ad82211"
+        },
+        {
+          "__typename": "Photo",
+          "key": "de98a39e025a828272a44ca3571d7d3a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "fcaeaf0f3ceeb1c7ba246adf0afb5c05"
+        },
+        {
+          "__typename": "Photo",
+          "key": "01f172e6fd8e42593b7a03203da2e2eb"
+        },
+        {
+          "__typename": "Photo",
+          "key": "a901752218168ad0ed16da08fe8a60ea"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ada1827287d0d5c89823b6779659b9b0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "83d1afd4088233e4ae7eb0e88cd76c99"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d10d786b75928fd7d23389dffdc75fa9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "259cdb09b51bea8616be8f0bd73ab946"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ac9691b0f038581dc5a61f8476a138af"
+        },
+        {
+          "__typename": "Photo",
+          "key": "aa3aa70edd16edd5b95f6a45af46f43e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "cd3ba357ec3390c40d7f413025d9ee31"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c138e33ca255817a66f650618624f129"
+        },
+        {
+          "__typename": "Photo",
+          "key": "20938996b0f445b34ae1ba173caa94a4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9f70cb6a5df20034978f1c269fa4b99c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "546f1a4f94461ed1271c7219bf595c9c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "8eaa9e49338154f2a701ffda6701c3ed"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e71e4e9952ace4e831535112aff06425"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b5d511531839c3d4fae8eaa415733bf1"
+        },
+        {
+          "__typename": "Photo",
+          "key": "2896c6959ae879da60a7dbff5daefa37"
+        }
+      ],
+      "price": 9600,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Bozzuto Management",
+      "sourceType": "FEED",
+      "status": "ACTIVE",
+      "street": "1065 Second Avenue",
+      "tier": null,
+      "unit": "05C",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/aalto57-1065-second-avenue-manhattan/05c"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4992907",
+      "areaName": "Lincoln Square",
+      "availableAt": "2026-03-18",
+      "bedroomCount": 2,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 2,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.773293,
+        "longitude": -73.991585
+      },
+      "halfBathroomCount": 1,
+      "hasTour3d": false,
+      "hasVideos": false,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "7fd55d1c76fb2549e5bf1425e41b968a"
+        },
+        "floorPlan": null
+      },
+      "leaseTermMonths": 12,
+      "livingAreaSize": 1555,
+      "mediaAssetCount": 18,
+      "monthsFree": 2,
+      "noFee": false,
+      "netEffectivePrice": 14744,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "7fd55d1c76fb2549e5bf1425e41b968a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e54accf6093cfb37abfc4bfd6d989d53"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7ede52b5b08dfa344dcfff0e43748e35"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e26913c510abc842f9478bf253ae2f7a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "768792baf492ab300db24e5c34fd457f"
+        },
+        {
+          "__typename": "Photo",
+          "key": "5f1c711e38dc3753b219e1212844d2a9"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4d60af32d7424c54621899ff331ac919"
+        },
+        {
+          "__typename": "Photo",
+          "key": "66ba1f3a4d15054f2429e7baffa290d0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "c7e56d7be49589e5eb63a8b06c736166"
+        },
+        {
+          "__typename": "Photo",
+          "key": "669f54b037e17ff3ecce89d3a40ee648"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ee44ca602597cbca5713301948461e05"
+        },
+        {
+          "__typename": "Photo",
+          "key": "bb3f77e1a1c1bdb58c0e519b16e69c6a"
+        },
+        {
+          "__typename": "Photo",
+          "key": "0d04b665dc0dbee034f27400ef1c87e3"
+        },
+        {
+          "__typename": "Photo",
+          "key": "21c5584107aceb6993e7bcedf0116abe"
+        },
+        {
+          "__typename": "Photo",
+          "key": "1f1818077d28e679f87bfb1f50be1084"
+        },
+        {
+          "__typename": "Photo",
+          "key": "28f93d6984ab467165f655a8b97dab28"
+        },
+        {
+          "__typename": "Photo",
+          "key": "029c3d0a10c4c750b6a6f3ecc77c1e82"
+        },
+        {
+          "__typename": "Photo",
+          "key": "458d3a23fa2600cd43c1acf5e2095a8a"
+        }
+      ],
+      "price": 17693,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "GID Development Group",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "400 West 61st Street",
+      "tier": null,
+      "unit": "708",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/400-west-61st-street-lincoln_square/708"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4976918",
+      "areaName": "Financial District",
+      "availableAt": "2026-03-04",
+      "bedroomCount": 0,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.7065,
+        "longitude": -74.0077
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": true,
+      "isNewDevelopment": false,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "50b14fa2c05b1fa1dda9f9463459e058"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "3d84edcb2b348f3700046012d5735178"
+        }
+      },
+      "leaseTermMonths": null,
+      "livingAreaSize": 514,
+      "mediaAssetCount": 23,
+      "monthsFree": 0,
+      "noFee": false,
+      "netEffectivePrice": 0,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "50b14fa2c05b1fa1dda9f9463459e058"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e39b6996b10a84eb43b00bd5a77172e7"
+        },
+        {
+          "__typename": "Photo",
+          "key": "7e07b26df7b801766197c0f1d67358e4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9297df67b7ee68fb9fb18c5292dbc64e"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b5453af5a6b2ef3d31b8959ac3cb98c4"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b28d93f9a780975ceaead370c21bf10b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "648431963846f37086204cfdbd4f28f8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "51e4e555836732edab248b4730e26d12"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e596abf303d787f62f5bfc19d7fce943"
+        },
+        {
+          "__typename": "Photo",
+          "key": "11a03c4e82f45cb7826b0786f202158b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "aed6e8124820f65ac8538cbeb8e0df62"
+        },
+        {
+          "__typename": "Photo",
+          "key": "40c6aca3d35c854c71cd7d6521fa4aaa"
+        },
+        {
+          "__typename": "Photo",
+          "key": "27d00a52bb26e080037bea938dfe9433"
+        },
+        {
+          "__typename": "Photo",
+          "key": "077108f55da268c03ff8e113f04d38c8"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ff5886e6c8316c2b6bfb3e05d21ffc40"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ec02f96b70a9e1c1ad9739d02da00332"
+        },
+        {
+          "__typename": "Photo",
+          "key": "dbc55301292159f5c8ebc2ffac521ba2"
+        },
+        {
+          "__typename": "Photo",
+          "key": "4702a8cc4d7078ac895a640e7c6157af"
+        },
+        {
+          "__typename": "Photo",
+          "key": "136427fb523832ec2dc42835376e12bf"
+        },
+        {
+          "__typename": "Photo",
+          "key": "1553a627f865606189f4c92ad6db0212"
+        },
+        {
+          "__typename": "Photo",
+          "key": "68f72c469cabf0db52c0154c7315bdb2"
+        }
+      ],
+      "price": 4093,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Rose Associates, Inc.",
+      "sourceType": "FEED",
+      "status": "ACTIVE",
+      "street": "70 Pine Street",
+      "tier": null,
+      "unit": "1509",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/70-pine-street/1509"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  },
+  {
+    "__typename": "OrganicRentalEdge",
+    "node": {
+      "__typename": "SearchRentalListing",
+      "id": "4936824",
+      "areaName": "Saint George",
+      "availableAt": "2025-12-30",
+      "bedroomCount": 1,
+      "buildingType": "RENTAL",
+      "fullBathroomCount": 1,
+      "furnished": false,
+      "geoPoint": {
+        "__typename": "Geo",
+        "latitude": 40.64165,
+        "longitude": -74.073586
+      },
+      "halfBathroomCount": 0,
+      "hasTour3d": false,
+      "hasVideos": true,
+      "isNewDevelopment": true,
+      "leadMedia": {
+        "__typename": "LeadMedia",
+        "photo": {
+          "__typename": "Photo",
+          "key": "5efe42a56c4680dd60713246134aa66b"
+        },
+        "floorPlan": {
+          "__typename": "FloorPlan",
+          "key": "b2efe7ee9eb44fc3217c131f7ec9d6ae"
+        }
+      },
+      "leaseTermMonths": 13,
+      "livingAreaSize": 0,
+      "mediaAssetCount": 17,
+      "monthsFree": 1,
+      "noFee": false,
+      "netEffectivePrice": 4334,
+      "offMarketAt": null,
+      "photos": [
+        {
+          "__typename": "Photo",
+          "key": "5efe42a56c4680dd60713246134aa66b"
+        },
+        {
+          "__typename": "Photo",
+          "key": "9560c6cb0f380edd1aba9164ccd1896d"
+        },
+        {
+          "__typename": "Photo",
+          "key": "94bb6e66917e2471cfc328fcbc0fa184"
+        },
+        {
+          "__typename": "Photo",
+          "key": "1a36da8283598a4374a4377d47dbee22"
+        },
+        {
+          "__typename": "Photo",
+          "key": "49c9826c678045f026c9f44462614791"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ec907b4b35d372613561b0cc8e5fee50"
+        },
+        {
+          "__typename": "Photo",
+          "key": "b66f15f1ee0d7a1097a15d67e785d079"
+        },
+        {
+          "__typename": "Photo",
+          "key": "e51813cb6d5aa03102b814ba19a430a0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "d4b8794c07112e775f82b39c241e073c"
+        },
+        {
+          "__typename": "Photo",
+          "key": "52b8dfb508363717af3c51fa259b0a22"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ad495bc3c318b0d1af32e8c293034154"
+        },
+        {
+          "__typename": "Photo",
+          "key": "ea2e4ef3b269f00eca92b245d286ba31"
+        },
+        {
+          "__typename": "Photo",
+          "key": "bfc5145aa177c211367a2e99f59c8cee"
+        },
+        {
+          "__typename": "Photo",
+          "key": "58c3dbcabd529d0cf3398ef07dda73f0"
+        },
+        {
+          "__typename": "Photo",
+          "key": "82bd824486c6e634e98d765bd7f2a38a"
+        }
+      ],
+      "price": 4695,
+      "interestingPriceDelta": null,
+      "relloExpress": null,
+      "slug": null,
+      "sourceGroupLabel": "Corcoran",
+      "sourceType": "PARTNER",
+      "status": "ACTIVE",
+      "street": "5 Bay Street",
+      "tier": null,
+      "unit": "12-M",
+      "upcomingOpenHouse": null,
+      "urlPath": "/building/residences-at-lighthouse-point/12m"
+    },
+    "amenitiesMatch": null,
+    "matchedAmenities": null,
+    "missingAmenities": null
+  }
+]

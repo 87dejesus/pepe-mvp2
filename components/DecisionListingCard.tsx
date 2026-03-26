@@ -47,7 +47,6 @@ function formatBathrooms(n: number): string {
   return `${n} baths`;
 }
 
-// Detect incentives in description
 const INCENTIVE_PATTERNS: { regex: RegExp; message: string }[] = [
   { regex: /(\d+)\s*months?\s*free/i, message: 'offers free month(s)!' },
   { regex: /free\s*months?/i, message: 'offers a free month!' },
@@ -71,17 +70,15 @@ function getTransitNote(borough: string): string {
   const b = (borough || '').toLowerCase();
   if (b.includes('manhattan')) return 'Subway station ~3–5 min walk';
   if (b.includes('brooklyn')) return 'Subway station ~5–10 min walk';
-  if (b.includes('queens'))   return 'Subway station ~8–12 min walk';
-  if (b.includes('bronx'))    return 'Bus or subway ~10–15 min walk';
+  if (b.includes('queens')) return 'Subway station ~8–12 min walk';
+  if (b.includes('bronx')) return 'Bus or subway ~10–15 min walk';
   return 'Transit nearby';
 }
 
-// Generate empathetic commentary
 function buildHeedTake(listing: Listing, answers: Answers, score: number, warnings: string[]): string {
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
-  // Budget analysis
   if (listing.price <= answers.budget) {
     const savings = answers.budget - listing.price;
     if (savings > 200) {
@@ -95,7 +92,6 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
     parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%) — worth considering if the fit feels right`);
   }
 
-  // Bedroom match
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   if (listing.bedrooms === needed || (answers.bedrooms === '3+' && listing.bedrooms >= 3)) {
@@ -104,7 +100,6 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
     parts.push(`${formatBedrooms(listing.bedrooms)} (close to what you wanted)`);
   }
 
-  // Location match
   if (answers.boroughs.length > 0) {
     const boroughLower = (listing.borough || '').toLowerCase();
     const neighborhoodLower = (listing.neighborhood || '').toLowerCase();
@@ -118,18 +113,15 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
     }
   }
 
-  // Pet situation
   if (answers.pets !== 'none' && listing.pets?.toLowerCase() === 'yes') {
     parts.push('pets welcome here');
   }
 
-  // Incentive detection from description
   const incentive = detectIncentives(listing.description);
   if (incentive) {
     parts.push(`Plus, ${incentive}`);
   }
 
-  // Build the final message
   if (parts.length === 0) {
     return score >= 80
       ? `This ${neighborhood} listing hits most of your criteria. Worth a serious look!`
@@ -140,7 +132,6 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
   return `${intro} ${parts.join(', ')}.`;
 }
 
-// Generate 3–4 color-coded bullets from listing data
 function buildBullets(
   listing: Listing,
   answers: Answers,
@@ -148,7 +139,6 @@ function buildBullets(
 ): { color: string; text: string }[] {
   const bullets: { color: string; text: string }[] = [];
 
-  // 1. Budget
   const price = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
   if (price <= answers.budget) {
     const savings = answers.budget - price;
@@ -162,7 +152,6 @@ function buildBullets(
     bullets.push({ color: '#ef4444', text: `$${over.toLocaleString()}/mo over your budget` });
   }
 
-  // 2. Bedroom match
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   const isExactBed = answers.bedrooms === '3+' ? listing.bedrooms >= 3 : listing.bedrooms === needed;
@@ -173,17 +162,14 @@ function buildBullets(
     bullets.push({ color: '#f59e0b', text: `${formatBedrooms(listing.bedrooms)} (you wanted ${wantedLabel})` });
   }
 
-  // 3. Pets
   if (listing.pets === 'Allowed') {
-    bullets.push({ color: '#00A651', text: "Pet friendly — no need to hide your furry friend" });
+    bullets.push({ color: '#00A651', text: 'Pet friendly — no need to hide your furry friend' });
   } else if (listing.pets === 'Not allowed') {
-    bullets.push({ color: '#ef4444', text: "No pets allowed — confirm before applying" });
+    bullets.push({ color: '#ef4444', text: 'No pets allowed — confirm before applying' });
   }
 
-  // 4. Transit (neutral)
   bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
 
-  // 4. Dynamic red bullet from real listing data
   const price2 = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
   if (price2 < answers.budget * 0.9) {
     bullets.push({ color: '#ef4444', text: `If you pass: next comparable unit in ${listing.borough || 'this area'} likely costs more` });
@@ -192,7 +178,6 @@ function buildBullets(
   } else if (warnings.length > 0) {
     bullets.push({ color: '#ef4444', text: 'This listing has flags — but so might the next one' });
   }
-  // Default: no red bullet
 
   return bullets;
 }
@@ -206,8 +191,11 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
     return () => clearTimeout(timer);
   }, [listing.id]);
 
-  const rawImageUrl = listing.image_url || listing.images?.[0] || '';
-  const hasValidImage = rawImageUrl && !rawImageUrl.includes('add7ffb');
+  const rawImageUrl = (listing.image_url || listing.images?.[0] || '').trim();
+  const hasValidImage =
+    !!rawImageUrl &&
+    (rawImageUrl.startsWith('http://') || rawImageUrl.startsWith('https://')) &&
+    !rawImageUrl.includes('add7ffb');
   const heedTake = buildHeedTake(listing, answers, matchScore, warnings);
   const bullets = buildBullets(listing, answers, warnings);
   const showGuarantor = answers.budget <= 2500;
@@ -227,7 +215,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         marginBottom: 16,
       }}
     >
-      {/* ── Image section ─────────────────────────────────────────── */}
       <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
         {hasValidImage ? (
           <img
@@ -241,23 +228,52 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             style={{
               width: '100%',
               height: '100%',
-              backgroundColor: '#1a3a5c',
+              background: 'linear-gradient(135deg, #10263d 0%, #1a3a5c 55%, #29557c 100%)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
+              padding: '24px 20px',
+              textAlign: 'center',
+              position: 'relative',
             }}
           >
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.25 }}>
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M9 21V12h6v9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>No photo — check full listing</span>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  'radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 42%), radial-gradient(circle at bottom right, rgba(255,255,255,0.08), transparent 38%)',
+              }}
+            />
+            <div
+              style={{
+                position: 'relative',
+                zIndex: 1,
+                maxWidth: 320,
+                width: '100%',
+                border: '1px solid rgba(255,255,255,0.16)',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                borderRadius: 16,
+                padding: '18px 16px',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }}
+            >
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.72, margin: '0 auto 12px auto', display: 'block' }}>
+                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 21V12h6v9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <p style={{ margin: 0, marginBottom: 8, fontSize: 18, lineHeight: 1.2, fontWeight: 700, color: 'white' }}>
+                Photos unavailable
+              </p>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.82)' }}>
+                Photos unavailable for this listing. Tap See listing details to view photos and more information.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Strong match badge — top left */}
         {recommendation === 'ACT_NOW' && (
           <div
             style={{
@@ -277,7 +293,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         )}
 
-        {/* Price badge — top right */}
         <div
           style={{
             position: 'absolute',
@@ -295,10 +310,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
         </div>
       </div>
 
-      {/* ── Content section ───────────────────────────────────────── */}
       <div style={{ padding: 16, backgroundColor: 'white' }}>
-
-        {/* Title row */}
         <div style={{ marginBottom: 10 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0A2540', margin: 0, marginBottom: 2, lineHeight: 1.2 }}>
             {listing.neighborhood || 'Unknown'}
@@ -308,7 +320,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </p>
         </div>
 
-        {/* Pills row */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
           <span style={{ backgroundColor: '#f0f0f0', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#444' }}>
             {formatBedrooms(listing.bedrooms)}
@@ -328,7 +339,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           )}
         </div>
 
-        {/* Match score */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
             <span style={{ fontSize: 11, color: '#888' }}>Match score</span>
@@ -347,7 +357,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         </div>
 
-        {/* ── Heed's Take ─────────────────────────────────────────── */}
         <div
           style={{
             backgroundColor: '#f8f9fb',
@@ -357,21 +366,17 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             marginBottom: 12,
           }}
         >
-          {/* Header row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <Image src="/brand/heed-mascot.png" alt="Heed" width={36} height={36} style={{ objectFit: 'contain', flexShrink: 0 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: '#0A2540' }}>Heed&apos;s Take</span>
           </div>
 
-          {/* Commentary */}
           <p style={{ fontSize: 12, color: '#333', lineHeight: 1.5, margin: 0, marginBottom: 8 }}>
             {heedTake}
           </p>
 
-          {/* Divider */}
           <div style={{ height: 1, backgroundColor: '#e8edf3', marginBottom: 8 }} />
 
-          {/* Bullet points */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
             {bullets.map((b, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
@@ -390,10 +395,8 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             ))}
           </div>
 
-          {/* Divider */}
           <div style={{ height: 1, backgroundColor: '#e8edf3', marginBottom: 8 }} />
 
-          {/* Pressure alert — only if warnings exist */}
           {warnings.length > 0 && (
             <div
               style={{
@@ -412,7 +415,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             </div>
           )}
 
-          {/* Verdict row */}
           <div
             style={{
               backgroundColor: '#EAF3DE',
@@ -427,9 +429,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         </div>
 
-        {/* ── Referral section ──────────────────────────────────────── */}
-
-        {/* Storage card — always show */}
         <div
           style={{
             backgroundColor: '#f8f9fb',
@@ -473,7 +472,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </button>
         </div>
 
-        {/* Guarantor card — only if budget <= 2500 */}
         {showGuarantor && (
           <div
             style={{
@@ -518,7 +516,6 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
           </div>
         )}
 
-        {/* Description */}
         {listing.description && (
           <p
             style={{

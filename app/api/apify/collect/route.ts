@@ -16,7 +16,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { normalizeItem, ApifyListing, ApartmentsItem } from '@/lib/apify-normalize';
+import { normalizeBuilding, DbRow, ZillowBuildingItem } from '@/lib/apify-normalize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -94,26 +94,23 @@ async function collect() {
       { status: 500 }
     );
   }
-  const raw: ApartmentsItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] Apify: fetched ${raw.length} raw items`);
-  console.log('[Model Debug]', JSON.stringify({contact: (raw[0] as any).contact, model0: (raw[0] as any).models?.[0]}));
+  const raw: ZillowBuildingItem[] = await itemsRes.json();
+  console.log(`[Steady Debug] Apify: fetched ${raw.length} raw buildings`);
+  console.log('[Zillow Debug]', JSON.stringify({city: raw[0]?.addressCity, units: raw[0]?.units?.length, imgSrc: raw[0]?.imgSrc?.slice(0, 60)}));
 
-  // 4. Normalize
-  const normalized: ApifyListing[] = raw
-    .map(normalizeItem)
-    .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
-  console.log('[Normalize Debug]', JSON.stringify(normalized.slice(0,5).map((i:any) => ({id: i.id, image_url: i.image_url, address: i.address}))));
+  // 4. Normalize — each building expands into one DbRow per unit type
+  const normalized: DbRow[] = raw.flatMap(normalizeBuilding);
+  console.log(`[Steady Debug] Apify: normalized ${normalized.length} rows from ${raw.length} buildings`);
+  console.log('[Normalize Debug]', JSON.stringify(normalized.slice(0,5).map(i => ({image_url: i.image_url, address: i.address, price: i.price, beds: i.bedrooms}))));
 
   // 5. Upsert to Supabase (neighborhood, pets, description excluded to protect curated data)
   let synced = 0;
   let dbError: string | null = null;
 
   if (normalized.length > 0) {
-    const dbRows = normalized.map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ id: _id, amenities: _am, images: _im, neighborhood: _n, pets: _p, description: _d, ...rest }) => rest
-    );
+    // Exclude fields that protect curated data from being overwritten on upsert
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const dbRows = normalized.map(({ neighborhood: _n, pets: _p, description: _d, ...rest }) => rest);
 
     const seenUrls = new Set<string>();
     const uniqueDbRows = dbRows.filter(row => {

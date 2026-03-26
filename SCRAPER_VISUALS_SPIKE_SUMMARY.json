@@ -1,0 +1,398 @@
+{
+  "runId": "eyAI1WK17gHAPHcLh",
+  "actorId": "epctex~apartments-scraper-api",
+  "input": {
+    "startUrls": [
+      "https://www.apartments.com/new-york-ny/",
+      "https://www.apartments.com/brooklyn-ny/",
+      "https://www.apartments.com/new-york-ny/studio-apartments/"
+    ],
+    "includeReviews": false,
+    "includeVisuals": true,
+    "includeInteriorAmenities": true,
+    "includeWalkScore": false,
+    "maxItems": 10
+  },
+  "aggregate": {
+    "items": 10,
+    "withAnyImagesArray": 0,
+    "withPhotoLikeImagesArray": 0,
+    "withFloorPlanLikeModel0": 0,
+    "withPhotoLikeModel0": 6,
+    "withDifferentModel0AndImages0": 0,
+    "withRecommendedPrimaryFromImages": 0,
+    "withNoUsablePhoto": 4
+  },
+  "recommendedFields": [
+    [
+      "models[0].image",
+      6
+    ],
+    [
+      "models[0].imageLarge",
+      6
+    ],
+    [
+      "images[]",
+      0
+    ],
+    [
+      "imageUrl",
+      0
+    ],
+    [
+      "thumbnailUrl",
+      0
+    ],
+    [
+      "mainImage",
+      0
+    ],
+    [
+      "heroImage",
+      0
+    ]
+  ],
+  "items": [
+    {
+      "id": "80g1zt0",
+      "url": "https://www.apartments.com/the-equestrian-at-pelham-parkway/80g1zt0/",
+      "propertyName": "The Equestrian At Pelham Parkway",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": null,
+        "model0imageLarge": null,
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "missing",
+        "models[0].imageLarge": "missing",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": null,
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": null,
+        "imageLarge": null
+      }
+    },
+    {
+      "id": "db9r3kj",
+      "url": "https://www.apartments.com/the-riverdale-tower/db9r3kj/",
+      "propertyName": "The Riverdale Tower",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/fbn058VkEiGH_ZoB606B6TF7eG2rjdkshYAuqAJRjAo/105/image.jpg",
+        "model0imageLarge": "https://images1.apartments.com/i2/fbn058VkEiGH_ZoB606B6TF7eG2rjdkshYAuqAJRjAo/117/image.jpg",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/fbn058VkEiGH_ZoB606B6TF7eG2rjdkshYAuqAJRjAo/105/image.jpg",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/fbn058VkEiGH_ZoB606B6TF7eG2rjdkshYAuqAJRjAo/105/image.jpg",
+        "imageLarge": "https://images1.apartments.com/i2/fbn058VkEiGH_ZoB606B6TF7eG2rjdkshYAuqAJRjAo/117/image.jpg"
+      }
+    },
+    {
+      "id": "2vjnkfb",
+      "url": "https://www.apartments.com/the-station-apartments/2vjnkfb/",
+      "propertyName": "The Station Apartments",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/3Uk_jJMR-k4LY79-BXd7lpRh6ZHoII44nsu8Ak0bp0g/105/image.jpg",
+        "model0imageLarge": "https://images1.apartments.com/i2/3Uk_jJMR-k4LY79-BXd7lpRh6ZHoII44nsu8Ak0bp0g/117/image.jpg",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/3Uk_jJMR-k4LY79-BXd7lpRh6ZHoII44nsu8Ak0bp0g/105/image.jpg",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/3Uk_jJMR-k4LY79-BXd7lpRh6ZHoII44nsu8Ak0bp0g/105/image.jpg",
+        "imageLarge": "https://images1.apartments.com/i2/3Uk_jJMR-k4LY79-BXd7lpRh6ZHoII44nsu8Ak0bp0g/117/image.jpg"
+      }
+    },
+    {
+      "id": "vh82btd",
+      "url": "https://www.apartments.com/found-study-brooklyn-heights/vh82btd/",
+      "propertyName": "FOUND Study Brooklyn Heights",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/mwnhimTI17l0K3RbOZSVk2LocgJYaT4_uktnWmnunPc/105/image.jpg",
+        "model0imageLarge": "https://images1.apartments.com/i2/mwnhimTI17l0K3RbOZSVk2LocgJYaT4_uktnWmnunPc/117/image.jpg",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/mwnhimTI17l0K3RbOZSVk2LocgJYaT4_uktnWmnunPc/105/image.jpg",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/mwnhimTI17l0K3RbOZSVk2LocgJYaT4_uktnWmnunPc/105/image.jpg",
+        "imageLarge": "https://images1.apartments.com/i2/mwnhimTI17l0K3RbOZSVk2LocgJYaT4_uktnWmnunPc/117/image.jpg"
+      }
+    },
+    {
+      "id": "21jytlc",
+      "url": "https://www.apartments.com/the-vitagraph/21jytlc/",
+      "propertyName": "The Vitagraph",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": null,
+        "model0imageLarge": null,
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "missing",
+        "models[0].imageLarge": "missing",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": null,
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": null,
+        "imageLarge": null
+      }
+    },
+    {
+      "id": "1j2c5h6",
+      "url": "https://www.apartments.com/10-halletts-point/1j2c5h6/",
+      "propertyName": "10 Halletts Point",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/iB885I1eZWRMpONUeFxRLTrAjehiHXfXa1Hg5xAshUM/105/image.png",
+        "model0imageLarge": "https://images1.apartments.com/i2/iB885I1eZWRMpONUeFxRLTrAjehiHXfXa1Hg5xAshUM/117/image.png",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/iB885I1eZWRMpONUeFxRLTrAjehiHXfXa1Hg5xAshUM/105/image.png",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/iB885I1eZWRMpONUeFxRLTrAjehiHXfXa1Hg5xAshUM/105/image.png",
+        "imageLarge": "https://images1.apartments.com/i2/iB885I1eZWRMpONUeFxRLTrAjehiHXfXa1Hg5xAshUM/117/image.png"
+      }
+    },
+    {
+      "id": "g3tgv6x",
+      "url": "https://www.apartments.com/webster-apartments-all-womens-housing/g3tgv6x/",
+      "propertyName": "Webster Apartments- ALL WOMENS HOUSING",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": null,
+        "model0imageLarge": null,
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "missing",
+        "models[0].imageLarge": "missing",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": null,
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": null,
+        "imageLarge": null
+      }
+    },
+    {
+      "id": "d10ll7l",
+      "url": "https://www.apartments.com/21-chelsea/d10ll7l/",
+      "propertyName": "21 Chelsea",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/6md3ogntFLf6ISn8ATmDA_MAB-ILci95VM0kRNa5QmY/105/image.jpg",
+        "model0imageLarge": "https://images1.apartments.com/i2/6md3ogntFLf6ISn8ATmDA_MAB-ILci95VM0kRNa5QmY/117/image.jpg",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/6md3ogntFLf6ISn8ATmDA_MAB-ILci95VM0kRNa5QmY/105/image.jpg",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/6md3ogntFLf6ISn8ATmDA_MAB-ILci95VM0kRNa5QmY/105/image.jpg",
+        "imageLarge": "https://images1.apartments.com/i2/6md3ogntFLf6ISn8ATmDA_MAB-ILci95VM0kRNa5QmY/117/image.jpg"
+      }
+    },
+    {
+      "id": "e3s3rfm",
+      "url": "https://www.apartments.com/parkchester/e3s3rfm/",
+      "propertyName": "Parkchester",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": null,
+        "model0imageLarge": null,
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "missing",
+        "models[0].imageLarge": "missing",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": null,
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": null,
+        "imageLarge": null
+      }
+    },
+    {
+      "id": "3w6dcsd",
+      "url": "https://www.apartments.com/the-reserve/3w6dcsd/",
+      "propertyName": "The Reserve",
+      "imageFieldCounts": {
+        "images": 0,
+        "photoLikeImages": 0,
+        "floorPlanLikeImages": 0
+      },
+      "candidates": {
+        "images": [],
+        "model0image": "https://images1.apartments.com/i2/UkGo81ZAXwoPBd51ifS5_alKwbmmiQ5pnR3EiILlZvU/105/image.jpg",
+        "model0imageLarge": "https://images1.apartments.com/i2/UkGo81ZAXwoPBd51ifS5_alKwbmmiQ5pnR3EiILlZvU/117/image.jpg",
+        "imageUrl": null,
+        "thumbnailUrl": null,
+        "mainImage": null,
+        "heroImage": null
+      },
+      "classifications": {
+        "images[0]": "missing",
+        "models[0].image": "photo-like",
+        "models[0].imageLarge": "photo-like",
+        "imageUrl": "missing",
+        "thumbnailUrl": "missing",
+        "mainImage": "missing",
+        "heroImage": "missing"
+      },
+      "recommendedPrimary": "https://images1.apartments.com/i2/UkGo81ZAXwoPBd51ifS5_alKwbmmiQ5pnR3EiILlZvU/105/image.jpg",
+      "sampleGallery": [],
+      "sampleModel0": {
+        "image": "https://images1.apartments.com/i2/UkGo81ZAXwoPBd51ifS5_alKwbmmiQ5pnR3EiILlZvU/105/image.jpg",
+        "imageLarge": "https://images1.apartments.com/i2/UkGo81ZAXwoPBd51ifS5_alKwbmmiQ5pnR3EiILlZvU/117/image.jpg"
+      }
+    }
+  ]
+}

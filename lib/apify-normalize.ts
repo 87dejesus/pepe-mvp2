@@ -1,33 +1,33 @@
 /**
- * Shared normalization logic for Apartments.com Apify scraper data.
+ * Normalization logic for Zillow ZIP Code Search Apify scraper data.
  * Used by /api/apify/sync (start run) and /api/apify/collect (fetch + upsert).
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ApartmentsItem = {
-  id?: string;
-  propertyName?: string;
+export type ZillowUnit = {
+  price: string;       // e.g. "$4,154+"
+  beds: string;        // e.g. "0", "1", "2", "Studio"
+  roomForRent: boolean;
+};
+
+export type ZillowBuildingItem = {
+  zpid?: string;
+  imgSrc?: string;
+  detailUrl?: string;
+  hdpUrl?: string;
   url?: string;
-  location?: {
-    fullAddress?: string;
-    city?: string;
-    state?: string;
-    neighborhood?: string;
-    postalCode?: string;
-    streetAddress?: string;
-  };
-  rent?: { min?: number; max?: number };
-  beds?: string;
-  baths?: string;
-  sqft?: string;
-  description?: string;
-  contact?: { phone?: string; name?: string };
-  amenities?: Array<{ title: string; value: string[] }>;
-  petPolicy?: string;
-  petFriendly?: boolean;
-  images?: string[];
-  rating?: number;
+  statusType?: string;
+  address?: string;
+  addressStreet?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressZipcode?: string;
+  addressNeighborhood?: string;
+  minBaseRent?: number;
+  maxBaseRent?: number;
+  units?: ZillowUnit[];
+  isBuilding?: boolean;
 };
 
 // Fields safe to INSERT into Supabase listings table
@@ -45,13 +45,6 @@ export type DbRow = {
   status: string;
 };
 
-// Full listing returned to the React client (includes amenities, images, id)
-export type ApifyListing = DbRow & {
-  id: string;
-  amenities: string[];
-  images: string[];
-};
-
 // ─── Borough detection ────────────────────────────────────────────────────────
 
 const BOROUGH_MAP: Record<string, string> = {
@@ -63,7 +56,7 @@ const BOROUGH_MAP: Record<string, string> = {
   'staten island': 'Staten Island',
 };
 
-// Queens is tricky — Apartments.com lists neighborhood names as the city
+// Queens — Zillow may list neighborhood names as the city for Queens areas
 const QUEENS_CITIES = new Set([
   'astoria', 'long island city', 'lic', 'flushing', 'jackson heights',
   'forest hills', 'rego park', 'woodside', 'sunnyside', 'elmhurst',
@@ -90,30 +83,6 @@ function detectBorough(city: string, state: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parsePets(item: ApartmentsItem): string {
-  if (item.petFriendly === true)  return 'Allowed';
-  if (item.petFriendly === false) return 'Not allowed';
-  if (item.petPolicy) {
-    if (/yes|allowed|ok|welcome/i.test(item.petPolicy))  return 'Allowed';
-    if (/no|not\s*allowed|none/i.test(item.petPolicy))   return 'Not allowed';
-  }
-  return 'Unknown';
-}
-
-function cleanNeighborhood(item: ApartmentsItem, borough: string): string {
-  // 1. Prefer location.neighborhood if present and clean
-  const nb = (item.location?.neighborhood ?? '').trim();
-  if (nb && nb.length <= 60) return nb;
-
-  // 2. Try location.city with cleanliness checks
-  const raw = (item.location?.city ?? '').trim();
-  if (!raw) return borough;
-  if (raw.includes('$')) return borough;           // price blob
-  const firstLine = raw.includes('\n') ? raw.split('\n')[0].trim() : raw;
-  if (firstLine.length > 60) return borough;       // title blob
-  return firstLine || borough;
-}
-
 function parseBedrooms(beds?: string): number {
   if (!beds) return 0;
   const b = beds.toLowerCase().trim();
@@ -122,74 +91,57 @@ function parseBedrooms(beds?: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
-function parseBathrooms(baths?: string): number {
-  if (!baths) return 1;
-  const match = baths.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : 1;
-}
-
-function parseAmenities(list?: Array<{ title: string; value: string[] }>): string[] {
-  if (!list) return [];
-  return list.flatMap((group) => group.value).map((s) => s.trim()).filter(Boolean);
-}
-
 // ─── Normalizer ───────────────────────────────────────────────────────────────
 
-export function normalizeItem(item: ApartmentsItem): ApifyListing | null {
-  // Price
-  const price = item.rent?.min ?? 0;
-  if (price <= 0) return null;
+/**
+ * Takes one Zillow building item and returns one DbRow per unit type in
+ * item.units[]. Skips the building entirely if imgSrc is missing or not a
+ * public https:// URL, or if the city doesn't resolve to a valid NYC borough.
+ * Skips individual units where the parsed price is 0.
+ */
+export function normalizeBuilding(item: ZillowBuildingItem): DbRow[] {
+  // Skip buildings without a public photo
+  if (!item.imgSrc || !item.imgSrc.startsWith('https://')) return [];
 
-  // Location
-  const city  = item.location?.city  ?? '';
-  const state = item.location?.state ?? '';
-  const borough      = detectBorough(city, state);
-  if (!VALID_BOROUGHS.has(borough)) return null;
-  const neighborhood = cleanNeighborhood(item, borough);
+  const address = (item.address ?? item.addressStreet ?? '').trim();
+  const city    = item.addressCity  ?? '';
+  const state   = item.addressState ?? '';
+  const borough = detectBorough(city, state);
+  if (!VALID_BOROUGHS.has(borough)) return [];
 
-  // Beds / baths
-  const bedrooms  = parseBedrooms(item.beds);
-  const bathrooms = parseBathrooms(item.baths);
+  const neighborhood = item.addressNeighborhood ?? city;
+  // detailUrl is a full URL; hdpUrl is a path that needs the hostname prepended
+  const baseUrl = item.detailUrl
+    ?? (item.hdpUrl ? `https://www.zillow.com${item.hdpUrl}` : item.url ?? '');
 
-  // URL (required); image is optional
-  const original_url = item.url ?? '';
-  if (!original_url) return null;
+  const units = item.units ?? [];
 
-  // Skip listings where address is missing or contains a price blob instead of a real address
-  const address = (item.location?.fullAddress ?? '').trim();
-  if (!address || /^\$[\d,]+/.test(address)) {
-    console.log(`[Steady Debug] Skipped malformed listing: ${JSON.stringify(item)}`);
-    return null;
-  }
+  return units
+    .map((unit, i): DbRow | null => {
+      // Parse price: strip "$", ",", "+" → parseInt; fall back to minBaseRent
+      const rawPrice  = unit.price.replace(/[$,+]/g, '');
+      const parsed    = parseInt(rawPrice, 10);
+      const price     = (!isNaN(parsed) && parsed > 0) ? parsed : (item.minBaseRent ?? 0);
+      if (price <= 0) return null;
 
-  const image_url = (() => {
-    const candidates = [
-      (item as any).models?.[0]?.image,
-      (item as any).models?.[0]?.imageLarge,
-      item.images?.[0],
-      (item as any).imageUrl,
-      (item as any).thumbnailUrl,
-      (item as any).mainImage,
-      (item as any).heroImage,
-    ];
-    return candidates.find(img => typeof img === 'string' && img.startsWith('https://') && !img.includes('add7ffb')) ?? '';
-  })();
-  const id = item.id ?? `apts-${Math.random().toString(36).slice(2)}`;
+      const bedrooms    = parseBedrooms(unit.beds);
+      // Append a unit discriminator so each bed-type row gets a unique original_url
+      const original_url = baseUrl ? `${baseUrl}#unit-${unit.beds}-${i}` : '';
+      if (!original_url) return null;
 
-  return {
-    id,
-    address,
-    neighborhood,
-    borough,
-    price,
-    bedrooms,
-    bathrooms,
-    description:  item.description ?? '',
-    image_url,
-    original_url,
-    pets:         parsePets(item),
-    status:       'Active',
-    amenities:    parseAmenities(item.amenities),
-    images:       item.images ?? [],
-  };
+      return {
+        address,
+        neighborhood,
+        borough,
+        price,
+        bedrooms,
+        bathrooms:    1,
+        description:  '',
+        image_url:    item.imgSrc!,
+        original_url,
+        pets:         'Unknown',
+        status:       'Active',
+      };
+    })
+    .filter((row): row is DbRow => row !== null);
 }
