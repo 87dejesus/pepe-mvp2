@@ -38,7 +38,7 @@ async function startApifyRun(): Promise<string> {
     // Actor-specific rental flags (confirmed from working Mar-12 run)
     searchForRent: true,
     searchForSale: false,
-    forSaleByAgent: false,
+    forSaleByAgent: true,   // required: actor validates at least one of these flags is true
     forSaleByOwner: false,
     forRent: false,
     sold: false,
