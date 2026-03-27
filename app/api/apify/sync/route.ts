@@ -11,7 +11,7 @@
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
  *   APIFY_ACTOR_ID                  (optional — overrides default actor)
- *                                  Set to: maxcopell~zillow-zip-search in Vercel
+ *                                  Set to: epctex~apartments-scraper-api in Vercel
  *
  * SQL — run once in Supabase before deploying:
  *   CREATE TABLE sync_runs (
@@ -28,35 +28,28 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'maxcopell~zillow-zip-search';
+const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'epctex~apartments-scraper-api';
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    // Actor-specific rental flags (confirmed from working Mar-12 run)
-    searchForRent: true,
-    searchForSale: false,
-    forSaleByAgent: true,   // required: actor validates at least one of these flags is true
-    forSaleByOwner: false,
-    forRent: false,
-    sold: false,
-    daysOnZillow: '',
-    priceMin: 1000,
-    priceMax: 15000,
-    maxItems: 300,
-    // NYC rental ZIP codes — best-coverage ZIPs per borough
-    zipCodes: [
-      // Manhattan (6)
-      '10001','10002','10011','10014','10025','10036',
-      // Brooklyn (6)
-      '11201','11211','11215','11216','11231','11238',
-      // Bronx (4)
-      '10451','10456','10458','10468',
-      // Queens (4)
-      '11101','11373','11375','11385',
+    startUrls: [
+      'https://www.apartments.com/new-york-ny/',
+      'https://www.apartments.com/brooklyn-ny/',
+      'https://www.apartments.com/bronx-ny/',
+      'https://www.apartments.com/queens-ny/',
+      'https://www.apartments.com/new-york-ny/studio-apartments/',
+      'https://www.apartments.com/brooklyn-ny/studio-apartments/',
+      'https://www.apartments.com/bronx-ny/studio-apartments/',
+      'https://www.apartments.com/queens-ny/studio-apartments/',
     ],
+    includeReviews: false,
+    includeVisuals: false,
+    includeInteriorAmenities: true,
+    includeWalkScore: false,
+    maxItems: 300,
   });
 
   const res = await fetch(
