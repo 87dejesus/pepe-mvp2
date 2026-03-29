@@ -17,9 +17,12 @@
  *   - vercel.json (no cron entry yet — Phase 2)
  *   - Any existing listing rows from the Apify pipeline
  *
- * Env vars used (same as existing routes — no new vars needed):
+ * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY  (preferred) or NEXT_PUBLIC_SUPABASE_ANON_KEY
+ *   RENTHOP_PROXY_URL          (required) — full HTTP proxy URL for RentHop fetches,
+ *                               e.g. http://scraperapi:API_KEY@proxy-server.scraperapi.com:8001
+ *                               Needed because Cloudflare blocks Vercel's AWS IP range.
  */
 
 import { NextResponse } from 'next/server';
@@ -59,6 +62,12 @@ const BROWSER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
+// HTTP proxy URL for RentHop fetches. Required in production — Cloudflare blocks
+// Vercel's AWS datacenter IP range. Must be a full proxy URL including credentials,
+// e.g. http://scraperapi:API_KEY@proxy-server.scraperapi.com:8001
+// Any provider that accepts HTTP CONNECT proxy auth will work.
+const RENTHOP_PROXY_URL = process.env.RENTHOP_PROXY_URL ?? null;
+
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
 /**
@@ -87,6 +96,12 @@ function curlGet(url: string, extraHeaders: Record<string, string> = {}): Promis
       '--max-redirs',  '3',
       '--compressed',
     ];
+
+    // Route through the scraping proxy when configured.
+    // The proxy provides a residential IP that passes Cloudflare's bot filter.
+    if (RENTHOP_PROXY_URL) {
+      args.push('--proxy', RENTHOP_PROXY_URL);
+    }
 
     for (const [k, v] of Object.entries(headers)) {
       args.push('-H', `${k}: ${v}`);
@@ -202,6 +217,19 @@ function parseSearchCards(html: string, limit: number): RentHopSearchStub[] {
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 async function handler() {
+  // RENTHOP_PROXY_URL is required — Cloudflare blocks Vercel's AWS datacenter IPs.
+  // The route will not attempt any RentHop fetches without a proxy configured.
+  if (!RENTHOP_PROXY_URL) {
+    return NextResponse.json(
+      {
+        error: 'RENTHOP_PROXY_URL is not set. RentHop fetches require a scraping proxy ' +
+               'because Cloudflare blocks Vercel\'s AWS IP range. ' +
+               'Set RENTHOP_PROXY_URL in Vercel environment variables.',
+      },
+      { status: 500 },
+    );
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
