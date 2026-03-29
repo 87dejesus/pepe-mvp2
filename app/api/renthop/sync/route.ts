@@ -243,6 +243,7 @@ async function handler() {
   // ── Step 1: Collect Brooklyn stubs (paginate until MAX_LISTINGS or MAX_PAGES) ─
 
   const allStubs: RentHopSearchStub[] = [];
+  const searchErrors: string[] = [];
   let numFound = 0;
 
   for (let page = 1; page <= MAX_SEARCH_PAGES && allStubs.length < MAX_LISTINGS; page++) {
@@ -254,6 +255,7 @@ async function handler() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[RentHop] Search page ${page} failed: ${msg}`);
+      searchErrors.push(`page ${page}: ${msg}`);
       break; // stop paginating; process stubs collected so far
     }
 
@@ -281,6 +283,7 @@ async function handler() {
       valid:      0,
       upserted:   0,
       skipped:    0,
+      ...(searchErrors.length > 0 && { searchErrors }),
     });
   }
 
