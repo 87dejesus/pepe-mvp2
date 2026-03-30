@@ -39,7 +39,7 @@ import {
 import type { DbRow } from '@/lib/apify-normalize';
 
 export const dynamic    = 'force-dynamic';
-export const maxDuration = 300; // 5 min — 20 listings × (2.5s delay + ~3s fetch) ≈ 110s
+export const maxDuration = 300; // 5 min — 4 boroughs × 10 listings, extra search pages for Bronx/Queens
 
 // ─── Borough configuration ───────────────────────────────────────────────────
 
@@ -47,18 +47,21 @@ type BoroughConfig = {
   name: string;
   mbr: string;        // bounding box: south,west,north,east
   referer: string;    // slug used in Referer header
+  maxPages: number;   // search pages to scan (higher for low-yield boroughs)
 };
 
+// MBR-based search bleeds across borough boundaries. Manhattan and Brooklyn have
+// high yield (~10/14 cards match), but Bronx and Queens yield only ~2/14 cards
+// per page because their bounding boxes overlap Manhattan heavily. maxPages is
+// set per borough to compensate: ~7 pages × 2 matches ≈ 14 candidates → 10 target.
 const BOROUGHS: BoroughConfig[] = [
-  { name: 'Manhattan', mbr: '40.6996,-74.0201,40.8821,-73.9070', referer: 'manhattan-ny' },
-  { name: 'Brooklyn',  mbr: '40.5715,-74.0421,40.7395,-73.8334', referer: 'brooklyn-ny' },
-  { name: 'Bronx',     mbr: '40.7855,-73.9339,40.9153,-73.7654', referer: 'bronx-ny' },
-  { name: 'Queens',    mbr: '40.5415,-73.9623,40.8012,-73.7004', referer: 'queens-ny' },
+  { name: 'Manhattan', mbr: '40.6996,-74.0201,40.8821,-73.9070', referer: 'manhattan-ny', maxPages: 2 },
+  { name: 'Brooklyn',  mbr: '40.5715,-74.0421,40.7395,-73.8334', referer: 'brooklyn-ny',  maxPages: 2 },
+  { name: 'Bronx',     mbr: '40.8000,-73.9200,40.9100,-73.8000', referer: 'bronx-ny',     maxPages: 7 },
+  { name: 'Queens',    mbr: '40.5415,-73.9623,40.8012,-73.7004', referer: 'queens-ny',    maxPages: 7 },
 ];
 
-// Per-borough caps. 10 listings × 4 boroughs = 40 max, fits within 300s maxDuration.
 const MAX_LISTINGS_PER_BOROUGH = 10;
-const MAX_SEARCH_PAGES = 2;
 
 // Polite inter-request delay. Cloudflare rate-limits aggressive crawlers;
 // 2500ms is conservative and confirmed to work in local pipeline tests.
@@ -285,7 +288,7 @@ async function handler() {
     // Collect stubs for this borough
     const stubs: RentHopSearchStub[] = [];
 
-    for (let page = 1; page <= MAX_SEARCH_PAGES && stubs.length < MAX_LISTINGS_PER_BOROUGH; page++) {
+    for (let page = 1; page <= borough.maxPages && stubs.length < MAX_LISTINGS_PER_BOROUGH; page++) {
       if (page > 1 || boroughResults.length > 0) await sleep(DELAY_MS);
 
       let result: SearchResult;
