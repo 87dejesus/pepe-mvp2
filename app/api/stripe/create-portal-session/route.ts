@@ -1,15 +1,15 @@
 /**
  * POST /api/stripe/create-portal-session
  *
- * Creates a Stripe Billing Portal session so payment_failed users can update
- * their payment method on their existing subscription without starting a new one.
+ * Creates a Stripe Billing Portal session so users can manage their billing,
+ * update their payment method, or cancel their plan.
  *
  * Identity is derived from the authenticated Supabase session cookie — never
  * from the request body.
  *
  * Requirements enforced server-side:
  *   - Valid Supabase session (cookie)
- *   - users.subscription_status must be 'payment_failed'
+ *   - users.subscription_status must be 'active', 'trialing', or 'payment_failed'
  *   - users.stripe_customer_id must be present (no fallback to checkout)
  *
  * Returns { url } — client redirects to Stripe-hosted billing portal.
@@ -79,14 +79,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Validate status — only payment_failed users may use this route ───────────
-  if (userRow.subscription_status !== 'payment_failed') {
+  // ── Validate status — active, trialing, and payment_failed users may use this route
+  const portalAllowed = ['active', 'trialing', 'payment_failed'];
+  if (!portalAllowed.includes(userRow.subscription_status)) {
     console.warn(
       `[Portal] User ${user.id} requested portal with status '${userRow.subscription_status}' — rejected`
     );
     return NextResponse.json(
       {
-        error: 'Billing portal is only available for accounts with a failed payment.',
+        error: 'Billing portal is only available for users with an active account.',
         code: 'wrong_status',
       },
       { status: 403 }

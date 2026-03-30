@@ -1113,7 +1113,7 @@ function DecisionClientInner() {
               <span className="ml-2 text-xs text-white/35">(relaxed)</span>
             )}
           </span>
-          {!isAdmin && (accessState.status === 'active' || accessState.status === 'trialing') && (
+          {(accessState.status === 'active' || accessState.status === 'trialing') && (
             <button
               onClick={handleManageSubscription}
               className="text-[11px] text-white/40 hover:text-white/70 transition-colors"
