@@ -99,8 +99,10 @@ function curlGet(url: string, extraHeaders: Record<string, string> = {}): Promis
 
     // Route through the scraping proxy when configured.
     // The proxy provides a residential IP that passes Cloudflare's bot filter.
+    // -k skips SSL certificate verification — the proxy's MITM cert is not in
+    // the system trust store, so curl exits 60 without it.
     if (RENTHOP_PROXY_URL) {
-      args.push('--proxy', RENTHOP_PROXY_URL);
+      args.push('--proxy', RENTHOP_PROXY_URL, '-k');
     }
 
     for (const [k, v] of Object.entries(headers)) {
