@@ -12,6 +12,10 @@
     {
       "path": "/api/apify/collect",
       "schedule": "10 6 * * *"
+    },
+    {
+      "path": "/api/renthop/sync",
+      "schedule": "20 6 * * *"
     }
   ],
   "redirects": [
