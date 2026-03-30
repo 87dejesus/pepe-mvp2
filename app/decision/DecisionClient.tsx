@@ -771,11 +771,13 @@ function DecisionClientInner() {
         }
       }
 
-      // Sort by match score DESCENDING
-      // Borough is 40pts in score — borough-matched listings naturally float to top
-      finalList.sort((a, b) =>
-        calculateMatchScore(b, answers!) - calculateMatchScore(a, answers!)
-      );
+      // Sort: RentHop listings first (real photos), then by match score DESCENDING
+      finalList.sort((a, b) => {
+        const aRH = a.original_url?.includes('renthop') ? 1 : 0;
+        const bRH = b.original_url?.includes('renthop') ? 1 : 0;
+        if (bRH !== aRH) return bRH - aRH;
+        return calculateMatchScore(b, answers!) - calculateMatchScore(a, answers!);
+      });
 
       // Deduplicate by original_url (the actual listing link)
       const seenIds = new Set<string>();
