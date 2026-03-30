@@ -1,15 +1,17 @@
 /**
  * POST /api/renthop/sync  (GET also accepted for manual curl testing)
  *
- * Phase 1: Brooklyn-only, manual-trigger only, no cron.
+ * Multi-borough sync: Manhattan, Brooklyn, Bronx, Queens (no Staten Island).
+ * Manual-trigger only, no cron.
  *
  * What this does:
- *   1. Fetches RentHop Brooklyn search results (internal XHR API, no Apify)
- *   2. Filters to confirmed-Brooklyn cards only (neighborhoodRaw check)
- *   3. Fetches each listing detail page (static HTML, no JS rendering)
- *   4. Normalizes via lib/renthop-normalize.ts
- *   5. Applies a second borough gate before upsert
- *   6. Upserts to the existing listings table on conflict original_url
+ *   1. Iterates over 4 NYC boroughs sequentially
+ *   2. For each borough: fetches RentHop search results using a bounding box
+ *   3. Filters to confirmed-borough cards only (neighborhoodRaw check)
+ *   4. Fetches each listing detail page (static HTML, no JS rendering)
+ *   5. Normalizes via lib/renthop-normalize.ts
+ *   6. Applies a second borough gate before upsert
+ *   7. Upserts to the existing listings table on conflict original_url
  *
  * What this does NOT touch:
  *   - app/api/apify/*  (existing provider — no changes)
@@ -39,20 +41,24 @@ import type { DbRow } from '@/lib/apify-normalize';
 export const dynamic    = 'force-dynamic';
 export const maxDuration = 300; // 5 min — 20 listings × (2.5s delay + ~3s fetch) ≈ 110s
 
-// ─── Phase 1 constants ────────────────────────────────────────────────────────
+// ─── Borough configuration ───────────────────────────────────────────────────
 
-// Confirmed bounding box — returns 3,000+ Brooklyn listings in the search API
-const BROOKLYN_MBR = '40.5715,-74.0421,40.7395,-73.8334';
+type BoroughConfig = {
+  name: string;
+  mbr: string;        // bounding box: south,west,north,east
+  referer: string;    // slug used in Referer header
+};
 
-// Hard borough gate. Any row whose resolved borough is not this value is
-// rejected before upsert regardless of how it passed the search card filter.
-const PHASE1_BOROUGH = 'Brooklyn';
+const BOROUGHS: BoroughConfig[] = [
+  { name: 'Manhattan', mbr: '40.6996,-74.0201,40.8821,-73.9070', referer: 'manhattan-ny' },
+  { name: 'Brooklyn',  mbr: '40.5715,-74.0421,40.7395,-73.8334', referer: 'brooklyn-ny' },
+  { name: 'Bronx',     mbr: '40.7855,-73.9339,40.9153,-73.7654', referer: 'bronx-ny' },
+  { name: 'Queens',    mbr: '40.5415,-73.9623,40.8012,-73.7004', referer: 'queens-ny' },
+];
 
-// Caps for Phase 1.  MAX_LISTINGS is the total target; MAX_SEARCH_PAGES bounds
-// how many search API pages are fetched to reach that target.
-// Bump both in Phase 2 when the cron is added.
-const MAX_LISTINGS    = 20;
-const MAX_SEARCH_PAGES = 3;
+// Per-borough caps. 10 listings × 4 boroughs = 40 max, fits within 300s maxDuration.
+const MAX_LISTINGS_PER_BOROUGH = 10;
+const MAX_SEARCH_PAGES = 2;
 
 // Polite inter-request delay. Cloudflare rate-limits aggressive crawlers;
 // 2500ms is conservative and confirmed to work in local pipeline tests.
@@ -129,12 +135,12 @@ function sleep(ms: number): Promise<void> {
 
 type SearchResult = { html: string; numFound: number; numPages: number };
 
-async function fetchSearchPage(page: number): Promise<SearchResult> {
+async function fetchSearchPage(page: number, borough: BoroughConfig): Promise<SearchResult> {
   const url = new URL('https://www.renthop.com/r/listings/search_map_query');
-  url.searchParams.set('mbr',       BROOKLYN_MBR);
+  url.searchParams.set('mbr',       borough.mbr);
   // sort=newest keeps results geographically local to the bounding box.
   // sort=hopscore is a national ranking that ignores the bbox and surfaces
-  // Manhattan listings on every page — confirmed non-viable in pipeline tests.
+  // off-borough listings on every page — confirmed non-viable in pipeline tests.
   url.searchParams.set('sort',      'newest');
   url.searchParams.set('has_photo', '1');
   url.searchParams.set('page',      String(page));
@@ -142,7 +148,7 @@ async function fetchSearchPage(page: number): Promise<SearchResult> {
   const body = await curlGet(url.toString(), {
     'Accept':           'application/json, text/javascript, */*; q=0.01',
     'X-Requested-With': 'XMLHttpRequest',
-    'Referer':          'https://www.renthop.com/apartments-for-rent/brooklyn-ny',
+    'Referer':          `https://www.renthop.com/apartments-for-rent/${borough.referer}`,
   });
 
   const data = JSON.parse(body) as {
@@ -169,10 +175,11 @@ async function fetchSearchPage(page: number): Promise<SearchResult> {
  * Parses listing stubs from the search API HTML fragment.
  * Only returns stubs that are confirmed to be in the target borough.
  *
- * @param html    HTML fragment from the search API response
- * @param limit   Max stubs to return from this page
+ * @param html        HTML fragment from the search API response
+ * @param limit       Max stubs to return from this page
+ * @param boroughName Borough name for bleed protection filter
  */
-function parseSearchCards(html: string, limit: number): RentHopSearchStub[] {
+function parseSearchCards(html: string, limit: number, boroughName: string): RentHopSearchStub[] {
   const blocks = html.split('search-map-listing').slice(1);
   const stubs: RentHopSearchStub[] = [];
 
@@ -194,7 +201,7 @@ function parseSearchCards(html: string, limit: number): RentHopSearchStub[] {
     // neighborhood string. The bounding box is a soft geographic filter — it
     // returns off-borough listings sorted by recency. Only cards that
     // explicitly name the borough are included.
-    if (!neighborhoodRaw || !neighborhoodRaw.toLowerCase().includes(PHASE1_BOROUGH.toLowerCase())) {
+    if (!neighborhoodRaw || !neighborhoodRaw.toLowerCase().includes(boroughName.toLowerCase())) {
       continue;
     }
 
@@ -242,169 +249,192 @@ async function handler() {
 
   const db = createClient(supabaseUrl, supabaseKey);
 
-  // ── Step 1: Collect Brooklyn stubs (paginate until MAX_LISTINGS or MAX_PAGES) ─
+  // ── Per-borough tracking ──────────────────────────────────────────────────
 
-  const allStubs: RentHopSearchStub[] = [];
-  const searchErrors: string[] = [];
-  let numFound = 0;
+  type BoroughResult = {
+    borough: string;
+    numFound: number;
+    attempted: number;
+    normalized: number;
+    valid: number;
+    upserted: number;
+    skipped: number;
+    errors: string[];
+  };
 
-  for (let page = 1; page <= MAX_SEARCH_PAGES && allStubs.length < MAX_LISTINGS; page++) {
-    if (page > 1) await sleep(DELAY_MS);
+  const boroughResults: BoroughResult[] = [];
+  const allDbRows: DbRow[] = [];
+  const seenUrls = new Set<string>();
 
-    let result: SearchResult;
-    try {
-      result = await fetchSearchPage(page);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[RentHop] Search page ${page} failed: ${msg}`);
-      searchErrors.push(`page ${page}: ${msg}`);
-      break; // stop paginating; process stubs collected so far
-    }
+  // ── Step 1 & 2: For each borough, collect stubs then fetch details ────────
 
-    if (page === 1) numFound = result.numFound;
-
-    const pageStubs = parseSearchCards(result.html, MAX_LISTINGS - allStubs.length);
-    allStubs.push(...pageStubs);
-
-    console.log(
-      `[RentHop] Page ${page}/${result.numPages}: ${pageStubs.length} Brooklyn stubs ` +
-      `(running total: ${allStubs.length})`
-    );
-
-    if (result.numPages <= page) break; // no more pages available
-  }
-
-  if (allStubs.length === 0) {
-    return NextResponse.json({
-      status:     'no_stubs',
-      borough:    PHASE1_BOROUGH,
-      numFound,
-      message:    'No Brooklyn listings found in search results — page structure may have changed',
+  for (const borough of BOROUGHS) {
+    const br: BoroughResult = {
+      borough:    borough.name,
+      numFound:   0,
       attempted:  0,
       normalized: 0,
       valid:      0,
       upserted:   0,
       skipped:    0,
-      ...(searchErrors.length > 0 && { searchErrors }),
-    });
+      errors:     [],
+    };
+
+    console.log(`[RentHop] ── Starting ${borough.name} ──`);
+
+    // Collect stubs for this borough
+    const stubs: RentHopSearchStub[] = [];
+
+    for (let page = 1; page <= MAX_SEARCH_PAGES && stubs.length < MAX_LISTINGS_PER_BOROUGH; page++) {
+      if (page > 1 || boroughResults.length > 0) await sleep(DELAY_MS);
+
+      let result: SearchResult;
+      try {
+        result = await fetchSearchPage(page, borough);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[RentHop] ${borough.name} search page ${page} failed: ${msg}`);
+        br.errors.push(`search page ${page}: ${msg}`);
+        break;
+      }
+
+      if (page === 1) br.numFound = result.numFound;
+
+      const pageStubs = parseSearchCards(result.html, MAX_LISTINGS_PER_BOROUGH - stubs.length, borough.name);
+      stubs.push(...pageStubs);
+
+      console.log(
+        `[RentHop] ${borough.name} page ${page}/${result.numPages}: ${pageStubs.length} stubs ` +
+        `(running total: ${stubs.length})`
+      );
+
+      if (result.numPages <= page) break;
+    }
+
+    br.attempted = stubs.length;
+
+    if (stubs.length === 0) {
+      console.log(`[RentHop] ${borough.name}: no stubs found, skipping detail fetch`);
+      boroughResults.push(br);
+      continue;
+    }
+
+    // Fetch detail pages, normalize, validate
+    for (let i = 0; i < stubs.length; i++) {
+      const stub = stubs[i];
+
+      await sleep(DELAY_MS);
+
+      let html: string;
+      try {
+        html = await curlGet(stub.listingUrl, {
+          'Referer': `https://www.renthop.com/apartments-for-rent/${borough.referer}`,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        br.errors.push(`fetch failed — ${stub.listingUrl}: ${msg}`);
+        br.skipped++;
+        continue;
+      }
+
+      let row: RentHopRow;
+      try {
+        row = normalizeRentHopListing(html, stub);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        br.errors.push(`normalize error — ${stub.listingUrl}: ${msg}`);
+        br.skipped++;
+        continue;
+      }
+
+      br.normalized++;
+
+      // Layer 3 bleed protection: reject rows that resolved to a different borough
+      if (row.borough !== borough.name) {
+        br.errors.push(`bleed rejected — ${stub.listingUrl}: resolved borough = "${row.borough}"`);
+        br.skipped++;
+        continue;
+      }
+
+      const { valid, issues } = validateRentHopRow(row);
+      if (!valid) {
+        br.errors.push(`validation failed — ${stub.listingUrl}: ${issues.join(', ')}`);
+        br.skipped++;
+        continue;
+      }
+
+      if (seenUrls.has(row.original_url)) {
+        br.skipped++;
+        continue;
+      }
+      seenUrls.add(row.original_url);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { source: _src, petDetail: _pd, ...dbRow } = row;
+      allDbRows.push(dbRow);
+      br.valid++;
+
+      console.log(
+        `[RentHop] ${borough.name} [${i + 1}/${stubs.length}] ` +
+        `${row.address} | $${row.price} | ${row.bedrooms}BR/${row.bathrooms}ba | pets=${row.pets}`
+      );
+    }
+
+    boroughResults.push(br);
   }
 
-  // ── Step 2: Fetch detail pages, normalize, validate ───────────────────────
+  // ── Step 3: Upsert all rows ───────────────────────────────────────────────
 
-  const dbRows:   DbRow[]   = [];
-  const seenUrls            = new Set<string>();
-  const errors:   string[]  = [];
-  let normalizedCount       = 0;
-  let skipped               = 0;
-
-  for (let i = 0; i < allStubs.length; i++) {
-    const stub = allStubs[i];
-
-    await sleep(DELAY_MS);
-
-    // Fetch detail page HTML
-    let html: string;
-    try {
-      html = await curlGet(stub.listingUrl, {
-        'Referer': 'https://www.renthop.com/apartments-for-rent/brooklyn-ny',
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`fetch failed — ${stub.listingUrl}: ${msg}`);
-      skipped++;
-      continue;
-    }
-
-    // Normalize
-    let row: RentHopRow;
-    try {
-      row = normalizeRentHopListing(html, stub);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`normalize error — ${stub.listingUrl}: ${msg}`);
-      skipped++;
-      continue;
-    }
-
-    normalizedCount++;
-
-    // Layer 3 bleed protection: reject any row that resolved to a borough other
-    // than Brooklyn, even if it passed the search card filter. This catches edge
-    // cases where JSON-LD contains a different addressLocality than expected.
-    if (row.borough !== PHASE1_BOROUGH) {
-      errors.push(`bleed rejected — ${stub.listingUrl}: resolved borough = "${row.borough}"`);
-      skipped++;
-      continue;
-    }
-
-    // Validate minimum DbRow requirements
-    const { valid, issues } = validateRentHopRow(row);
-    if (!valid) {
-      errors.push(`validation failed — ${stub.listingUrl}: ${issues.join(', ')}`);
-      skipped++;
-      continue;
-    }
-
-    // Deduplicate within this run
-    if (seenUrls.has(row.original_url)) {
-      skipped++;
-      continue;
-    }
-    seenUrls.add(row.original_url);
-
-    // Strip fields not yet in the DB schema.
-    //
-    // `source` and `petDetail` are produced by normalizeRentHopListing but the
-    // corresponding columns do not exist in the listings table yet.
-    // They are stripped here and re-enabled in Phase 2 after running:
-    //   ALTER TABLE listings ADD COLUMN source TEXT;
-    //
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { source: _src, petDetail: _pd, ...dbRow } = row;
-
-    // Unlike the existing Apify collect route, RentHop writes neighborhood,
-    // pets, and description. The Apify route strips those fields to protect
-    // manually curated DB values. RentHop rows are new inserts — no curated
-    // values exist to protect, and RentHop's pet and neighborhood data is
-    // reliable enough to write directly.
-    dbRows.push(dbRow);
-
-    console.log(
-      `[RentHop] [${i + 1}/${allStubs.length}] ` +
-      `${row.address} | $${row.price} | ${row.bedrooms}BR/${row.bathrooms}ba | pets=${row.pets}`
-    );
-  }
-
-  // ── Step 3: Upsert ────────────────────────────────────────────────────────
-
-  let upserted    = 0;
+  let totalUpserted = 0;
   let dbError: string | null = null;
 
-  if (dbRows.length > 0) {
+  if (allDbRows.length > 0) {
     const { error } = await db
       .from('listings')
-      .upsert(dbRows, { onConflict: 'original_url', ignoreDuplicates: false });
+      .upsert(allDbRows, { onConflict: 'original_url', ignoreDuplicates: false });
 
     if (error) {
       console.error('[RentHop] Supabase upsert error:', error.message);
       dbError = error.message;
     } else {
-      upserted = dbRows.length;
-      console.log(`[RentHop] Upserted ${upserted} listings to Supabase`);
+      totalUpserted = allDbRows.length;
+      console.log(`[RentHop] Upserted ${totalUpserted} listings to Supabase`);
     }
   }
 
+  // Distribute upsert count back to borough results
+  if (totalUpserted > 0) {
+    for (const br of boroughResults) {
+      br.upserted = br.valid; // each valid row was upserted
+    }
+  }
+
+  // Build totals
+  const totals = {
+    attempted:  boroughResults.reduce((s, b) => s + b.attempted, 0),
+    normalized: boroughResults.reduce((s, b) => s + b.normalized, 0),
+    valid:      boroughResults.reduce((s, b) => s + b.valid, 0),
+    upserted:   totalUpserted,
+    skipped:    boroughResults.reduce((s, b) => s + b.skipped, 0),
+  };
+
+  // Collect all errors across boroughs
+  const allErrors = boroughResults.flatMap(b =>
+    b.errors.map(e => `[${b.borough}] ${e}`)
+  );
+
+  // Clean up borough results for response (omit empty error arrays)
+  const boroughs = boroughResults.map(({ errors: errs, ...rest }) => ({
+    ...rest,
+    ...(errs.length > 0 && { errors: errs }),
+  }));
+
   return NextResponse.json({
-    status:     dbError ? 'error' : 'ok',
-    borough:    PHASE1_BOROUGH,
-    numFound,
-    attempted:  allStubs.length,
-    normalized: normalizedCount,
-    valid:      dbRows.length,
-    upserted,
-    skipped,
-    ...(errors.length > 0 && { errors }),
-    ...(dbError        && { dbError }),
+    status: dbError ? 'error' : totals.valid === 0 ? 'no_stubs' : 'ok',
+    ...totals,
+    boroughs,
+    ...(allErrors.length > 0 && { errors: allErrors }),
+    ...(dbError && { dbError }),
   });
 }
 
