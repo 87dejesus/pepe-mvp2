@@ -871,14 +871,11 @@ function DecisionClientInner() {
     }
   };
 
-  async function handleManageSubscription() {
-    const res = await fetch('/api/stripe/create-portal-session', { method: 'POST' });
-    const data = await res.json() as { url?: string; error?: string };
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert(data.error || 'Unable to open billing portal.');
-    }
+  function handleMyPlan() {
+    const expiry = accessState.current_period_end
+      ? new Date(accessState.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : 'N/A';
+    alert(`Your access expires on ${expiry}.\n\nNeed help? Contact team@thesteadyone.com`);
   }
 
   // Access gate — enforces all access rules after server check completes
@@ -1119,10 +1116,10 @@ function DecisionClientInner() {
           </span>
           {(accessState.status === 'active' || accessState.status === 'trialing') && (
             <button
-              onClick={handleManageSubscription}
+              onClick={handleMyPlan}
               className="text-[11px] text-white/40 hover:text-white/70 transition-colors"
             >
-              Manage
+              My Plan
             </button>
           )}
         </div>
