@@ -873,8 +873,12 @@ function DecisionClientInner() {
 
   async function handleManageSubscription() {
     const res = await fetch('/api/stripe/create-portal-session', { method: 'POST' });
-    const data = await res.json() as { url?: string };
-    if (data.url) window.location.href = data.url;
+    const data = await res.json() as { url?: string; error?: string };
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || 'Unable to open billing portal.');
+    }
   }
 
   // Access gate — enforces all access rules after server check completes
