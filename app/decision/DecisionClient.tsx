@@ -771,8 +771,13 @@ function DecisionClientInner() {
         }
       }
 
-      // Sort: RentHop listings first (real photos), then by match score DESCENDING
+      // Sort: bedroom match first, then RentHop priority, then match score
+      const bedroomMapSort: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
+      const neededSort = bedroomMapSort[answers!.bedrooms] ?? 1;
       finalList.sort((a, b) => {
+        const aExact = (answers!.bedrooms === '3+' ? a.bedrooms >= 3 : a.bedrooms === neededSort) ? 1 : 0;
+        const bExact = (answers!.bedrooms === '3+' ? b.bedrooms >= 3 : b.bedrooms === neededSort) ? 1 : 0;
+        if (bExact !== aExact) return bExact - aExact;
         const aRH = a.original_url?.includes('renthop') ? 1 : 0;
         const bRH = b.original_url?.includes('renthop') ? 1 : 0;
         if (bRH !== aRH) return bRH - aRH;
