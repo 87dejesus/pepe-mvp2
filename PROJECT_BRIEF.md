@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 1
-**Last updated:** 2026-05-19
+**Revision:** 2
+**Last updated:** 2026-05-19 (evening — scraper incident)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -40,13 +40,17 @@ Admin (`luhciano.sj@gmail.com`) bypasses paywall via `supabase.auth.getUser()` c
 
 ## 4. Data sources
 
-- **Primary scraper:** Apify `epctex~apartments-scraper-api` (Zillow data, cron 6:00 UTC sync + 6:10 UTC collect)
+- **Primary scraper:** Apify `epctex~apartments-scraper-api` (Apartments.com data, cron 6:00 UTC sync + 6:10 UTC collect)
+  - ⚠️ **Regressed mid-May 2026:** actor stopped returning `rent` field. Quick fix in PR #7 accepts listings with `price == 0` and renders "Contact for pricing" downstream. Long-term: evaluate `parseforge/apartments-com-scraper` via `/scraper-provider-evaluator`.
 - **Secondary scraper:** RentHop API (Phase 1, cron 6:20 UTC, MN/BK/BX/QN, ~10 listings per borough)
   - Requires `RENTHOP_PROXY_URL` since Cloudflare blocks Vercel's AWS IPs
+  - **Proxy provider:** ScraperAPI (account: `luhciano.sj@gmail.com`, free plan = 1000 credits/month). RentHop sync burns ~50 credits per run, so daily cron exhausts the free tier in ~20 days. Upgrade or reduce frequency before mid-June.
 - **Table:** `listings` (NOT `pepe_listings`)
+  - `listings_price_check` constraint relaxed from `price > 0` to `price >= 0` on 2026-05-19 to accept Apify items without rent
 - **Sort order on /decision:** bedroom match → RentHop priority (real photos) → match score
 - **Match score:** Borough 40 + Budget 30 + Bedrooms 20 + Pets 5 + Bath 3 + Incentive 2
-- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`
+  - Listings with `price == 0` get 15/30 budget points (neutral) and bypass both strict and relaxed budget caps
+- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`. **Important:** if both scrapers fail simultaneously for >10 days the DB will fully drain and the site falls back to 10 hardcoded mock listings in `app/decision/DecisionClient.tsx` (`streeteasy.com/mock-N` URLs that go to the StreetEasy 404 page).
 
 ## 5. Design system (Steady Modern)
 
@@ -74,13 +78,23 @@ Apply on every UI change without being asked.
 
 ## 6. Open issues
 
+### High priority (next session)
+- [ ] **Evaluate `parseforge/apartments-com-scraper`** via the `/scraper-provider-evaluator` skill. Current Apify actor (`epctex/apartments-scraper-api`) regressed on 2026-05-19 — no longer returns the `rent` field. Quick fix in PR #7 patches around it with "Contact for pricing" but the proper fix is a replacement actor.
+- [ ] **Decide on ScraperAPI plan** before mid-June 2026. Free tier (1000 credits/month) burns out in ~20 days at current daily RentHop sync rate. Options: upgrade to Hobby (~$49/mo, 100k credits), reduce cron from daily to weekly, or reduce borough coverage.
+- [ ] **Rotate the ScraperAPI API key** that was leaked in chat (`30e0384ce6a3acd0d3fb0181dd651e2b`). Login at dashboard.scraperapi.com → Manage → regenerate → update `RENTHOP_PROXY_URL` in Vercel and redeploy.
+
+### Medium priority
 - [ ] **Cron auth on apify/renthop sync routes:** no `CRON_SECRET` check exists, only the cleanup route is protected. Vercel cron header (`x-vercel-cron`) is not verified either.
+- [ ] **Monitoring for empty scraper runs:** the 2026-05-19 incident persisted because nothing alerted when `synced: 0` happened day after day. Add a Sentry alert or a health endpoint.
+
+### Low priority
 - [ ] **CI:** no GitHub Actions workflow for lint/typecheck/build/smoke
 - [ ] **Pre-commit hooks:** none configured (no Husky)
 - [ ] **Footer:** no footer component anywhere; only the Header is shared
 - [ ] **Per-page metadata:** /paywall, /subscribe, /onboarding/* still inherit only from root layout
 - [ ] **Em-dashes in comments/console.log:** still present in src/; only user-visible copy was cleaned in revision 1
 - [ ] **`app/test/page.tsx`:** harmless but exists in production (noindexed and disallowed in robots)
+- [ ] **`maxItems: 300` hardcoded** in `app/api/apify/sync/route.ts` violates CLAUDE.md "always use maxItems ≤ 3 for tests". Route doesn't accept a query param so manual test runs cost full credits.
 
 ## 7. Standing copy rules
 
@@ -143,3 +157,22 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 - This file is canonical. Other context lives in `CLAUDE.md` (rules) and `~/.claude/projects/.../memory/MEMORY.md` (architecture, design system, patterns).
 - Old discovery reports archived in `docs/archive/`.
+
+## 13. Incident log
+
+### 2026-05-19 — Scraper double failure (resolved same day)
+
+**Symptoms:** First paid subscriber reported that listing detail links went to `streeteasy.com/mock-N` 404 pages. Investigation showed `/decision` was serving the 10 hardcoded fallback mocks because the DB had zero active listings.
+
+**Root causes (two independent bugs that surfaced together):**
+1. **Apify actor regression** — `epctex/apartments-scraper-api` stopped returning the `rent` field on its items. Our `normalizeItem` rejected 100% of 300 items per run via the `price <= 0 → return null` guard. Daily cron had been silently writing 0 listings for ~10 days; cleanup cron then marked all existing listings `Expired`.
+2. **RentHop proxy unauthorized** — ScraperAPI account (`luhciano.sj@gmail.com`) had never been activated. The proxy was returning plain-text `"Unauthorized"` on every request, breaking JSON parse in the search step. Activation generated a new API key, but `RENTHOP_PROXY_URL` in Vercel still held the old (invalid) one.
+
+**Fixes shipped:**
+- **PR #7** (`fix(scraper): accept listings without price...`) — normalizer keeps `price == 0` items, card renders "Contact for pricing", match score and budget filters handle zero gracefully.
+- **Supabase SQL** — `ALTER TABLE listings DROP CONSTRAINT listings_price_check; ALTER TABLE listings ADD CONSTRAINT listings_price_check CHECK (price >= 0);`
+- **Vercel env var** — `RENTHOP_PROXY_URL` updated with the new ScraperAPI key, redeployed.
+
+**End state:** 132 Apify listings ("Contact for pricing") + 20 RentHop listings (with photos and prices) upserted. Site recovered.
+
+**Open follow-ups:** see §6 high-priority list.
