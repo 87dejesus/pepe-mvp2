@@ -68,10 +68,10 @@ function detectIncentives(description: string): string | null {
 
 function getTransitNote(borough: string): string {
   const b = (borough || '').toLowerCase();
-  if (b.includes('manhattan')) return 'Subway station ~3–5 min walk';
-  if (b.includes('brooklyn')) return 'Subway station ~5–10 min walk';
-  if (b.includes('queens')) return 'Subway station ~8–12 min walk';
-  if (b.includes('bronx')) return 'Bus or subway ~10–15 min walk';
+  if (b.includes('manhattan')) return 'Subway station ~3-5 min walk';
+  if (b.includes('brooklyn')) return 'Subway station ~5-10 min walk';
+  if (b.includes('queens')) return 'Subway station ~8-12 min walk';
+  if (b.includes('bronx')) return 'Bus or subway ~10-15 min walk';
   return 'Transit nearby';
 }
 
@@ -89,7 +89,7 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
   } else {
     const over = listing.price - answers.budget;
     const pctOver = Math.round((over / answers.budget) * 100);
-    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%) — worth considering if the fit feels right`);
+    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%), worth considering if the fit feels right`);
   }
 
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
@@ -156,16 +156,16 @@ function buildBullets(
   const needed = bedroomMap[answers.bedrooms] ?? 1;
   const isExactBed = answers.bedrooms === '3+' ? listing.bedrooms >= 3 : listing.bedrooms === needed;
   if (isExactBed) {
-    bullets.push({ color: '#00A651', text: `Exact match — ${formatBedrooms(listing.bedrooms)}` });
+    bullets.push({ color: '#00A651', text: `Exact match: ${formatBedrooms(listing.bedrooms)}` });
   } else {
     const wantedLabel = answers.bedrooms === '0' ? 'Studio' : `${answers.bedrooms} bed`;
     bullets.push({ color: '#f59e0b', text: `${formatBedrooms(listing.bedrooms)} (you wanted ${wantedLabel})` });
   }
 
   if (listing.pets === 'Allowed') {
-    bullets.push({ color: '#00A651', text: 'Pet friendly — no need to hide your furry friend' });
+    bullets.push({ color: '#00A651', text: 'Pet friendly: no need to hide your furry friend' });
   } else if (listing.pets === 'Not allowed') {
-    bullets.push({ color: '#ef4444', text: 'No pets allowed — confirm before applying' });
+    bullets.push({ color: '#ef4444', text: 'No pets allowed: confirm before applying' });
   }
 
   bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
@@ -176,7 +176,7 @@ function buildBullets(
   } else if (detectIncentives(listing.description)) {
     bullets.push({ color: '#ef4444', text: 'Incentive may not be available on the next listing' });
   } else if (warnings.length > 0) {
-    bullets.push({ color: '#ef4444', text: 'This listing has flags — but so might the next one' });
+    bullets.push({ color: '#ef4444', text: 'This listing has flags, but so might the next one' });
   }
 
   return bullets;
@@ -201,8 +201,8 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
   const showGuarantor = answers.budget <= 2500;
   const boroughLabel = listing.neighborhood || listing.borough || 'your area';
   const verdictText = recommendation === 'ACT_NOW'
-    ? 'Strong match — this one fits your criteria well.'
-    : 'Good option — compare a few more before deciding.';
+    ? 'Strong match: this one fits your criteria well.'
+    : 'Good option: compare a few more before deciding.';
 
   return (
     <div

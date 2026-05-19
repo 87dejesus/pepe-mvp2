@@ -16,7 +16,7 @@ export const STORAGE_PARTNERS: StoragePartner[] = [
     name: 'Extra Space Storage',
     tagline: 'Units near you, move-in ready',
     description:
-      'Climate-controlled units across all five boroughs. Reserve online in minutes — no truck needed to get started.',
+      'Climate-controlled units across all five boroughs. Reserve online in minutes. No truck needed to get started.',
     cta: 'Find a Unit Near You',
     url: 'https://extraspace.com',
     badge: 'STORAGE',
@@ -52,7 +52,7 @@ export const STORAGE_PARTNERS: StoragePartner[] = [
     name: 'The Guarantee',
     tagline: 'No co-signer. No problem.',
     description:
-      "Can't meet the 40x income rule? The Guarantee acts as your guarantor so you can sign a lease — trusted by 500+ NYC landlords.",
+      "Can't meet the 40x income rule? The Guarantee acts as your guarantor so you can sign a lease. Trusted by 500+ NYC landlords.",
     cta: 'Check Eligibility',
     url: 'https://theguarantee.com',
     badge: 'GUARANTOR',

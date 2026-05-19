@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { timingSafeEqual } from 'node:crypto';
+
+// Timing-safe string compare. Returns false for length mismatch (which is
+// itself a side channel, but cheap and acceptable for bearer tokens).
+function safeBearerEquals(received: string | null, expected: string): boolean {
+  if (!received) return false;
+  const a = Buffer.from(received);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 export async function GET(request: NextRequest) {
   // Initialize Supabase inside the function (not at module level)
@@ -8,11 +19,16 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  // Security: Verify CRON_SECRET
+  // Security: Verify CRON_SECRET with constant-time compare
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error('Cron cleanup: CRON_SECRET not configured');
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
   const authHeader = request.headers.get('authorization');
-  const expectedToken = `Bearer ${process.env.CRON_SECRET}`;
+  const expectedToken = `Bearer ${cronSecret}`;
 
-  if (authHeader !== expectedToken) {
+  if (!safeBearerEquals(authHeader, expectedToken)) {
     console.log('Cron cleanup: Unauthorized attempt');
     return NextResponse.json(
       { error: 'Unauthorized' },

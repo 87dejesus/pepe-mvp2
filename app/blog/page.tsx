@@ -40,7 +40,7 @@ export default function BlogPage() {
           NYC Rental Guides
         </h1>
         <p style={{ fontSize: 17, color: "#6b7280", margin: 0, lineHeight: 1.6 }}>
-          Real talk about apartment hunting in New York City — from pressure to decision to lease.
+          Real talk about apartment hunting in New York City: from pressure to decision to lease.
         </p>
       </div>
 

@@ -87,7 +87,7 @@ export default function AffiliateOffers({ budget, matchScore, showLowCreditForce
           accentColor="#E84B2A"
           label="Storage"
           title="Need storage during your move?"
-          pitch="Climate-controlled units near you — reserve in minutes"
+          pitch="Climate-controlled units near you. Reserve in minutes"
           cta="Find Storage"
           trackUrl={storageTrackUrl}
         />

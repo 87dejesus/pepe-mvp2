@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | The Steady One",
   },
   description:
-    "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+    "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
   keywords: ["NYC apartments", "apartment search", "NYC rentals", "apartment matcher", "The Steady One"],
   authors: [{ name: "The Steady One" }],
   openGraph: {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     siteName: "The Steady One",
     title: "The Steady One | NYC Apartment Match",
     description:
-      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
     images: [
       {
         url: "/brand/steady-one-blue.png",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "The Steady One | NYC Apartment Match",
     description:
-      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
     images: ["/brand/steady-one-blue.png"],
   },
   manifest: "/manifest.json",
@@ -74,6 +74,28 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'The Steady One',
+  alternateName: 'Steady One',
+  url: 'https://thesteadyone.com',
+  logo: 'https://thesteadyone.com/brand/steady-one-512.png',
+  description:
+    'NYC apartment match platform. Answer 7 questions, get curated listings, decide with clarity.',
+  areaServed: {
+    '@type': 'City',
+    name: 'New York City',
+  },
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'The Steady One',
+  url: 'https://thesteadyone.com',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -84,6 +106,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         {children}
         <ServiceWorkerRegistration />
         <GoogleAnalytics gaId="G-0LQ1VL0PMG" />
