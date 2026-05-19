@@ -5,9 +5,9 @@ import { STORAGE_PARTNERS } from './lib/storage-partners';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Storage & Moving Tools — The Steady One',
+  title: 'Storage & Moving Tools',
   description:
-    'Storage units, valet storage, security deposit insurance, and lease guarantors — everything you need to actually move.',
+    'Storage units, valet storage, security deposit insurance, and lease guarantors. Everything you need to actually move.',
 };
 
 const STORAGE_PARTNERS_LIST = STORAGE_PARTNERS.filter((p) => p.category === 'storage');
@@ -32,7 +32,7 @@ export default function StoragePage() {
           </h1>
           <p className="text-[#666666] text-sm sm:text-base leading-relaxed max-w-md">
             Picked for NYC apartment hunters. Storage near you, valet pickup,
-            deposit savings, and guarantors — so nothing blocks your move.
+            deposit savings, and guarantors, so nothing blocks your move.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function StoragePage() {
           <p className="text-[#666666] text-xs leading-relaxed">
             <span className="font-semibold text-[#1A1A1A]">Heads up:</span>{' '}
             Some links above are affiliate links. We may earn a small fee if you
-            sign up — at no extra cost to you. We only list partners that are
+            sign up, at no extra cost to you. We only list partners that are
             genuinely useful for NYC renters.
           </p>
         </div>

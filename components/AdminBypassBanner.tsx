@@ -36,7 +36,7 @@ export default function AdminBypassBanner() {
   return (
     <div className="shrink-0 bg-[#00A651]/90 border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
       <p className="text-xs font-medium text-white/90 leading-tight">
-        🔧 ADMIN MODE — Full access (Owner only)
+        🔧 ADMIN MODE: Full access (Owner only)
       </p>
       <button
         onClick={() => {

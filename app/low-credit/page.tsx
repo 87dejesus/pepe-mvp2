@@ -5,7 +5,7 @@ import { LOW_CREDIT_PARTNERS } from './lib/low-credit-partners';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Low Credit? Still Get the Apartment — The Steady One',
+  title: 'Low Credit? Still Get the Apartment',
   description:
     'Lease guarantors, deposit insurance, and zero-deposit programs for NYC renters with low credit, no credit history, or income gaps.',
 };
@@ -29,7 +29,7 @@ export default function LowCreditPage() {
           </h1>
           <p className="text-[#666666] text-sm sm:text-base leading-relaxed max-w-md">
             These NYC-trusted tools help renters with low credit, no US credit
-            history, or income gaps get approved — without a co-signer or lump
+            history, or income gaps get approved without a co-signer or lump
             sum deposit.
           </p>
         </div>
@@ -41,7 +41,7 @@ export default function LowCreditPage() {
           </p>
           <ol className="space-y-1.5 text-[#666666] text-sm">
             <li><span className="text-[#00A651] font-semibold">1.</span> Pick the tool that fits your situation below.</li>
-            <li><span className="text-[#00A651] font-semibold">2.</span> Apply directly — takes 5–10 minutes.</li>
+            <li><span className="text-[#00A651] font-semibold">2.</span> Apply directly, takes 5-10 minutes.</li>
             <li><span className="text-[#00A651] font-semibold">3.</span> Get your approval letter and send it with your application.</li>
           </ol>
         </div>
@@ -69,7 +69,7 @@ export default function LowCreditPage() {
           <p className="text-[#666666] text-sm leading-relaxed">
             Apply to a guarantor <span className="text-[#0A2540] font-semibold">before</span> you
             find the apartment. Showing up with an approval letter makes landlords take
-            you seriously — even in a competitive market.
+            you seriously, even in a competitive market.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default function LowCreditPage() {
           <p className="text-[#666666] text-xs leading-relaxed">
             <span className="font-semibold text-[#1A1A1A]">Heads up:</span>{' '}
             Some links above are affiliate links. We may earn a small fee if you
-            sign up — at no extra cost to you. We only list services that are
+            sign up, at no extra cost to you. We only list services that are
             genuinely useful for NYC renters.
           </p>
         </div>

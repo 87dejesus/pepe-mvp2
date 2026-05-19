@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | The Steady One",
   },
   description:
-    "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+    "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
   keywords: ["NYC apartments", "apartment search", "NYC rentals", "apartment matcher", "The Steady One"],
   authors: [{ name: "The Steady One" }],
   openGraph: {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     siteName: "The Steady One",
     title: "The Steady One | NYC Apartment Match",
     description:
-      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
     images: [
       {
         url: "/brand/steady-one-blue.png",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "The Steady One | NYC Apartment Match",
     description:
-      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+      "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
     images: ["/brand/steady-one-blue.png"],
   },
   manifest: "/manifest.json",

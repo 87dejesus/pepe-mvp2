@@ -1,7 +1,7 @@
 {
   "name": "The Steady One",
   "short_name": "Steady One",
-  "description": "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity — not panic.",
+  "description": "Find your steady home in NYC. Answer 7 questions, get matched with listings, and decide with clarity, not panic.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

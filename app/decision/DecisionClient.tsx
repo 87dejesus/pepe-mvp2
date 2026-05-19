@@ -256,7 +256,7 @@ const MOCK_LISTINGS: Listing[] = [
     price: 2750,
     bedrooms: 0,
     bathrooms: 1,
-    description: 'Spacious studio in central Harlem — 1 free month, no broker fee. Exposed brick, high ceilings, gym access, pets OK. Near 2/3 subway.',
+    description: 'Spacious studio in central Harlem. 1 free month, no broker fee. Exposed brick, high ceilings, gym access, pets OK. Near 2/3 subway.',
     image_url: 'https://images.unsplash.com/photo-1502672023-a1a1-4ac7-800b-c8b8e7b96bc7?w=800&q=80',
     images: [],
     pets: 'yes',
@@ -286,7 +286,7 @@ const MOCK_LISTINGS: Listing[] = [
     price: 2600,
     bedrooms: 0,
     bathrooms: 1,
-    description: 'Cozy studio in Astoria — free month on 12-month lease. Newly renovated, pet-friendly, gym included. N/W train, 20 min to Midtown.',
+    description: 'Cozy studio in Astoria. Free month on 12-month lease. Newly renovated, pet-friendly, gym included. N/W train, 20 min to Midtown.',
     image_url: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=800&q=80',
     images: [],
     pets: 'yes',
@@ -316,7 +316,7 @@ const MOCK_LISTINGS: Listing[] = [
     price: 2500,
     bedrooms: 0,
     bathrooms: 1,
-    description: 'Affordable studio in Jackson Heights — first month free, owner pays broker fee. Pets allowed, gym in building, laundry on-site. 7 train.',
+    description: 'Affordable studio in Jackson Heights. First month free, owner pays broker fee. Pets allowed, gym in building, laundry on-site. 7 train.',
     image_url: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80',
     images: [],
     pets: 'yes',
@@ -346,7 +346,7 @@ const MOCK_LISTINGS: Listing[] = [
     price: 2900,
     bedrooms: 0,
     bathrooms: 1,
-    description: 'Sunny studio in East Harlem — reduced first month, no broker fee. Pet-friendly, gym, central air. Close to 6 train and Central Park.',
+    description: 'Sunny studio in East Harlem. Reduced first month, no broker fee. Pet-friendly, gym, central air. Close to 6 train and Central Park.',
     image_url: 'https://images.unsplash.com/photo-1571508601891-ca5e7a713859?w=800&q=80',
     images: [],
     pets: 'yes',
@@ -361,7 +361,7 @@ const MOCK_LISTINGS: Listing[] = [
     price: 2800,
     bedrooms: 1,
     bathrooms: 1,
-    description: '1-bed in Sunnyside Gardens — 1 month free on 12+ month lease. Hardwood floors, updated kitchen, pet-friendly, gym access. 7 train, 25 min to Midtown.',
+    description: '1-bed in Sunnyside Gardens. 1 month free on 12+ month lease. Hardwood floors, updated kitchen, pet-friendly, gym access. 7 train, 25 min to Midtown.',
     image_url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
     images: [],
     pets: 'yes',
@@ -994,7 +994,7 @@ function DecisionClientInner() {
                   <h1 className="text-lg font-semibold text-white">No matches right now</h1>
                   <p className="text-sm text-white/55 mt-1 leading-relaxed">
                     {filterStats?.total === 0
-                      ? "The database is empty — listings will appear as they're scraped."
+                      ? "The database is empty. Listings will appear as they're scraped."
                       : "I couldn't find listings that fit your criteria. Let's figure out why."}
                   </p>
                 </div>
@@ -1045,7 +1045,7 @@ function DecisionClientInner() {
                   </ul>
                   {filterStats.relaxedUsed && (
                     <p className="mt-3 text-xs text-amber-400/80 font-medium">
-                      Even with relaxed criteria (budget +60%, bedrooms ±1) — still no matches.
+                      Even with relaxed criteria (budget +60%, bedrooms +/-1), still no matches.
                     </p>
                   )}
                 </div>
@@ -1081,7 +1081,7 @@ function DecisionClientInner() {
       {isAdmin && !adminBannerDismissed && (
         <div className="shrink-0 bg-[#00A651]/90 border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
           <p className="text-xs font-medium text-white/90 leading-tight">
-            🔧 ADMIN MODE — Full access (Owner only)
+            🔧 ADMIN MODE: Full access (Owner only)
           </p>
           <button
             onClick={() => {
@@ -1099,7 +1099,7 @@ function DecisionClientInner() {
       {accessState.status === 'trialing' && (
         <div className="shrink-0 bg-amber-500/20 border-b border-amber-500/20 px-3 py-1.5 text-center">
           <p className="text-xs font-medium text-amber-300 leading-tight">
-            Trial — {daysLeft} days left · $4.49/wk after
+            Trial: {daysLeft} days left · $4.49/wk after
           </p>
         </div>
       )}
