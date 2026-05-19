@@ -17,7 +17,10 @@ export type Post = PostMeta & {
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
 
 function parseFrontmatter(raw: string): { meta: PostMeta; content: string } {
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  // Normalize CRLF to LF so the regex works regardless of how Git checked
+  // the file out (Windows worktrees can produce CRLF).
+  const normalized = raw.replace(/\r\n/g, "\n");
+  const match = normalized.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) throw new Error("Invalid frontmatter");
 
   const frontmatter = match[1];
