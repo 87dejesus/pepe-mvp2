@@ -79,17 +79,21 @@ function buildHeedTake(listing: Listing, answers: Answers, score: number, warnin
   const parts: string[] = [];
   const neighborhood = listing.neighborhood || listing.borough || 'this area';
 
-  if (listing.price <= answers.budget) {
-    const savings = answers.budget - listing.price;
-    if (savings > 200) {
-      parts.push(`This ${neighborhood} spot saves you $${savings.toLocaleString()}/mo from your budget`);
+  if (listing.price > 0) {
+    if (listing.price <= answers.budget) {
+      const savings = answers.budget - listing.price;
+      if (savings > 200) {
+        parts.push(`This ${neighborhood} spot saves you $${savings.toLocaleString()}/mo from your budget`);
+      } else {
+        parts.push(`Right at your $${answers.budget.toLocaleString()} budget`);
+      }
     } else {
-      parts.push(`Right at your $${answers.budget.toLocaleString()} budget`);
+      const over = listing.price - answers.budget;
+      const pctOver = Math.round((over / answers.budget) * 100);
+      parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%), worth considering if the fit feels right`);
     }
   } else {
-    const over = listing.price - answers.budget;
-    const pctOver = Math.round((over / answers.budget) * 100);
-    parts.push(`$${over.toLocaleString()}/mo over budget (${pctOver}%), worth considering if the fit feels right`);
+    parts.push(`pricing on request, contact the building directly`);
   }
 
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
@@ -140,16 +144,20 @@ function buildBullets(
   const bullets: { color: string; text: string }[] = [];
 
   const price = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
-  if (price <= answers.budget) {
-    const savings = answers.budget - price;
-    if (savings > 100) {
-      bullets.push({ color: '#00A651', text: `$${savings.toLocaleString()}/mo under your budget` });
+  if (price > 0) {
+    if (price <= answers.budget) {
+      const savings = answers.budget - price;
+      if (savings > 100) {
+        bullets.push({ color: '#00A651', text: `$${savings.toLocaleString()}/mo under your budget` });
+      } else {
+        bullets.push({ color: '#00A651', text: 'Fits your budget' });
+      }
     } else {
-      bullets.push({ color: '#00A651', text: 'Fits your budget' });
+      const over = price - answers.budget;
+      bullets.push({ color: '#ef4444', text: `$${over.toLocaleString()}/mo over your budget` });
     }
   } else {
-    const over = price - answers.budget;
-    bullets.push({ color: '#ef4444', text: `$${over.toLocaleString()}/mo over your budget` });
+    bullets.push({ color: '#f59e0b', text: 'Pricing on request, ask the building directly' });
   }
 
   const bedroomMap: Record<string, number> = { '0': 0, '1': 1, '2': 2, '3+': 3 };
@@ -171,7 +179,7 @@ function buildBullets(
   bullets.push({ color: '#f59e0b', text: getTransitNote(listing.borough) });
 
   const price2 = Number(String(listing.price || 0).replace(/[^0-9.]/g, '')) || 0;
-  if (price2 < answers.budget * 0.9) {
+  if (price2 > 0 && price2 < answers.budget * 0.9) {
     bullets.push({ color: '#ef4444', text: `If you pass: next comparable unit in ${listing.borough || 'this area'} likely costs more` });
   } else if (detectIncentives(listing.description)) {
     bullets.push({ color: '#ef4444', text: 'Incentive may not be available on the next listing' });
@@ -306,7 +314,9 @@ export default function DecisionListingCard({ listing, answers, matchScore, reco
             fontWeight: 700,
           }}
         >
-          ${listing.price?.toLocaleString()}/mo
+          {listing.price && listing.price > 0
+            ? `$${listing.price.toLocaleString()}/mo`
+            : 'Contact for pricing'}
         </div>
       </div>
 

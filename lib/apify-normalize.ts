@@ -136,9 +136,12 @@ function parseAmenities(list?: Array<{ title: string; value: string[] }>): strin
 // ─── Normalizer ───────────────────────────────────────────────────────────────
 
 export function normalizeItem(item: ApartmentsItem): ApifyListing | null {
-  // Price
+  // Price. 0 is allowed and signals "Contact for pricing" downstream — the
+  // epctex actor stopped returning rent in late May 2026, so rejecting on
+  // missing price would empty the entire feed. Filtering by budget on the
+  // client treats 0 as a non-match for strict budget filters and lets it
+  // through in relaxed mode.
   const price = item.rent?.min ?? 0;
-  if (price <= 0) return null;
 
   // Location
   const city  = item.location?.city  ?? '';

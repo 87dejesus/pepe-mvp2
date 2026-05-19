@@ -131,9 +131,13 @@ function calculateMatchScore(listing: Listing, answers: Answers): number {
     score += 40;
   }
 
-  // Budget (30 points base + 2 bonus for well under budget)
+  // Budget (30 points base + 2 bonus for well under budget).
+  // price == 0 means "pricing on request" (Apify epctex stopped returning rent
+  // mid-May 2026). Give a neutral 15 points so listings rank by other criteria.
   const price = parsePrice(listing.price);
-  if (price <= answers.budget) {
+  if (price <= 0) {
+    score += 15;
+  } else if (price <= answers.budget) {
     score += 30;
     const pctUnder = (answers.budget - price) / answers.budget;
     if (pctUnder > 0.15) score += 2;
@@ -688,10 +692,13 @@ function DecisionClientInner() {
       }));
 
       // === PASS 1: Strict filters (budget +35%, exact bedrooms, borough required, pets) ===
+      // price == 0 means "pricing on request" — let it pass the budget gate
+      // and rely on bedroom + borough + photo filters to keep quality high.
       const strictBudgetCap = 1.35;
       const strict = rawWithMatch.filter((l: Listing) => {
         if (!l.original_url) { stats.noUrl++; return false; }
-        if (parsePrice(l.price) > answers!.budget * strictBudgetCap) { stats.overBudget++; return false; }
+        const lprice = parsePrice(l.price);
+        if (lprice > 0 && lprice > answers!.budget * strictBudgetCap) { stats.overBudget++; return false; }
         if (answers!.bedrooms === '3+') {
           if (l.bedrooms < 3) { stats.wrongBedrooms++; return false; }
         } else {
@@ -730,8 +737,9 @@ function DecisionClientInner() {
           if (isPlaceholder(l)) return false;
           // Non-NYC locations never qualify even in relaxed mode
           if (isNonNYC(l)) return false;
-          // Budget: allow +60%
-          if (parsePrice(l.price) > answers!.budget * 1.60) return false;
+          // Budget: allow +60%. price == 0 means "pricing on request" — pass.
+          const lprice = parsePrice(l.price);
+          if (lprice > 0 && lprice > answers!.budget * 1.60) return false;
           // Bedrooms: flexible — Studio accepts 0 or 1; others allow ±1
           if (answers!.bedrooms === '3+') {
             if (l.bedrooms < 2) return false;
