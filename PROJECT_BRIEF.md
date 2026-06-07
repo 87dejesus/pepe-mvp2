@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 2
-**Last updated:** 2026-05-19 (evening — scraper incident)
+**Revision:** 3
+**Last updated:** 2026-06-07 (scraper migration to ParseForge)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -40,17 +40,17 @@ Admin (`luhciano.sj@gmail.com`) bypasses paywall via `supabase.auth.getUser()` c
 
 ## 4. Data sources
 
-- **Primary scraper:** Apify `epctex~apartments-scraper-api` (Apartments.com data, cron 6:00 UTC sync + 6:10 UTC collect)
-  - ⚠️ **Regressed mid-May 2026:** actor stopped returning `rent` field. Quick fix in PR #7 accepts listings with `price == 0` and renders "Contact for pricing" downstream. Long-term: evaluate `parseforge/apartments-com-scraper` via `/scraper-provider-evaluator`.
-- **Secondary scraper:** RentHop API (Phase 1, cron 6:20 UTC, MN/BK/BX/QN, ~10 listings per borough)
-  - Requires `RENTHOP_PROXY_URL` since Cloudflare blocks Vercel's AWS IPs
-  - **Proxy provider:** ScraperAPI (account: `luhciano.sj@gmail.com`, free plan = 1000 credits/month). RentHop sync burns ~50 credits per run, so daily cron exhausts the free tier in ~20 days. Upgrade or reduce frequency before mid-June.
+- **Primary scraper (CURRENT):** Apify `parseforge~apartments-com-scraper` (Apartments.com). Adopted 2026-06-07 after `/scraper-provider-evaluator` passed it. Returns numeric prices (`minPrice`/`maxPrice` + per-bedroom `bedRents`) AND public `images1.apartments.com` CDN image URLs in one cheap run. Replaces BOTH epctex and RentHop.
+  - Route: `/api/apify/sync` (start run, `startUrl=apartments.com/new-york-ny/`, `maxItems=200`) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/parseforge-normalize.ts`.
+  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC) to keep cost ~$10/month given current revenue (~$47/mo from 5 customers). Pricing ~$0.005/result + ~$0.09 actor-start. Tune volume via `PARSEFORGE_MAX_ITEMS` env (default 200) or change cron frequency in `vercel.json`.
+  - Borough derived from ZIP prefix in the normalizer (rejects non-NYC bleed: Yonkers, Mount Vernon, NJ). The `price` string field is "Contact for Price"; use `minPrice` (numeric).
+- **Retired:** `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026) and RentHop + ScraperAPI proxy (Cloudflare made it ~10-25 credits/request, too expensive). The `/api/renthop/sync` route and `lib/renthop-normalize.ts` remain in the repo but are no longer wired to any cron — safe to delete later.
 - **Table:** `listings` (NOT `pepe_listings`)
-  - `listings_price_check` constraint relaxed from `price > 0` to `price >= 0` on 2026-05-19 to accept Apify items without rent
-- **Sort order on /decision:** bedroom match → RentHop priority (real photos) → match score
+  - `listings_price_check` constraint allows `price >= 0` (price == 0 still means "Contact for pricing" for buildings ParseForge can't price).
+- **Sort order on /decision:** bedroom match → RentHop priority (legacy, now inert) → match score
 - **Match score:** Borough 40 + Budget 30 + Bedrooms 20 + Pets 5 + Bath 3 + Incentive 2
   - Listings with `price == 0` get 15/30 budget points (neutral) and bypass both strict and relaxed budget caps
-- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`. **Important:** if both scrapers fail simultaneously for >10 days the DB will fully drain and the site falls back to 10 hardcoded mock listings in `app/decision/DecisionClient.tsx` (`streeteasy.com/mock-N` URLs that go to the StreetEasy 404 page).
+- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`. **Important:** if the scraper fails for >10 days the DB drains and the site falls back to 10 hardcoded mock listings in `app/decision/DecisionClient.tsx` (`streeteasy.com/mock-N` URLs that 404). Add monitoring on `synced: 0`.
 
 ## 5. Design system (Steady Modern)
 

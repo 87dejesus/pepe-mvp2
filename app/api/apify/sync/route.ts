@@ -1,9 +1,14 @@
 /**
  * POST /api/apify/sync
  *
- * Fire-and-forget: starts the Apify Apartments.com actor run and saves the
- * runId to the sync_runs table, then returns immediately.
+ * Fire-and-forget: starts the ParseForge apartments-com-scraper actor run and
+ * saves the runId to the sync_runs table, then returns immediately.
  * Results are collected by GET /api/apify/collect (run ~10 min later by cron).
+ *
+ * Actor: parseforge/apartments-com-scraper (adopted 2026-06-07, replaces both
+ * epctex/apartments-scraper-api — which stopped returning rent — and RentHop).
+ * It returns numeric prices (minPrice/maxPrice + per-bedroom bedRents) and
+ * public apartments.com CDN image URLs. See lib/parseforge-normalize.ts.
  *
  * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL        (required)
@@ -11,7 +16,7 @@
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
  *   APIFY_ACTOR_ID                  (optional — overrides default actor)
- *                                  Set to: epctex~apartments-scraper-api in Vercel
+ *   PARSEFORGE_MAX_ITEMS            (optional — overrides default 200)
  *
  * SQL — run once in Supabase before deploying:
  *   CREATE TABLE sync_runs (
@@ -28,28 +33,23 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'epctex~apartments-scraper-api';
+const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'parseforge~apartments-com-scraper';
+
+// apartments.com/new-york-ny/ surfaces listings across all five boroughs (the
+// maxItems=3 spike returned Queens + Bronx). The collect-side normalizer derives
+// borough from ZIP and rejects non-NYC bleed (Yonkers, Mount Vernon, NJ).
+const START_URL = 'https://www.apartments.com/new-york-ny/';
+
+// Cost control: ~$0.005/result. 200 items every 3 days ≈ $10/month. Tune via env.
+const MAX_ITEMS = Number(process.env.PARSEFORGE_MAX_ITEMS ?? 200);
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    startUrls: [
-      'https://www.apartments.com/new-york-ny/',
-      'https://www.apartments.com/brooklyn-ny/',
-      'https://www.apartments.com/bronx-ny/',
-      'https://www.apartments.com/queens-ny/',
-      'https://www.apartments.com/new-york-ny/studio-apartments/',
-      'https://www.apartments.com/brooklyn-ny/studio-apartments/',
-      'https://www.apartments.com/bronx-ny/studio-apartments/',
-      'https://www.apartments.com/queens-ny/studio-apartments/',
-    ],
-    includeReviews: false,
-    includeVisuals: false,
-    includeInteriorAmenities: true,
-    includeWalkScore: false,
-    maxItems: 300,
+    startUrl: START_URL,
+    maxItems: MAX_ITEMS,
   });
 
   const res = await fetch(

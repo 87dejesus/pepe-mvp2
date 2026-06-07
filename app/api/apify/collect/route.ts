@@ -16,7 +16,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { normalizeItem, ApifyListing, ApartmentsItem } from '@/lib/apify-normalize';
+import type { ApifyListing } from '@/lib/apify-normalize';
+import { normalizeParseForgeItem, type ParseForgeItem } from '@/lib/parseforge-normalize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -94,16 +95,20 @@ async function collect() {
       { status: 500 }
     );
   }
-  const raw: ApartmentsItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] Apify: fetched ${raw.length} raw items`);
-  console.log('[Model Debug]', JSON.stringify({contact: (raw[0] as any)?.contact, model0: (raw[0] as any)?.models?.[0]}));
+  const raw: ParseForgeItem[] = await itemsRes.json();
+  console.log(`[Steady Debug] ParseForge: fetched ${raw.length} raw items`);
 
   // 4. Normalize
   const normalized: ApifyListing[] = raw
-    .map(normalizeItem)
+    .map(normalizeParseForgeItem)
     .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] Apify: normalized ${normalized.length}/${raw.length} items`);
-  console.log('[Normalize Debug]', JSON.stringify(normalized.slice(0,5).map((i: any) => ({id: i.id, image_url: i.image_url, address: i.address}))));
+  console.log(`[Steady Debug] ParseForge: normalized ${normalized.length}/${raw.length} items`);
+  console.log(
+    '[Normalize Debug]',
+    JSON.stringify(
+      normalized.slice(0, 5).map((i) => ({ price: i.price, image: !!i.image_url, borough: i.borough, address: i.address }))
+    )
+  );
 
   // 5. Upsert to Supabase (neighborhood, pets, description excluded to protect curated data)
   let synced = 0;

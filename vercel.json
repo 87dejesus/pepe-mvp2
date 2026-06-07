@@ -7,15 +7,11 @@
     },
     {
       "path": "/api/apify/sync",
-      "schedule": "0 6 * * *"
+      "schedule": "0 6 */3 * *"
     },
     {
       "path": "/api/apify/collect",
-      "schedule": "10 6 * * *"
-    },
-    {
-      "path": "/api/renthop/sync",
-      "schedule": "20 6 * * *"
+      "schedule": "25 6 */3 * *"
     }
   ],
   "redirects": [
