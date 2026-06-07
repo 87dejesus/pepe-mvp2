@@ -15,8 +15,11 @@
  *   SUPABASE_SERVICE_ROLE_KEY       (preferred — allows write without RLS)
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
- *   APIFY_ACTOR_ID                  (optional — overrides default actor)
  *   PARSEFORGE_MAX_ITEMS            (optional — overrides default 200)
+ *
+ * NOTE: the actor is hardcoded below (not env-driven). A leftover Vercel env
+ * var APIFY_ACTOR_ID was silently forcing the dead epctex actor. Safe to delete
+ * that env var in Vercel; it is no longer read.
  *
  * SQL — run once in Supabase before deploying:
  *   CREATE TABLE sync_runs (
@@ -33,7 +36,11 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const APIFY_ACTOR_ID = process.env.APIFY_ACTOR_ID ?? 'parseforge~apartments-com-scraper';
+// Hardcoded intentionally. A stale Vercel env var APIFY_ACTOR_ID=epctex~...
+// silently overrode the actor on 2026-06-07 and kept routing runs to the dead
+// epctex actor. The actor choice belongs in code, not in a forgotten env toggle.
+// To change actors, edit this line.
+const APIFY_ACTOR_ID = 'parseforge~apartments-com-scraper';
 
 // apartments.com/new-york-ny/ surfaces listings across all five boroughs (the
 // maxItems=3 spike returned Queens + Bronx). The collect-side normalizer derives
