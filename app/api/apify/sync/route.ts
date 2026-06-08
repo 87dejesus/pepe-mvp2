@@ -1,21 +1,24 @@
 /**
  * POST /api/apify/sync
  *
- * Fire-and-forget: starts the ParseForge apartments-com-scraper actor run and
+ * Fire-and-forget: starts the saswave advanced-apartments-com-scraper run and
  * saves the runId to the sync_runs table, then returns immediately.
- * Results are collected by GET /api/apify/collect (run ~10 min later by cron).
+ * Results are collected by GET /api/apify/collect (run ~25 min later by cron).
  *
- * Actor: parseforge/apartments-com-scraper (adopted 2026-06-07, replaces both
- * epctex/apartments-scraper-api — which stopped returning rent — and RentHop).
- * It returns numeric prices (minPrice/maxPrice + per-bedroom bedRents) and
- * public apartments.com CDN image URLs. See lib/parseforge-normalize.ts.
+ * Actor: saswave/advanced-apartments-com-scraper (adopted 2026-06-08). Replaces
+ * ParseForge, which returned good data but relied on OUR Apify proxy that
+ * apartments.com blocks at any volume (worked at 3 items, blocked at 50).
+ * saswave bundles its own proxy infra (no proxyConfiguration input), so the
+ * anti-bot problem is the actor's, not ours — a single run pulled 40 listings
+ * with no block. Returns numeric rent + public CDN images. See
+ * lib/saswave-normalize.ts.
  *
  * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL        (required)
  *   SUPABASE_SERVICE_ROLE_KEY       (preferred — allows write without RLS)
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
- *   PARSEFORGE_MAX_ITEMS            (optional — overrides default 200)
+ *   SASWAVE_MAX_PAGES              (optional — overrides default 5; ~40 listings/page)
  *
  * NOTE: the actor is hardcoded below (not env-driven). A leftover Vercel env
  * var APIFY_ACTOR_ID was silently forcing the dead epctex actor. Safe to delete
@@ -40,23 +43,24 @@ export const maxDuration = 30;
 // silently overrode the actor on 2026-06-07 and kept routing runs to the dead
 // epctex actor. The actor choice belongs in code, not in a forgotten env toggle.
 // To change actors, edit this line.
-const APIFY_ACTOR_ID = 'parseforge~apartments-com-scraper';
+const APIFY_ACTOR_ID = 'saswave~advanced-apartments-com-scraper';
 
-// apartments.com/new-york-ny/ surfaces listings across all five boroughs (the
-// maxItems=3 spike returned Queens + Bronx). The collect-side normalizer derives
-// borough from ZIP and rejects non-NYC bleed (Yonkers, Mount Vernon, NJ).
-const START_URL = 'https://www.apartments.com/new-york-ny/';
+// apartments.com/new-york-ny/ surfaces listings across all five boroughs. The
+// collect-side normalizer derives borough from ZIP and rejects non-NYC bleed
+// (Yonkers, Mount Vernon, NJ).
+const SEARCH_URL = 'https://www.apartments.com/new-york-ny/';
 
-// Cost control: ~$0.005/result. 200 items every 3 days ≈ $10/month. Tune via env.
-const MAX_ITEMS = Number(process.env.PARSEFORGE_MAX_ITEMS ?? 200);
+// Cost control: ~$0.001/result, ~40 listings/page. 5 pages ≈ 200 listings every
+// 3 days ≈ $2/month. Tune via env.
+const MAX_PAGES = Number(process.env.SASWAVE_MAX_PAGES ?? 5);
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    startUrl: START_URL,
-    maxItems: MAX_ITEMS,
+    search_url: SEARCH_URL,
+    max_pages: MAX_PAGES,
   });
 
   const res = await fetch(
