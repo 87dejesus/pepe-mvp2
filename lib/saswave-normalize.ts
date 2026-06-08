@@ -27,6 +27,8 @@ export type SaswaveFloorPlan = {
   units?: unknown[];
 };
 
+export type SaswaveTransportGroup = { subtitle?: string; stations?: string[] };
+
 export type SaswaveItem = {
   url?: string;
   pricingAndFloorPlans?: SaswaveFloorPlan[];
@@ -39,6 +41,7 @@ export type SaswaveItem = {
   };
   contact?: Record<string, unknown>;
   amenities?: unknown;
+  transportation?: { description?: string; groups?: SaswaveTransportGroup[] };
 };
 
 const VALID_BOROUGHS = new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']);
@@ -130,6 +133,43 @@ function parsePets(item: SaswaveItem): string {
   return 'Unknown';
 }
 
+// Nearest WALKABLE subway from saswave's transportation.groups. Stations look
+// like "125 Street (4,5,6 Line) : Walk: 3 min / 0.2 mi" or, without a line,
+// "Van Cortlandt Park-242 Street : Walk: 3 min / 0.2 mi". We pick the shortest
+// walk and format a tight note for the card. Falls back to nearest drive if no
+// station is walkable, and to '' if there is no subway data at all.
+function parseTransit(item: SaswaveItem): string {
+  const groups = item.transportation?.groups ?? [];
+  const subway = groups.find((g) => /subway/i.test(g.subtitle ?? ''));
+  const stations = subway?.stations ?? [];
+
+  type Stop = { name: string; lines: string | null; mode: 'walk' | 'drive'; min: number };
+  const stops: Stop[] = [];
+  for (const s of stations) {
+    const m = s.match(/^\s*(.*?)\s*(?:\(([^)]*?)\s*Line\)\s*)?:\s*(Walk|Drive):\s*(\d+)\s*min/i);
+    if (!m) continue;
+    stops.push({
+      name: m[1].trim(),
+      lines: m[2] ? m[2].replace(/\s+/g, '') : null,
+      mode: /walk/i.test(m[3]) ? 'walk' : 'drive',
+      min: parseInt(m[4], 10),
+    });
+  }
+  if (!stops.length) return '';
+
+  const walks = stops.filter((s) => s.mode === 'walk').sort((a, b) => a.min - b.min);
+  const best = walks[0] ?? stops.slice().sort((a, b) => a.min - b.min)[0];
+  const verb = best.mode === 'walk' ? 'min walk' : 'min drive';
+
+  if (best.lines) return `${best.lines} train · ${best.min} ${verb}`;
+  // No line label: use a tidy station name with common abbreviations.
+  const name = best.name
+    .replace(/\bStreet\b/g, 'St')
+    .replace(/\bAvenue\b/g, 'Av')
+    .replace(/\bBoulevard\b/g, 'Blvd');
+  return `${name} · ${best.min} ${verb}`;
+}
+
 function pickImage(about: NonNullable<SaswaveItem['about']>): string {
   const img = (about.image ?? '').trim();
   if (img.startsWith('https://') && !img.includes('add7ffb')) return img;
@@ -174,6 +214,7 @@ export function normalizeSaswaveItem(item: SaswaveItem): ApifyListing | null {
     original_url,
     pets: parsePets(item),
     status: 'Active',
+    transit: parseTransit(item),
     amenities: [],
     images: image_url ? [image_url] : [],
   };

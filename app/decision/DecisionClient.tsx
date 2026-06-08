@@ -39,6 +39,7 @@ type Listing = {
   amenities: string[];
   original_url: string | null;
   status: string;
+  transit?: string;
   boroughMatch?: boolean;
 };
 

@@ -43,6 +43,7 @@ export type DbRow = {
   original_url: string;
   pets: string;
   status: string;
+  transit?: string;            // nearest walkable subway note, e.g. "4,5,6 train · 3 min walk"
 };
 
 // Full listing returned to the React client (includes amenities, images, id)
