@@ -237,7 +237,8 @@ export default function DecisionListingCard({ listing, answers, matchScore }: Pr
           // eslint-disable-next-line @next/next/no-img-element
           <img src={rawImg} alt={neighborhood} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.92 }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, opacity: 0.5 }}>🐊</div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/brand/heed-mascot.png" alt="Heed" style={{ height: 96, width: 'auto', opacity: 0.85 }} /></div>
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(7,27,48,.1) 0%,rgba(7,27,48,0) 35%,rgba(7,27,48,.85) 100%)' }} />
         <span style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, background: 'rgba(7,27,48,.72)', color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: '1px solid rgba(255,255,255,.18)' }}>
@@ -318,7 +319,8 @@ export default function DecisionListingCard({ listing, answers, matchScore }: Pr
 
       {/* Heed's take */}
       <div style={{ display: 'flex', gap: 12, margin: '4px 20px 20px', padding: '14px 16px', background: 'rgba(255,255,255,.05)', borderLeft: `3px solid ${GREEN}`, borderRadius: '0 12px 12px 0' }}>
-        <span style={{ width: 34, height: 34, borderRadius: 999, background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flex: 'none' }}>🐊</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/heed-mascot.png" alt="Heed" style={{ height: 44, width: 'auto', flex: 'none', filter: 'drop-shadow(0 3px 8px rgba(0,0,0,.4))' }} />
         <div>
           <div style={{ fontFamily: CASLON, color: '#fff', fontSize: 15, lineHeight: 1.4, fontStyle: 'italic' }}>&ldquo;{take}&rdquo;</div>
           <div style={{ color: GREEN, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 700, marginTop: 6 }}>Heed&apos;s take</div>

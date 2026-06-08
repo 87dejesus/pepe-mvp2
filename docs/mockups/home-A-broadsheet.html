@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Home — Dark Broadsheet (v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#0A2540; --deep:#071b30; --green:#00A651; --green-dk:#00913f;
+         --line:rgba(255,255,255,.14); --serif:"Libre Caslon Display",Georgia,serif; --ui:"Inter",system-ui,sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px 16px;min-height:100vh}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .phone{width:100%;max-width:420px;background:var(--navy);border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.5);min-height:780px;display:flex;flex-direction:column;position:relative}
+
+  /* halftone newsprint texture + etched skyline live behind everything */
+  .phone::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.05) 0.7px,transparent 0.7px);background-size:4px 4px;opacity:.5}
+  .skyline{position:absolute;left:0;right:0;bottom:120px;z-index:0;pointer-events:none;opacity:.22}
+  .skyline svg{width:100%;height:auto;display:block}
+  .stack{position:relative;z-index:1;display:flex;flex-direction:column;flex:1}
+
+  /* masthead */
+  .top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 13px;border-bottom:1px solid var(--line)}
+  .word{display:flex;align-items:center;gap:9px}
+  .word img{height:30px;width:auto;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+  .word .name{font-family:var(--serif);color:#fff;font-size:16px;letter-spacing:.01em}
+  .top .edition{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+
+  /* hero */
+  .hero{padding:32px 22px 8px;flex:1}
+  .kicker{color:var(--green);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px}
+  h1{font-family:var(--serif);color:#fff;font-size:42px;line-height:1.02;font-weight:400;letter-spacing:.2px;margin-bottom:18px;text-shadow:0 2px 20px rgba(7,27,48,.6)}
+  h1 em{font-style:italic;color:var(--green)}
+  .lede{color:rgba(255,255,255,.72);font-size:16px;line-height:1.55;max-width:32ch}
+  .lede b{color:#fff;font-weight:600}
+
+  .pillars{margin:24px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .pillar{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .pillar:last-child{border-bottom:none}
+  .pillar .n{font-family:var(--serif);color:rgba(255,255,255,.32);font-size:18px;line-height:1;width:22px;flex:none}
+  .pillar .t{color:#fff;font-size:14.5px;font-weight:600}
+  .pillar .d{color:rgba(255,255,255,.55);font-size:13px;line-height:1.45;margin-top:2px}
+
+  /* heed strip — full character, not cropped */
+  .heed{display:flex;align-items:center;gap:14px;margin:20px 0 0;padding:13px 16px;background:rgba(10,37,64,.3);backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:0 14px 14px 0}
+  .heed img{height:62px;width:auto;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+  .heed .q{font-family:var(--serif);color:#fff;font-size:15.5px;font-style:italic;line-height:1.4;text-shadow:0 1px 8px rgba(7,27,48,.95),0 0 2px rgba(7,27,48,.8)}
+  .heed .by{font-family:var(--ui);color:var(--green);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-top:7px;font-style:normal}
+
+  /* CTA dock */
+  .dock{position:relative;z-index:1;padding:18px 22px 26px;background:var(--deep);border-top:1px solid var(--line)}
+  .cta{display:flex;align-items:center;justify-content:center;height:56px;border-radius:14px;background:var(--green);color:#fff;font-size:16px;font-weight:700;box-shadow:0 6px 24px rgba(0,166,81,.32)}
+  .signin{text-align:center;color:rgba(255,255,255,.55);font-size:13.5px;margin-top:14px}
+  .signin a{color:#fff;text-decoration:underline;text-underline-offset:2px;font-weight:500}
+  .trust{text-align:center;color:rgba(255,255,255,.32);font-size:11px;margin-top:12px;letter-spacing:.02em}
+</style>
+</head>
+<body>
+  <div class="label">Home · Dark Broadsheet · v2 (NYC etched bg + real Heed)</div>
+  <div class="phone">
+
+    <!-- etched NYC skyline with recognizable landmarks (engraving style) -->
+    <div class="skyline">
+      <svg viewBox="0 0 420 170" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round">
+        <!-- ── Statue of Liberty ── -->
+        <g>
+          <path d="M12 158 L12 150 L40 150"/>
+          <path d="M16 158 L16 126 L36 126 L36 158"/>
+          <path d="M20 126 L25 84 L31 84 L34 126"/>
+          <circle cx="27.5" cy="78" r="4.5"/>
+          <path d="M22 75 l-2 -5 M26 73 l-1 -6 M29 73 l1 -6 M32 75 l2 -5"/>
+          <path d="M31 88 L41 66"/>
+          <path d="M39 66 l2 -7 l2 7 z"/>
+          <path d="M20 98 l-5 3 l0 8 l5 -3 z"/>
+        </g>
+
+        <!-- ── Brooklyn Bridge (twin gothic towers + cables) ── -->
+        <g>
+          <path d="M54 158 L54 66 L82 66 L82 158"/>
+          <path d="M58 158 L58 106 L63 98 L68 106 L68 158"/>
+          <path d="M68 158 L68 106 L73 98 L78 106 L78 158"/>
+          <path d="M142 158 L142 66 L170 66 L170 158"/>
+          <path d="M146 158 L146 106 L151 98 L156 106 L156 158"/>
+          <path d="M156 158 L156 106 L161 98 L166 106 L166 158"/>
+          <!-- main suspension cables -->
+          <path d="M24 120 Q46 72 68 66"/>
+          <path d="M68 66 Q112 130 156 66"/>
+          <path d="M156 66 Q178 72 196 120"/>
+          <!-- deck + suspenders -->
+          <path d="M22 134 L198 134"/>
+          <path d="M40 92 L40 134 M52 76 L52 134 M96 118 L96 134 M124 118 L124 134 M170 80 L170 134" stroke-width="0.7"/>
+        </g>
+
+        <!-- ── Empire State Building ── -->
+        <path d="M178 158 L178 78 L182 78 L182 62 L186 62 L186 50 L190 50 L190 44 L191 30 L193 14 L195 30 L196 44 L200 44 L200 50 L204 50 L204 62 L208 62 L208 78 L212 78 L212 158"/>
+        <path d="M193 14 L193 6" stroke-width="0.8"/>
+
+        <!-- ── Chrysler Building (radiant crown) ── -->
+        <g>
+          <path d="M238 158 L238 86 L266 86 L266 158"/>
+          <path d="M238 86 Q252 44 266 86"/>
+          <path d="M242 86 Q252 53 262 86"/>
+          <path d="M246 86 Q252 62 258 86"/>
+          <path d="M252 50 L252 26" stroke-width="0.8"/>
+          <path d="M240 86 l4 -6 l4 6 M249 86 l3 -6 l3 6 M258 86 l4 -6 l4 6" stroke-width="0.6"/>
+        </g>
+
+        <!-- ── filler towers + NYC water towers ── -->
+        <path d="M286 158 L286 92 L312 92 L312 158"/>
+        <path d="M292 92 l3 -8 h10 l3 8 z M294 84 l0 -6 h10 l0 6 M295 78 l5 -5 h2 l5 5" stroke-width="0.9"/>
+        <path d="M318 158 L318 70 L340 70 L340 158"/>
+        <path d="M346 158 L346 100 L372 100 L372 158"/>
+        <path d="M352 100 l3 -7 h9 l3 7 z M354 93 l0 -6 h7 l0 6" stroke-width="0.9"/>
+        <path d="M378 158 L378 80 L406 80 L406 158"/>
+
+        <!-- faint window rows -->
+        <g stroke-width="0.55" opacity="0.7">
+          <path d="M322 80 h14 M322 92 h14 M322 104 h14 M322 116 h14 M322 128 h14 M322 140 h14"/>
+          <path d="M382 92 h18 M382 104 h18 M382 116 h18 M382 128 h18 M382 140 h18"/>
+          <path d="M290 104 h16 M290 116 h16 M290 128 h16 M290 140 h16"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="stack">
+      <div class="top">
+        <div class="word"><img src="../../public/brand/heed-mascot.png" alt="Heed"><span class="name">The Steady One</span></div>
+        <span class="edition">NYC · Rentals</span>
+      </div>
+
+      <div class="hero">
+        <div class="kicker">For New York renters</div>
+        <h1>Stop scrolling.<br>Start <em>deciding.</em></h1>
+        <div class="lede">You don't need more listings. You need to see the <b>tradeoffs</b>, hold your <b>non-negotiables</b>, and commit before it's gone.</div>
+
+        <div class="pillars">
+          <div class="pillar"><span class="n">1</span><div><div class="t">Hold your non-negotiables</div><div class="d">Set your lines once. Every place is scored against them.</div></div></div>
+          <div class="pillar"><span class="n">2</span><div><div class="t">See the real tradeoff</div><div class="d">What you gain, what you give up. No spin.</div></div></div>
+          <div class="pillar"><span class="n">3</span><div><div class="t">NYC down to the train</div><div class="d">The actual subway line and walk, not a guess.</div></div></div>
+        </div>
+
+        <div class="heed">
+          <img src="../../public/brand/heed-mascot.png" alt="Heed the crocodile">
+          <div><div class="q">"Tell me your lines. I'll tell you the truth about each place."</div><div class="by">Heed · your guide</div></div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <div class="cta">Find your steady home →</div>
+        <div class="signin">Already have an account? <a href="#">Sign in</a></div>
+        <div class="trust">7 questions · about 2 minutes</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
