@@ -18,7 +18,7 @@
   /* halftone newsprint texture + etched skyline live behind everything */
   .phone::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
     background-image:radial-gradient(rgba(255,255,255,.05) 0.7px,transparent 0.7px);background-size:4px 4px;opacity:.5}
-  .skyline{position:absolute;left:0;right:0;bottom:128px;z-index:0;pointer-events:none;opacity:.16}
+  .skyline{position:absolute;left:0;right:0;bottom:120px;z-index:0;pointer-events:none;opacity:.22}
   .skyline svg{width:100%;height:auto;display:block}
   .stack{position:relative;z-index:1;display:flex;flex-direction:column;flex:1}
 
@@ -62,37 +62,65 @@
   <div class="label">Home · Dark Broadsheet · v2 (NYC etched bg + real Heed)</div>
   <div class="phone">
 
-    <!-- etched NYC skyline (engraving style) -->
+    <!-- etched NYC skyline with recognizable landmarks (engraving style) -->
     <div class="skyline">
-      <svg viewBox="0 0 420 150" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linejoin="round">
-        <!-- bridge cables on the left -->
-        <path d="M2 60 L40 18 L78 60" />
-        <path d="M40 18 L40 150" />
-        <path d="M2 60 Q40 78 78 60" />
-        <path d="M10 64 L10 150 M22 70 L22 150 M58 70 L58 150 M70 64 L70 150" stroke-width="0.8"/>
-        <!-- building block -->
-        <rect x="86" y="70" width="34" height="80"/>
-        <rect x="124" y="48" width="26" height="102"/>
-        <rect x="154" y="86" width="30" height="64"/>
-        <!-- empire-ish spire -->
-        <path d="M196 150 L196 56 L204 56 L204 40 L208 28 L212 40 L212 56 L220 56 L220 150 Z"/>
-        <rect x="226" y="64" width="30" height="86"/>
-        <rect x="260" y="40" width="24" height="110"/>
-        <rect x="288" y="78" width="34" height="72"/>
-        <!-- water towers -->
-        <path d="M150 48 l4 -8 h12 l4 8 z M152 40 l0 -7 h12 l0 7 M153 33 l5 -6 h2 l5 6" stroke-width="0.9"/>
-        <path d="M294 78 l3 -7 h10 l3 7 z M296 71 l0 -6 h8 l0 6" stroke-width="0.9"/>
-        <rect x="326" y="58" width="26" height="92"/>
-        <rect x="356" y="84" width="28" height="66"/>
-        <rect x="388" y="66" width="28" height="84"/>
-        <!-- window rows (faint) -->
-        <g stroke-width="0.6" opacity="0.8">
-          <path d="M92 82 h22 M92 94 h22 M92 106 h22 M92 118 h22 M92 130 h22"/>
-          <path d="M130 60 h14 M130 72 h14 M130 84 h14 M130 96 h14 M130 108 h14 M130 120 h14 M130 132 h14"/>
-          <path d="M232 76 h18 M232 90 h18 M232 104 h18 M232 118 h18 M232 132 h18"/>
-          <path d="M266 52 h12 M266 66 h12 M266 80 h12 M266 94 h12 M266 108 h12 M266 122 h12 M266 136 h12"/>
-          <path d="M332 70 h14 M332 84 h14 M332 98 h14 M332 112 h14 M332 126 h14 M332 140 h14"/>
-          <path d="M394 78 h16 M394 92 h16 M394 106 h16 M394 120 h16 M394 134 h16"/>
+      <svg viewBox="0 0 420 170" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round">
+        <!-- ── Statue of Liberty ── -->
+        <g>
+          <path d="M12 158 L12 150 L40 150"/>
+          <path d="M16 158 L16 126 L36 126 L36 158"/>
+          <path d="M20 126 L25 84 L31 84 L34 126"/>
+          <circle cx="27.5" cy="78" r="4.5"/>
+          <path d="M22 75 l-2 -5 M26 73 l-1 -6 M29 73 l1 -6 M32 75 l2 -5"/>
+          <path d="M31 88 L41 66"/>
+          <path d="M39 66 l2 -7 l2 7 z"/>
+          <path d="M20 98 l-5 3 l0 8 l5 -3 z"/>
+        </g>
+
+        <!-- ── Brooklyn Bridge (twin gothic towers + cables) ── -->
+        <g>
+          <path d="M54 158 L54 66 L82 66 L82 158"/>
+          <path d="M58 158 L58 106 L63 98 L68 106 L68 158"/>
+          <path d="M68 158 L68 106 L73 98 L78 106 L78 158"/>
+          <path d="M142 158 L142 66 L170 66 L170 158"/>
+          <path d="M146 158 L146 106 L151 98 L156 106 L156 158"/>
+          <path d="M156 158 L156 106 L161 98 L166 106 L166 158"/>
+          <!-- main suspension cables -->
+          <path d="M24 120 Q46 72 68 66"/>
+          <path d="M68 66 Q112 130 156 66"/>
+          <path d="M156 66 Q178 72 196 120"/>
+          <!-- deck + suspenders -->
+          <path d="M22 134 L198 134"/>
+          <path d="M40 92 L40 134 M52 76 L52 134 M96 118 L96 134 M124 118 L124 134 M170 80 L170 134" stroke-width="0.7"/>
+        </g>
+
+        <!-- ── Empire State Building ── -->
+        <path d="M178 158 L178 78 L182 78 L182 62 L186 62 L186 50 L190 50 L190 44 L191 30 L193 14 L195 30 L196 44 L200 44 L200 50 L204 50 L204 62 L208 62 L208 78 L212 78 L212 158"/>
+        <path d="M193 14 L193 6" stroke-width="0.8"/>
+
+        <!-- ── Chrysler Building (radiant crown) ── -->
+        <g>
+          <path d="M238 158 L238 86 L266 86 L266 158"/>
+          <path d="M238 86 Q252 44 266 86"/>
+          <path d="M242 86 Q252 53 262 86"/>
+          <path d="M246 86 Q252 62 258 86"/>
+          <path d="M252 50 L252 26" stroke-width="0.8"/>
+          <path d="M240 86 l4 -6 l4 6 M249 86 l3 -6 l3 6 M258 86 l4 -6 l4 6" stroke-width="0.6"/>
+        </g>
+
+        <!-- ── filler towers + NYC water towers ── -->
+        <path d="M286 158 L286 92 L312 92 L312 158"/>
+        <path d="M292 92 l3 -8 h10 l3 8 z M294 84 l0 -6 h10 l0 6 M295 78 l5 -5 h2 l5 5" stroke-width="0.9"/>
+        <path d="M318 158 L318 70 L340 70 L340 158"/>
+        <path d="M346 158 L346 100 L372 100 L372 158"/>
+        <path d="M352 100 l3 -7 h9 l3 7 z M354 93 l0 -6 h7 l0 6" stroke-width="0.9"/>
+        <path d="M378 158 L378 80 L406 80 L406 158"/>
+
+        <!-- faint window rows -->
+        <g stroke-width="0.55" opacity="0.7">
+          <path d="M322 80 h14 M322 92 h14 M322 104 h14 M322 116 h14 M322 128 h14 M322 140 h14"/>
+          <path d="M382 92 h18 M382 104 h18 M382 116 h18 M382 128 h18 M382 140 h18"/>
+          <path d="M290 104 h16 M290 116 h16 M290 128 h16 M290 140 h16"/>
         </g>
       </svg>
     </div>
