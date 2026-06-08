@@ -15,6 +15,7 @@ type Listing = {
   pets: string;
   amenities: string[];
   original_url: string | null;
+  transit?: string;
 };
 
 type Answers = {
@@ -307,10 +308,12 @@ export default function DecisionListingCard({ listing, answers, matchScore }: Pr
         </div>
       </div>
 
-      {/* Transit */}
+      {/* Transit — real nearest-subway from saswave when present, else borough estimate */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '13px 20px', borderTop: `1px solid ${LINE}`, color: 'rgba(255,255,255,.7)', fontSize: 13 }}>
-        <span style={{ width: 22, height: 22, borderRadius: 999, background: 'rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 12 }}>↑</span>
-        {transitNote(listing.borough)}
+        <span style={{ width: 22, height: 22, borderRadius: 999, background: listing.transit ? '#fccc0a' : 'rgba(255,255,255,.12)', color: listing.transit ? '#000' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 12, fontWeight: 800 }}>
+          {listing.transit ? 'M' : '↑'}
+        </span>
+        {listing.transit || transitNote(listing.borough)}
       </div>
 
       {/* Heed's take */}
