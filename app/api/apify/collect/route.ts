@@ -17,7 +17,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { ApifyListing } from '@/lib/apify-normalize';
-import { normalizeParseForgeItem, type ParseForgeItem } from '@/lib/parseforge-normalize';
+import { normalizeSaswaveItem, type SaswaveItem } from '@/lib/saswave-normalize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -95,14 +95,14 @@ async function collect() {
       { status: 500 }
     );
   }
-  const raw: ParseForgeItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] ParseForge: fetched ${raw.length} raw items`);
+  const raw: SaswaveItem[] = await itemsRes.json();
+  console.log(`[Steady Debug] saswave: fetched ${raw.length} raw items`);
 
   // 4. Normalize
   const normalized: ApifyListing[] = raw
-    .map(normalizeParseForgeItem)
+    .map(normalizeSaswaveItem)
     .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] ParseForge: normalized ${normalized.length}/${raw.length} items`);
+  console.log(`[Steady Debug] saswave: normalized ${normalized.length}/${raw.length} items`);
   console.log(
     '[Normalize Debug]',
     JSON.stringify(

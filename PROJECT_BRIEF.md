@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 3
-**Last updated:** 2026-06-07 (scraper migration to ParseForge)
+**Revision:** 4
+**Last updated:** 2026-06-08 (scraper migration to saswave — bundled proxy)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -40,13 +40,13 @@ Admin (`luhciano.sj@gmail.com`) bypasses paywall via `supabase.auth.getUser()` c
 
 ## 4. Data sources
 
-- **Primary scraper (CURRENT):** Apify `parseforge~apartments-com-scraper` (Apartments.com). Adopted 2026-06-07 after `/scraper-provider-evaluator` passed it. Returns numeric prices (`minPrice`/`maxPrice` + per-bedroom `bedRents`) AND public `images1.apartments.com` CDN image URLs in one cheap run. Replaces BOTH epctex and RentHop.
-  - Route: `/api/apify/sync` (start run, `startUrl=apartments.com/new-york-ny/`, `maxItems=200`) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/parseforge-normalize.ts`.
-  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC) to keep cost ~$10/month given current revenue (~$47/mo from 5 customers). Pricing ~$0.005/result + ~$0.09 actor-start. Tune volume via `PARSEFORGE_MAX_ITEMS` env (default 200) or change cron frequency in `vercel.json`.
-  - Borough derived from ZIP prefix in the normalizer (rejects non-NYC bleed: Yonkers, Mount Vernon, NJ). The `price` string field is "Contact for Price"; use `minPrice` (numeric).
-- **Retired:** `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026) and RentHop + ScraperAPI proxy (Cloudflare made it ~10-25 credits/request, too expensive). The `/api/renthop/sync` route and `lib/renthop-normalize.ts` remain in the repo but are no longer wired to any cron — safe to delete later.
+- **Primary scraper (CURRENT):** Apify `saswave~advanced-apartments-com-scraper` (Apartments.com). Adopted 2026-06-08. **Bundles its own proxy infra** (no `proxyConfiguration` input) — the critical property. apartments.com aggressively blocks datacenter proxies; our Apify STARTER plan has zero residential proxy, so any actor that uses OUR proxy (ParseForge, powerai) gets blocked at volume. saswave handles anti-bot itself: a single run pulled 40 listings, 95% with numeric rent, 100% with public `images1.apartments.com` images, full address+ZIP. Replaces ParseForge, epctex, and RentHop.
+  - Route: `/api/apify/sync` (start run, `search_url=apartments.com/new-york-ny/`, `max_pages=5` ≈ 200 listings) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/saswave-normalize.ts`.
+  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC). Pricing ~$0.001/result ≈ **$2/month** at 200 every 3 days. Tune volume via `SASWAVE_MAX_PAGES` env (default 5) or cron frequency in `vercel.json`.
+  - Schema is nested: `pricingAndFloorPlans[].rent_label` ("$1,950 - $2,300", take min numeric), `about.location` (address + ZIP), `about.image` (CDN url). Borough from ZIP prefix (rejects non-NYC bleed).
+- **Retired:** `parseforge~apartments-com-scraper` (great data but used OUR proxy → apartments.com blocked it at volume, 2026-06-08); `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026); RentHop + ScraperAPI proxy (too expensive). Their routes/normalizers remain in the repo unused — safe to delete later. **Do NOT pick an apartments.com actor that exposes a `proxyConfiguration` input unless we buy residential proxies — it will get blocked.**
 - **Table:** `listings` (NOT `pepe_listings`)
-  - `listings_price_check` constraint allows `price >= 0` (price == 0 still means "Contact for pricing" for buildings ParseForge can't price).
+  - `listings_price_check` constraint allows `price >= 0` (price == 0 still means "Contact for pricing" for buildings without a published rent).
 - **Sort order on /decision:** bedroom match → RentHop priority (legacy, now inert) → match score
 - **Match score:** Borough 40 + Budget 30 + Bedrooms 20 + Pets 5 + Bath 3 + Incentive 2
   - Listings with `price == 0` get 15/30 budget points (neutral) and bypass both strict and relaxed budget caps
