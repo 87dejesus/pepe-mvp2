@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Decision Card — A · Dark Broadsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0A2540; --navy-deep:#071b30; --green:#00A651; --green-dk:#00913f;
+    --clay:#C8814B;            /* tension accent — signaling only, never a CTA */
+    --line:rgba(255,255,255,.14);
+    --serif:"Libre Caslon Display",Georgia,serif;
+    --ui:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 16px;min-height:100vh}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .card{width:100%;max-width:430px;background:var(--navy);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+
+  /* photo */
+  .photo{position:relative;height:230px;background:#16384f}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
+  .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,27,48,.15) 0%,rgba(7,27,48,.0) 35%,rgba(7,27,48,.85) 100%)}
+  .borough{position:absolute;top:12px;left:12px;z-index:2;background:rgba(7,27,48,.72);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+  .verdict{position:absolute;top:12px;right:12px;z-index:2;display:flex;align-items:center;gap:6px;background:var(--green);color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:6px 11px;border-radius:999px}
+
+  /* headline */
+  .head{padding:18px 20px 4px}
+  .kicker{color:var(--green);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:7px}
+  h1{font-family:var(--serif);color:#fff;font-size:30px;line-height:1.06;font-weight:400;letter-spacing:.2px}
+  .sub{color:rgba(255,255,255,.62);font-size:14px;margin-top:8px;line-height:1.45}
+
+  /* price strip */
+  .price{display:flex;align-items:baseline;gap:10px;padding:14px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:16px}
+  .price .num{font-family:var(--serif);color:#fff;font-size:26px}
+  .price .per{color:rgba(255,255,255,.5);font-size:13px}
+  .price .delta{margin-left:auto;color:var(--green);font-size:12.5px;font-weight:600;background:rgba(0,166,81,.12);padding:5px 10px;border-radius:8px}
+
+  /* non-negotiables contract */
+  .section{padding:16px 20px}
+  .section h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+  .nn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .nn .row{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
+  .tick{width:18px;height:18px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .met .tick{background:var(--green);color:#fff}
+  .warn .tick{background:var(--clay);color:#fff}
+  .nn .k{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em}
+  .nn .v{font-size:13px;color:#fff;font-weight:600;margin-top:1px}
+
+  /* tradeoff ledger */
+  .ledger{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:4px}
+  .ledger>div{padding:13px 14px}
+  .gain{background:rgba(0,166,81,.08)}
+  .give{background:rgba(200,129,75,.09);border-left:1px solid var(--line)}
+  .ledger .t{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+  .gain .t{color:var(--green)} .give .t{color:var(--clay)}
+  .ledger li{list-style:none;color:rgba(255,255,255,.82);font-size:12.5px;line-height:1.5;padding-left:14px;position:relative;margin-bottom:4px}
+  .gain li::before{content:"+";position:absolute;left:0;color:var(--green);font-weight:700}
+  .give li::before{content:"–";position:absolute;left:0;color:var(--clay);font-weight:700}
+
+  /* transit */
+  .transit{display:flex;align-items:center;gap:8px;padding:13px 20px;border-top:1px solid var(--line);color:rgba(255,255,255,.7);font-size:13px}
+  .subway{width:22px;height:22px;border-radius:999px;background:#fccc0a;color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+
+  /* heed pull-quote */
+  .heed{display:flex;gap:12px;margin:4px 20px 0;padding:14px 16px;background:rgba(255,255,255,.05);border-left:3px solid var(--green);border-radius:0 12px 12px 0}
+  .heed .av{width:34px;height:34px;border-radius:999px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+  .heed .q{font-family:var(--serif);color:#fff;font-size:15px;line-height:1.4;font-style:italic}
+  .heed .by{color:var(--green);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:6px}
+
+  /* actions */
+  .actions{display:flex;gap:10px;padding:16px 20px 20px}
+  .btn{flex:1;height:50px;border-radius:12px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none}
+  .apply{background:var(--green);color:#fff} .apply:hover{background:var(--green-dk)}
+  .pass{background:rgba(255,255,255,.06);color:rgba(255,255,255,.78);border:1px solid var(--line)}
+  .counter{text-align:center;color:rgba(255,255,255,.4);font-size:12px;padding-bottom:6px}
+</style>
+</head>
+<body>
+  <div class="label">Direction A · Dark Broadsheet</div>
+  <div class="card">
+    <div class="photo">
+      <span class="borough">Brooklyn</span>
+      <span class="verdict">★ Strong match</span>
+      <img src="https://images1.apartments.com/i2/MO4fr7jIBOgJUZaeWRa9_vxIBENYwYX50i2Bs6fslbY/111/371-95th-st-brooklyn-ny-primary-photo.jpg" alt="371 95th St">
+    </div>
+
+    <div class="head">
+      <div class="kicker">Bay Ridge · the verdict</div>
+      <h1>A genuinely steady pick.</h1>
+      <div class="sub">Hits every line you drew, and it leaves room in your budget. The one honest catch is the commute.</div>
+    </div>
+
+    <div class="price">
+      <span class="num">$1,650</span><span class="per">/ month</span>
+      <span class="delta">$350 under your ceiling</span>
+    </div>
+
+    <div class="section">
+      <h2>Your non-negotiables</h2>
+      <div class="nn">
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Budget</div><div class="v">Under $2,000</div></div></div>
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Bedrooms</div><div class="v">1 bed · exact</div></div></div>
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Borough</div><div class="v">Brooklyn</div></div></div>
+        <div class="row warn"><span class="tick">?</span><div><div class="k">Pets</div><div class="v">Confirm w/ building</div></div></div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0">
+      <h2>The tradeoff</h2>
+      <div class="ledger">
+        <div class="gain"><div class="t">You gain</div><ul>
+          <li>$350/mo back in your pocket</li>
+          <li>Exactly the 1-bed you wanted</li>
+          <li>Quiet, residential Bay Ridge</li>
+        </ul></div>
+        <div class="give"><div class="t">You give up</div><ul>
+          <li>~35 min to Midtown</li>
+          <li>Pet policy not confirmed</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="transit">
+      <span class="subway">R</span> R train · 8 min walk · ~35 min to Midtown
+    </div>
+
+    <div class="heed">
+      <span class="av">🐊</span>
+      <div>
+        <div class="q">"Nothing here breaks your rules. If the commute fits your life, this is a quiet yes."</div>
+        <div class="by">Heed's take</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn pass">Keep looking</button>
+      <button class="btn apply">Apply →</button>
+    </div>
+    <div class="counter">Listing 3 of 38 in Brooklyn</div>
+  </div>
+</body>
+</html>
