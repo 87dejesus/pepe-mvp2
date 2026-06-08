@@ -39,9 +39,21 @@ card-surface  bg rgba(255,255,255,.04-.07), border 1px line, radius 12-20
 
 1. **Non-negotiables scorecard** — the user's quiz lines (budget, bedrooms, borough, pets) scored against the thing on screen: MET (green ✓) / CONFIRM (clay ?) / MISS (red ✕). Use a 2-col grid of small bordered chips. This makes the user feel their own criteria.
 2. **Tradeoff ledger** — a two-column "You gain / You give up" block (green `+` / clay `–`). Always honest, never one-sided. This is the product's soul.
-3. **Heed's take** — an editorial pull-quote in serif italic, green left-border, with the 🐊 avatar and an uppercase "Heed's take" byline. Heed is a voice that does a job, not a sticker.
+3. **Heed's take** — an editorial pull-quote in serif italic, green left-border, with Heed and an uppercase "Heed's take" byline. Heed is a voice that does a job, not a sticker.
 
 Supporting NYC motif: **transit literacy** — real nearest subway line + walk time (subway-yellow glyph), the way a New Yorker actually evaluates a place. Data lives in the `transit` column (parsed in `lib/saswave-normalize.ts`).
+
+## Heed — the mascot asset (do not substitute)
+
+ALWAYS render the real Heed art at `public/brand/heed-mascot.png` (a green crocodile in a safari hat, coat, messenger bag, NY coffee cup). NEVER replace him with a 🐊 emoji or a generic crocodile. Show him **full-body** (object-fit: contain), not cropped inside a circle — his outfit is the character. Sizes: ~26-30px in a masthead, ~52-64px in a Heed voice strip. He may carry a small drop-shadow.
+
+## NYC texture (the "engraving" layer)
+
+The broadsheet identity wants NYC present visually, not just in copy. Use two subtle background layers behind hero/editorial areas:
+- **Etched skyline** — line-art (stroke-only, fill none) NYC skyline as an SVG, white strokes at ~0.12-0.18 opacity, bottom-anchored behind the headline. Evokes a newspaper engraving. (See `docs/mockups/home-A-broadsheet.html` for a reference SVG.)
+- **Halftone newsprint** — a faint dot texture via `radial-gradient(rgba(255,255,255,.05) .7px, transparent .7px); background-size: 4px 4px` at ~0.5 opacity. Evokes printed newsprint.
+
+Keep both subtle so headlines stay legible (add a soft text-shadow on serif headlines over texture).
 
 ## Verdict language
 
