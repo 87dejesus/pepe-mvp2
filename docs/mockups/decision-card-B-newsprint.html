@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Decision Card — B · Newsprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EFE4; --paper-2:#EAE4D4; --ink:#1A1A17; --ink-soft:#5b574d;
+    --navy:#0A2540; --green:#0a7d43; --clay:#9c5a2a;
+    --rule:rgba(26,26,23,.16);
+    --serif-d:"Libre Caslon Display",Georgia,serif;
+    --serif-t:"Libre Caslon Text",Georgia,serif;
+    --ui:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#2a2a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 16px;min-height:100vh}
+  .label{color:#b9b1a0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .card{width:100%;max-width:430px;background:var(--paper);border-radius:6px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);
+        background-image:radial-gradient(rgba(26,26,23,.025) 1px,transparent 1px);background-size:3px 3px}
+
+  /* masthead */
+  .masthead{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:2px solid var(--ink)}
+  .masthead .name{font-family:var(--serif-d);font-size:15px;color:var(--ink);letter-spacing:.02em}
+  .masthead .date{font-family:var(--ui);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+
+  /* photo */
+  .photo{position:relative;height:215px;background:#cfc7b3;filter:saturate(.92) contrast(1.02)}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .borough{position:absolute;top:11px;left:11px;background:var(--navy);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:2px}
+  .stamp{position:absolute;bottom:11px;right:11px;font-family:var(--ui);font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--green);padding:6px 11px;border-radius:2px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+
+  /* headline */
+  .head{padding:16px 18px 6px;text-align:center;border-bottom:1px solid var(--rule)}
+  .kicker{font-family:var(--ui);color:var(--green);font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px}
+  h1{font-family:var(--serif-d);color:var(--ink);font-size:31px;line-height:1.04;font-weight:400}
+  .sub{font-family:var(--serif-t);color:var(--ink-soft);font-size:14.5px;margin:9px auto 14px;line-height:1.5;max-width:34ch;font-style:italic}
+
+  /* price */
+  .price{display:flex;align-items:baseline;justify-content:center;gap:9px;padding:13px 18px;border-bottom:1px solid var(--rule)}
+  .price .num{font-family:var(--serif-d);color:var(--ink);font-size:27px}
+  .price .per{color:var(--ink-soft);font-size:13px}
+  .price .delta{color:var(--green);font-size:12.5px;font-weight:700;border:1px solid rgba(10,125,67,.4);padding:4px 9px;border-radius:3px}
+
+  /* non-negotiables */
+  .section{padding:15px 18px}
+  .section h2{font-family:var(--ui);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-bottom:11px;text-align:center;position:relative}
+  .section h2::before,.section h2::after{content:"";position:absolute;top:50%;width:24%;height:1px;background:var(--rule)}
+  .section h2::before{left:0}.section h2::after{right:0}
+  .nn{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .nn .row{display:flex;align-items:center;gap:9px;border:1px solid var(--rule);border-radius:4px;padding:9px 10px;background:rgba(255,255,255,.35)}
+  .tick{width:17px;height:17px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+  .met .tick{background:var(--green)} .warn .tick{background:var(--clay)}
+  .nn .k{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em}
+  .nn .v{font-size:13px;color:var(--ink);font-weight:700;margin-top:1px}
+
+  /* tradeoff ledger */
+  .ledger{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ink);border-radius:4px;overflow:hidden}
+  .ledger>div{padding:12px 13px}
+  .give{border-left:1px solid var(--ink)}
+  .ledger .t{font-family:var(--ui);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:8px}
+  .gain .t{color:var(--green)} .give .t{color:var(--clay)}
+  .ledger li{list-style:none;font-family:var(--serif-t);color:var(--ink);font-size:13px;line-height:1.45;padding-left:14px;position:relative;margin-bottom:5px}
+  .gain li::before{content:"+";position:absolute;left:0;color:var(--green);font-weight:700}
+  .give li::before{content:"–";position:absolute;left:0;color:var(--clay);font-weight:700}
+
+  /* transit */
+  .transit{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);color:var(--ink);font-family:var(--serif-t);font-size:13.5px}
+  .subway{width:21px;height:21px;border-radius:999px;background:#fccc0a;color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;font-family:var(--ui)}
+
+  /* heed */
+  .heed{display:flex;gap:11px;padding:14px 18px}
+  .heed .av{width:32px;height:32px;border-radius:999px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+  .heed .q{font-family:var(--serif-t);color:var(--ink);font-size:15px;line-height:1.45;font-style:italic}
+  .heed .by{font-family:var(--ui);color:var(--green);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:5px}
+
+  /* actions */
+  .actions{display:flex;gap:9px;padding:4px 18px 18px}
+  .btn{flex:1;height:50px;border-radius:4px;font-weight:700;font-size:15px;font-family:var(--ui);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none}
+  .apply{background:var(--navy);color:#fff}
+  .pass{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .counter{text-align:center;color:var(--ink-soft);font-size:11px;font-family:var(--ui);padding-bottom:8px}
+</style>
+</head>
+<body>
+  <div class="label">Direction B · Newsprint</div>
+  <div class="card">
+    <div class="masthead">
+      <span class="name">The Steady One</span>
+      <span class="date">Bay Ridge Edition</span>
+    </div>
+
+    <div class="photo">
+      <span class="borough">Brooklyn</span>
+      <span class="stamp">★ Strong match</span>
+      <img src="https://images1.apartments.com/i2/MO4fr7jIBOgJUZaeWRa9_vxIBENYwYX50i2Bs6fslbY/111/371-95th-st-brooklyn-ny-primary-photo.jpg" alt="371 95th St">
+    </div>
+
+    <div class="head">
+      <div class="kicker">The verdict</div>
+      <h1>A genuinely steady pick.</h1>
+      <div class="sub">It hits every line you drew and leaves room in your budget. The one honest catch is the commute.</div>
+    </div>
+
+    <div class="price">
+      <span class="num">$1,650</span><span class="per">/ month</span>
+      <span class="delta">$350 under your ceiling</span>
+    </div>
+
+    <div class="section">
+      <h2>Your non-negotiables</h2>
+      <div class="nn">
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Budget</div><div class="v">Under $2,000</div></div></div>
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Bedrooms</div><div class="v">1 bed · exact</div></div></div>
+        <div class="row met"><span class="tick">✓</span><div><div class="k">Borough</div><div class="v">Brooklyn</div></div></div>
+        <div class="row warn"><span class="tick">?</span><div><div class="k">Pets</div><div class="v">Confirm w/ building</div></div></div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0">
+      <h2>The tradeoff</h2>
+      <div class="ledger">
+        <div class="gain"><div class="t">You gain</div><ul>
+          <li>$350/mo back in your pocket</li>
+          <li>Exactly the 1-bed you wanted</li>
+          <li>Quiet, residential Bay Ridge</li>
+        </ul></div>
+        <div class="give"><div class="t">You give up</div><ul>
+          <li>~35 min to Midtown</li>
+          <li>Pet policy not confirmed</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="transit">
+      <span class="subway">R</span> R train · 8 min walk · ~35 min to Midtown
+    </div>
+
+    <div class="heed">
+      <span class="av">🐊</span>
+      <div>
+        <div class="q">"Nothing here breaks your rules. If the commute fits your life, this is a quiet yes."</div>
+        <div class="by">Heed's take</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn pass">Keep looking</button>
+      <button class="btn apply">Apply →</button>
+    </div>
+    <div class="counter">Listing 3 of 38 in Brooklyn</div>
+  </div>
+</body>
+</html>
