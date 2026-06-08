@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Libre_Caslon_Display } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
@@ -7,6 +7,15 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+// Editorial serif for headlines and verdicts (the "NYC broadsheet" voice).
+// UI and body stay on Inter.
+const caslon = Libre_Caslon_Display({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-caslon",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -104,7 +113,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
+        className={`${inter.variable} ${caslon.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
         <script
           type="application/ld+json"
