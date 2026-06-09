@@ -178,7 +178,7 @@ function buildLedger(listing: Listing, answers: Answers, sc: Criterion[]) {
 
   // Home type (shared / co-living / student) — a real give-up
   const home = find('Home type');
-  if (home) gives.push(`${home.value} — not a place of your own`);
+  if (home) gives.push(`${home.value}, not a place of your own`);
 
   // Borough
   const boro = find('Borough');
@@ -218,24 +218,24 @@ function buildLedger(listing: Listing, answers: Answers, sc: Criterion[]) {
 }
 
 function verdictOf(score: number): { stamp: string; headline: string } {
-  if (score >= 80) return { stamp: 'Strong match', headline: 'A genuinely steady pick.' };
-  if (score >= 60) return { stamp: 'Worth a look', headline: 'Worth a serious look.' };
-  return { stamp: 'A stretch', headline: 'A stretch, but read the tradeoff.' };
+  if (score >= 80) return { stamp: 'Strong match', headline: 'A steady pick.' };
+  if (score >= 60) return { stamp: 'Worth a look', headline: 'Good, not perfect.' };
+  return { stamp: 'A stretch', headline: 'A stretch. Read the tradeoff.' };
 }
 
 function heedTake(listing: Listing, sc: Criterion[], score: number): string {
   const misses = sc.filter((c) => c.status === 'miss');
   const warns = sc.filter((c) => c.status === 'warn');
   if (misses.length === 0 && warns.length === 0) {
-    return 'Nothing here breaks your rules. If the commute fits your life, this is a quiet yes.';
+    return "Nothing here breaks your rules. If the commute works, it's a yes.";
   }
   if (misses.length === 0) {
-    return `Nothing here breaks your rules. Just confirm the ${warns[0].key.toLowerCase()} and you are clear.`;
+    return `Nothing here breaks your rules. Just confirm the ${warns[0].key.toLowerCase()} and you're clear.`;
   }
   if (score >= 60) {
-    return `Close, but it gives up ${misses[0].key.toLowerCase()}. Worth it only if the gains below matter more to you.`;
+    return `Close, but it gives up ${misses[0].key.toLowerCase()}. Only worth it if the gains below matter more.`;
   }
-  return `This one bends a few of your lines. Keep it only if you are knowingly trading them away.`;
+  return `This one breaks a few of your rules. Only keep it if you're trading them on purpose.`;
 }
 
 // ─── component ───────────────────────────────────────────────────────────────────
@@ -277,13 +277,13 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
     truths.push({ ic: '💸', tone: 'plain', k: 'Real cost to move in', v: `≈ ${money(moveInEst)} up front`, note: '1 month deposit + first month. A broker fee is possible.' });
     truths.push(
       belowMarket
-        ? { ic: '🛡️', tone: 'warn', k: 'Listing check', v: 'Priced well below similar units', note: 'Unusually cheap. Verify it is real before paying anything.' }
+        ? { ic: '🛡️', tone: 'warn', k: 'Listing check', v: 'Priced well below similar units', note: "Unusually cheap. Verify it's real before you pay anything." }
         : { ic: '🛡️', tone: 'ok', k: 'Listing check', v: `Priced in range for ${listing.borough}`, note: 'No obvious scam signals.' }
     );
   } else {
     truths.push({ ic: '💸', tone: 'plain', k: 'Real cost to move in', v: 'Ask the building', note: 'No rent published. Get the full move-in cost in writing.' });
   }
-  truths.push({ ic: '🏛️', tone: 'warn', k: 'Rent-stabilized?', v: 'Worth checking', note: 'Could mean capped increases + guaranteed renewal. We will flag confirmed ones soon.' });
+  truths.push({ ic: '🏛️', tone: 'warn', k: 'Rent-stabilized?', v: 'Worth checking', note: 'Could mean capped rent and a guaranteed renewal. Ask the landlord, or check DHCR.' });
 
   return (
     <div
@@ -374,7 +374,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
             <div style={{ ...ledgerTitle, color: CLAY }}>You give up</div>
             <ul style={{ margin: 0, padding: 0 }}>
               {gives.map((g, i) => (
-                <li key={i} style={ledgerItem}><span style={{ color: CLAY, fontWeight: 700, position: 'absolute', left: 0 }}>–</span>{g}</li>
+                <li key={i} style={ledgerItem}><span style={{ color: CLAY, fontWeight: 700, position: 'absolute', left: 0 }}>-</span>{g}</li>
               ))}
             </ul>
           </div>
