@@ -850,6 +850,19 @@ function DecisionClientInner() {
   const recommendation = getRecommendation(matchScore);
   const currentWarnings = currentListing ? (warningsMap[currentListing.id] || []) : [];
 
+  // "Too good to be true" / scam signal: flag when the listing is priced far
+  // below the median of comparable units (same borough + bedrooms) in the catalog.
+  const belowMarket = (() => {
+    if (!currentListing || !(currentListing.price > 0)) return false;
+    const peers = listings
+      .filter((l) => l.borough === currentListing.borough && l.bedrooms === currentListing.bedrooms && parsePrice(l.price) > 0)
+      .map((l) => parsePrice(l.price))
+      .sort((a, b) => a - b);
+    if (peers.length < 5) return false; // not enough comparables to judge
+    const median = peers[Math.floor(peers.length / 2)];
+    return currentListing.price < median * 0.6;
+  })();
+
   // Affiliate logic: force Low-Credit card when results are thin or budget is low
   const avgMatchScore = listings.length > 0 && answers
     ? listings.reduce((sum, l) => sum + calculateMatchScore(l, answers), 0) / listings.length
@@ -1150,6 +1163,7 @@ function DecisionClientInner() {
               matchScore={matchScore}
               recommendation={recommendation}
               warnings={currentWarnings}
+              belowMarket={belowMarket}
             />
           </div>
         )}
