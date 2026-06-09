@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Decision Card + Truth Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--green:#00A651;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 16px}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .card{width:100%;max-width:430px;background:var(--navy);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.42)}
+  .photo{position:relative;height:170px;background:#16384f}
+  .photo img{width:100%;height:100%;object-fit:cover;opacity:.92}
+  .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,27,48,.1),rgba(7,27,48,0) 40%,rgba(7,27,48,.85))}
+  .boro{position:absolute;top:12px;left:12px;z-index:2;background:rgba(7,27,48,.72);color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+  .stamp{position:absolute;top:12px;right:12px;z-index:2;background:var(--green);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 11px;border-radius:999px}
+  .head{padding:16px 20px 4px}
+  .kicker{color:var(--green);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:7px}
+  h1{font-family:var(--serif);color:#fff;font-size:27px;line-height:1.07;font-weight:400}
+  .price{display:flex;align-items:baseline;gap:10px;padding:13px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:14px}
+  .price .n{font-family:var(--serif);color:#fff;font-size:24px}.price .p{color:rgba(255,255,255,.5);font-size:13px}
+  .price .d{margin-left:auto;color:var(--green);font-size:12.5px;font-weight:600}
+  .sec{padding:15px 20px}
+  .sec h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+  .sec h2 em{color:var(--green);font-style:normal}
+
+  /* truth panel */
+  .truths{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .truth{display:flex;gap:12px;padding:12px 13px;background:var(--navy);align-items:flex-start}
+  .truth .ic{width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .truth .k{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.05em}
+  .truth .v{font-size:13.5px;color:#fff;font-weight:600;margin-top:2px;line-height:1.35}
+  .truth .v small{display:block;font-weight:400;color:rgba(255,255,255,.55);font-size:12px;margin-top:2px}
+  .truth.ok .ic{background:rgba(0,166,81,.14);border-color:rgba(0,166,81,.4)}
+  .truth.warn .ic{background:rgba(200,129,75,.16);border-color:rgba(200,129,75,.45)}
+
+  .checklist{margin-top:10px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:0 12px 12px 0}
+  .checklist .t{font-family:var(--serif);font-style:italic;color:#fff;font-size:13.5px;margin-bottom:9px}
+  .checklist li{list-style:none;display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:rgba(255,255,255,.78);line-height:1.4;margin-bottom:6px}
+  .checklist li:last-child{margin-bottom:0}
+  .checklist .b{color:var(--green);font-weight:800;flex:none}
+  .heedline{display:flex;align-items:center;gap:9px;margin-top:11px;color:rgba(255,255,255,.5);font-size:11.5px}
+  .heedline img{height:26px;width:auto}
+</style>
+</head>
+<body>
+  <div class="label">Decision Card + "Truth Panel" (the paid value)</div>
+  <div class="card">
+    <div class="photo">
+      <span class="boro">Brooklyn</span><span class="stamp">★ Strong match</span>
+      <img src="https://images1.apartments.com/i2/MO4fr7jIBOgJUZaeWRa9_vxIBENYwYX50i2Bs6fslbY/111/371-95th-st-brooklyn-ny-primary-photo.jpg" alt="371 95th St">
+    </div>
+    <div class="head">
+      <div class="kicker">Bay Ridge · the verdict</div>
+      <h1>A genuinely steady pick.</h1>
+    </div>
+    <div class="price"><span class="n">$1,650</span><span class="p">/ month</span><span class="d">$350 under your ceiling</span></div>
+
+    <!-- the new value layer -->
+    <div class="sec">
+      <h2>Before you commit · <em>what Heed checked</em></h2>
+      <div class="truths">
+        <div class="truth ok">
+          <span class="ic">🧮</span>
+          <div><div class="k">Will you qualify</div><div class="v">≈ $66,000 / yr income<small>or a guarantor / guarantor service. You said you'll use a guarantor — fine here.</small></div></div>
+        </div>
+        <div class="truth">
+          <span class="ic">💸</span>
+          <div><div class="k">Real cost to move in</div><div class="v">≈ $3,300 up front<small>1 month deposit + first month. A broker fee is possible (the listing doesn't say).</small></div></div>
+        </div>
+        <div class="truth ok">
+          <span class="ic">🛡️</span>
+          <div><div class="k">Listing check</div><div class="v">Priced in range for Bay Ridge<small>Not suspiciously cheap. No obvious scam signals.</small></div></div>
+        </div>
+        <div class="truth warn">
+          <span class="ic">🏛️</span>
+          <div><div class="k">Rent-stabilized?</div><div class="v">Worth checking<small>Could mean capped increases + guaranteed renewal. We'll flag confirmed ones soon.</small></div></div>
+        </div>
+      </div>
+
+      <div class="checklist">
+        <div class="t">"Before you sign, get these in writing:"</div>
+        <ul>
+          <li><span class="b">✓</span> Who pays electric, gas, water?</li>
+          <li><span class="b">✓</span> Deposit is 1 month max · application fee $20 max (NYC law)</li>
+          <li><span class="b">✓</span> Never pay before an in-person viewing</li>
+        </ul>
+        <div class="heedline"><img src="../../public/brand/heed-mascot.png" alt="Heed"> Heed read the fine print so you don't get burned.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
