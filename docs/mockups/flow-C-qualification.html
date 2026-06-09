@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flow — Qualification question (the #1 stressor)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#0A2540; --deep:#071b30; --green:#00A651; --clay:#C8814B;
+         --line:rgba(255,255,255,.14); --serif:"Libre Caslon Display",Georgia,serif; --ui:"Inter",system-ui,sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px 16px;min-height:100vh}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .phone{width:100%;max-width:420px;background:var(--navy);border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.5);min-height:780px;display:flex;flex-direction:column}
+
+  .top{display:flex;align-items:center;justify-content:space-between;padding:15px 20px 11px}
+  .word{display:flex;align-items:center;gap:8px}.word img{height:26px;width:auto}
+  .word .name{font-family:var(--serif);color:#fff;font-size:15px}
+  .clause{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700}
+  .track{height:2px;background:rgba(255,255,255,.12);margin:0 20px}.fill{height:100%;width:64%;background:var(--green);border-radius:99px}
+
+  .q{padding:24px 22px 4px}
+  .kicker{color:rgba(255,255,255,.45);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:11px}
+  h1{font-family:var(--serif);color:#fff;font-size:27px;line-height:1.1;font-weight:400}
+  .hint{color:rgba(255,255,255,.55);font-size:13px;margin-top:9px;line-height:1.5}
+  .hint b{color:#fff;font-weight:600}
+
+  .opts{padding:14px 22px 6px;display:flex;flex-direction:column;gap:9px}
+  .opt{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.04);cursor:pointer}
+  .opt.sel{border-color:rgba(0,166,81,.6);background:rgba(0,166,81,.12)}
+  .box{width:22px;height:22px;border-radius:999px;border:2px solid rgba(255,255,255,.3);flex:none;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .opt.sel .box{border-color:var(--green);background:var(--green)}
+  .opt .t{font-size:15px;color:rgba(255,255,255,.74);font-weight:600}.opt.sel .t{color:#fff}
+  .opt .d{font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.4}
+
+  .reassure{margin:12px 22px 0;display:flex;gap:10px;align-items:center;padding:11px 14px;background:rgba(0,166,81,.08);border:1px solid rgba(0,166,81,.3);border-radius:12px}
+  .reassure img{height:38px;width:auto;flex:none}
+  .reassure .t{font-family:var(--serif);font-style:italic;color:#fff;font-size:13.5px;line-height:1.4}
+
+  .lines{margin:14px 22px 0;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px}
+  .lines h2{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.42);font-weight:700;margin-bottom:10px;display:flex;gap:8px}
+  .lines h2 .s{color:var(--green)}
+  .line{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07)}.line:last-child{border-bottom:none}
+  .line .tick{width:16px;height:16px;border-radius:999px;background:var(--green);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+  .line .k{font-size:11px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.05em;width:88px;flex:none}
+  .line .v{font-size:13px;color:#fff;font-weight:600}
+
+  .dock{margin-top:auto;padding:15px 22px 24px;border-top:1px solid var(--line);background:var(--deep)}
+  .cta{display:flex;align-items:center;justify-content:center;height:54px;border-radius:13px;background:var(--green);color:#fff;font-weight:700;font-size:16px}
+  .back{text-align:center;margin-top:10px}.back a{color:rgba(255,255,255,.45);font-size:13px;text-decoration:none}
+</style>
+</head>
+<body>
+  <div class="label">Flow · Qualification — the #1 NYC stressor, handled with zero judgment</div>
+  <div class="phone">
+    <div class="top">
+      <div class="word"><img src="../../public/brand/heed-mascot.png" alt="Heed"><span class="name">The Steady One</span></div>
+      <span class="clause">Your terms · 5 of 7</span>
+    </div>
+    <div class="track"><div class="fill"></div></div>
+
+    <div class="q">
+      <div class="kicker">Clause V · The money reality</div>
+      <h1>Can you clear the income bar?</h1>
+      <div class="hint">NYC landlords usually want income of <b>about 40x the rent</b>. No judgment — there's a path for every situation, and we'll only show you ones you can actually land.</div>
+    </div>
+
+    <div class="opts">
+      <div class="opt sel"><span class="box">✓</span><div><div class="t">Yes — my income clears ~40x</div><div class="d">e.g. ~$120k/yr for a $3,000 apartment.</div></div></div>
+      <div class="opt"><span class="box"></span><div><div class="t">I'll use a personal guarantor</div><div class="d">A family member or friend who earns ~80x.</div></div></div>
+      <div class="opt"><span class="box"></span><div><div class="t">I'll use a guarantor service</div><div class="d">Insurent / TheGuarantors — qualify at ~27.5x.</div></div></div>
+      <div class="opt"><span class="box"></span><div><div class="t">Not sure — show low-barrier options</div><div class="d">Co-living & buildings that skip the income test.</div></div></div>
+    </div>
+
+    <div class="reassure">
+      <img src="../../public/brand/heed-mascot.png" alt="Heed">
+      <div class="t">"This is where most people get stuck. Tell me the truth and I'll only show you what you can get."</div>
+    </div>
+
+    <div class="lines">
+      <h2><span class="s">§</span> Your lines so far</h2>
+      <div class="line"><span class="tick">✓</span><span class="k">Borough</span><span class="v">Brooklyn, Queens</span></div>
+      <div class="line"><span class="tick">✓</span><span class="k">Home type</span><span class="v">A place of my own</span></div>
+      <div class="line"><span class="tick">✓</span><span class="k">Budget</span><span class="v">Up to $2,500/mo</span></div>
+      <div class="line"><span class="tick">✓</span><span class="k">Qualify</span><span class="v">Income clears 40x</span></div>
+    </div>
+
+    <div class="dock">
+      <div class="cta">Continue →</div>
+      <div class="back"><a href="#">← Back</a></div>
+    </div>
+  </div>
+</body>
+</html>
