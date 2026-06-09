@@ -44,6 +44,7 @@ export type DbRow = {
   pets: string;
   status: string;
   transit?: string;            // nearest walkable subway note, e.g. "4,5,6 train · 3 min walk"
+  housing_type?: string;       // 'whole' | 'room' | 'coliving' | 'student' — separates shared/co-living from whole units
 };
 
 // Full listing returned to the React client (includes amenities, images, id)

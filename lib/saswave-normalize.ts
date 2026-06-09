@@ -170,6 +170,20 @@ function parseTransit(item: SaswaveItem): string {
   return `${name} · ${best.min} ${verb}`;
 }
 
+// Classify whole-unit vs shared-room / co-living / student housing. ~22% of the
+// apartments.com NYC catalog is a private room in a shared apartment or
+// student/intern housing that gets mislabeled as a "studio". Calibrated against
+// the live dataset (no false positives on the sampled non-whole listings).
+// Returns 'student' | 'coliving' | 'room' | 'whole'.
+export function detectHousingType(item: SaswaveItem): string {
+  const about = item.about ?? {};
+  const blob = `${about.title ?? ''} ${item.url ?? ''} ${(about.description ?? '').slice(0, 600)}`.toLowerCase();
+  if (/student|intern|\.edu|educational housing|by the semester|women'?s housing|womens housing|dormitor/.test(blob)) return 'student';
+  if (/co-?living|sharedeasy|shared easy/.test(blob)) return 'coliving';
+  if (/room in shared|private room|shared \d+ bed|shared apartment|roommate|shared\/private|\/room-in/.test(blob)) return 'room';
+  return 'whole';
+}
+
 function pickImage(about: NonNullable<SaswaveItem['about']>): string {
   const img = (about.image ?? '').trim();
   if (img.startsWith('https://') && !img.includes('add7ffb')) return img;
@@ -215,6 +229,7 @@ export function normalizeSaswaveItem(item: SaswaveItem): ApifyListing | null {
     pets: parsePets(item),
     status: 'Active',
     transit: parseTransit(item),
+    housing_type: detectHousingType(item),
     amenities: [],
     images: image_url ? [image_url] : [],
   };

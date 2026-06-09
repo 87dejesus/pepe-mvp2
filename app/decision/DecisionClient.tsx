@@ -40,6 +40,7 @@ type Listing = {
   original_url: string | null;
   status: string;
   transit?: string;
+  housing_type?: string;
   boroughMatch?: boolean;
 };
 

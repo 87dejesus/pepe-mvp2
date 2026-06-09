@@ -16,6 +16,7 @@ type Listing = {
   amenities: string[];
   original_url: string | null;
   transit?: string;
+  housing_type?: string;
 };
 
 type Answers = {
@@ -53,6 +54,18 @@ function bedNeeded(a: string): number {
 }
 function money(n: number): string {
   return `$${Math.round(n).toLocaleString()}`;
+}
+
+// Shared-room / co-living / student housing is NOT a whole apartment, even when
+// apartments.com labels it a "studio". Surface it honestly.
+function housingLabel(t?: string): string | null {
+  if (t === 'room') return 'Private room · shared';
+  if (t === 'coliving') return 'Co-living';
+  if (t === 'student') return 'Student housing';
+  return null;
+}
+function isShared(t?: string): boolean {
+  return t === 'room' || t === 'coliving' || t === 'student';
 }
 
 const INCENTIVE_PATTERNS: { regex: RegExp; message: string }[] = [
@@ -101,15 +114,21 @@ function buildScorecard(listing: Listing, answers: Answers): Criterion[] {
     out.push({ key: 'Budget', value: `${money(listing.price - answers.budget)} over`, status: 'miss' });
   }
 
-  // Bedrooms
-  const needed = bedNeeded(answers.bedrooms);
-  const exact = answers.bedrooms === '3+' ? listing.bedrooms >= 3 : listing.bedrooms === needed;
-  if (exact) {
-    out.push({ key: 'Bedrooms', value: `${formatBeds(listing.bedrooms)} · exact`, status: 'met' });
-  } else if (Math.abs(listing.bedrooms - needed) === 1) {
-    out.push({ key: 'Bedrooms', value: formatBeds(listing.bedrooms), status: 'warn' });
+  // Bedrooms — but for shared/co-living/student housing the bedroom count is
+  // misleading, so surface the real home type instead.
+  const hl = housingLabel(listing.housing_type);
+  if (hl) {
+    out.push({ key: 'Home type', value: hl, status: 'warn' });
   } else {
-    out.push({ key: 'Bedrooms', value: formatBeds(listing.bedrooms), status: 'miss' });
+    const needed = bedNeeded(answers.bedrooms);
+    const exact = answers.bedrooms === '3+' ? listing.bedrooms >= 3 : listing.bedrooms === needed;
+    if (exact) {
+      out.push({ key: 'Bedrooms', value: `${formatBeds(listing.bedrooms)} · exact`, status: 'met' });
+    } else if (Math.abs(listing.bedrooms - needed) === 1) {
+      out.push({ key: 'Bedrooms', value: formatBeds(listing.bedrooms), status: 'warn' });
+    } else {
+      out.push({ key: 'Bedrooms', value: formatBeds(listing.bedrooms), status: 'miss' });
+    }
   }
 
   // Borough
@@ -244,6 +263,11 @@ export default function DecisionListingCard({ listing, answers, matchScore }: Pr
         <span style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, background: 'rgba(7,27,48,.72)', color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: '1px solid rgba(255,255,255,.18)' }}>
           {listing.borough}
         </span>
+        {isShared(listing.housing_type) && (
+          <span style={{ position: 'absolute', top: 44, left: 12, zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(200,129,75,.92)', color: '#fff', fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
+            ⚠ {housingLabel(listing.housing_type)}
+          </span>
+        )}
         <span style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 5, background: matchScore >= 80 ? GREEN : 'rgba(7,27,48,.8)', color: '#fff', fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999, border: matchScore >= 80 ? 'none' : '1px solid rgba(255,255,255,.2)' }}>
           ★ {verdict.stamp}
         </span>
