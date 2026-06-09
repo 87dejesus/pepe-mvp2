@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 type Listing = {
   id: string;
+  address?: string;
   neighborhood: string;
   borough: string;
   price: number;
@@ -301,7 +302,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
   truths.push({
     ic: '🏛️', tone: 'warn', k: 'Rent-stabilized?', v: 'Check this building',
     note: 'If it is, you get capped rent and a guaranteed renewal. Tap to look it up.',
-    href: `https://www.google.com/search?q=${encodeURIComponent(`${listing.address} rent stabilized building`)}`,
+    href: `https://www.google.com/search?q=${encodeURIComponent(`${listing.address || `${listing.neighborhood}, ${listing.borough}`} rent stabilized building`)}`,
   });
 
   return (
