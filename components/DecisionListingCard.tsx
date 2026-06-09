@@ -27,6 +27,9 @@ type Answers = {
   pets: string;
   amenities: string[];
   timing: string;
+  housingType?: string;
+  upfrontCash?: string;
+  qualification?: string;
 };
 
 type Props = {
@@ -273,7 +276,19 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
   type Truth = { ic: string; tone: 'ok' | 'warn' | 'plain'; k: string; v: string; note: string };
   const truths: Truth[] = [];
   if (price > 0) {
-    truths.push({ ic: '🧮', tone: 'plain', k: 'Will you qualify', v: `≈ ${money(incomeNeeded)} / yr income`, note: 'or a guarantor / guarantor service' });
+    // Qualification semaphore, personalized by the quiz answer + this listing.
+    const q = answers.qualification;
+    const sharedUnit = isShared(listing.housing_type);
+    let qTone: Truth['tone'] = 'plain';
+    let qNote = 'Most places want ~40x income, or a guarantor.';
+    if (q === 'income40x') { qTone = 'ok'; qNote = 'You said your income clears this.'; }
+    else if (q === 'guarantor') { qTone = 'warn'; qNote = `You'll lean on your guarantor (needs ~${money(price * 80)}/yr). Confirm they qualify.`; }
+    else if (q === 'service') { qTone = 'warn'; qNote = "You'll use a guarantor service. Confirm this building accepts one."; }
+    else if (q === 'lowbarrier') {
+      if (sharedUnit) { qTone = 'ok'; qNote = 'This type usually skips the income test.'; }
+      else { qTone = 'warn'; qNote = 'This likely needs 40x income or a guarantor. Could be a hurdle.'; }
+    }
+    truths.push({ ic: '🧮', tone: qTone, k: 'Will you qualify', v: `≈ ${money(incomeNeeded)} / yr income`, note: qNote });
     truths.push({ ic: '💸', tone: 'plain', k: 'Real cost to move in', v: `≈ ${money(moveInEst)} up front`, note: '1 month deposit + first month. A broker fee is possible.' });
     truths.push(
       belowMarket
