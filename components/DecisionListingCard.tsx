@@ -159,32 +159,60 @@ function buildScorecard(listing: Listing, answers: Answers): Criterion[] {
 function buildLedger(listing: Listing, answers: Answers, sc: Criterion[]) {
   const gains: string[] = [];
   const gives: string[] = [];
+  const find = (k: string) => sc.find((c) => c.key === k); // null-safe: 'Bedrooms' is absent for shared units
 
-  const budget = sc.find((c) => c.key === 'Budget')!;
-  if (budget.status === 'met' && listing.price > 0) {
+  // Budget
+  const budget = find('Budget');
+  if (budget?.status === 'met' && listing.price > 0) {
     const under = answers.budget - listing.price;
     if (under >= 100) gains.push(`${money(under)}/mo back in your pocket`);
     else gains.push('Sits right inside your budget');
-  } else if (budget.status === 'miss') {
+  } else if (budget?.status === 'miss') {
     gives.push(`${money(listing.price - answers.budget)}/mo over your budget`);
   }
 
-  const beds = sc.find((c) => c.key === 'Bedrooms')!;
-  if (beds.status === 'met') gains.push(`Exactly the ${formatBeds(listing.bedrooms)} you wanted`);
-  else gives.push(`${formatBeds(listing.bedrooms)}, not your ${formatBeds(bedNeeded(answers.bedrooms))}`);
+  // Bedrooms (whole units only)
+  const beds = find('Bedrooms');
+  if (beds?.status === 'met') gains.push(`Exactly the ${formatBeds(listing.bedrooms)} you wanted`);
+  else if (beds) gives.push(`${formatBeds(listing.bedrooms)}, not your ${formatBeds(bedNeeded(answers.bedrooms))}`);
 
-  const boro = sc.find((c) => c.key === 'Borough')!;
-  if (boro.status === 'met' && answers.boroughs.length) gains.push(`In ${listing.borough}, your area`);
-  else if (boro.status === 'miss') gives.push(`${listing.borough}, outside your boroughs`);
+  // Home type (shared / co-living / student) — a real give-up
+  const home = find('Home type');
+  if (home) gives.push(`${home.value} — not a place of your own`);
 
-  const pets = sc.find((c) => c.key === 'Pets')!;
-  if (pets.status === 'miss') gives.push('No pets allowed');
-  else if (pets.status === 'warn' && answers.pets !== 'none') gives.push('Pet policy not confirmed');
+  // Borough
+  const boro = find('Borough');
+  if (boro?.status === 'met' && answers.boroughs.length) gains.push(`In ${listing.borough}, your area`);
+  else if (boro?.status === 'miss') gives.push(`${listing.borough}, outside your boroughs`);
+
+  // Pets
+  const pets = find('Pets');
+  if (pets?.status === 'miss') gives.push('No pets allowed');
+  else if (pets?.status === 'warn' && answers.pets !== 'none') gives.push('Pet policy not confirmed');
 
   const incentive = detectIncentive(listing.description);
   if (incentive && gains.length < 3) gains.push(`Plus ${incentive}`);
 
-  if (!gives.length) gives.push('Confirm the commute fits your routine');
+  // ── Soft, real give-ups derived from the data, so strong matches differ ──
+  if (gives.length < 2) {
+    const rawImg = (listing.image_url || listing.images?.[0] || '').trim();
+    const hasImg = rawImg.startsWith('http') && !rawImg.includes('add7ffb');
+    const walkMin = Number((String(listing.transit).match(/(\d+)\s*min walk/) || [])[1]);
+    if (listing.price > 0 && listing.price >= answers.budget * 0.95 && listing.price <= answers.budget)
+      gives.push('Right at the top of your budget');
+    if (!hasImg) gives.push('Few photos, so tour it before deciding');
+    if (!isNaN(walkMin) && walkMin >= 12) gives.push(`A longer walk to the train (${listing.transit})`);
+  }
+
+  // Honest closer, varied by the listing, only when nothing real to give up
+  if (!gives.length) {
+    const where = listing.neighborhood || listing.borough || 'the block';
+    gives.push(
+      listing.transit
+        ? `See ${where} in person and time the ${String(listing.transit).split(' · ')[0]} commute`
+        : `Nothing breaks your rules, just see ${where} in person first`
+    );
+  }
 
   return { gains: gains.slice(0, 3), gives: gives.slice(0, 3) };
 }
