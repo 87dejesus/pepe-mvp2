@@ -23,6 +23,9 @@ type Answers = {
   pets: string;
   amenities: string[];
   timing: string;
+  housingType?: string;
+  upfrontCash?: string;
+  qualification?: string;
 };
 
 type Listing = {

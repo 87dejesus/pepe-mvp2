@@ -89,6 +89,18 @@ Match score drives the verdict stamp + editorial headline:
 - **Paywall:** editorial and honest — "keep your decision desk," no fake urgency.
 - **Exit:** bring into the navy world; a calm editorial verdict ("wait thoughtfully").
 
+## Copy voice (founder, not AI)
+
+All user-facing text is builder-to-builder, plain, and direct. Before shipping any copy, strip the AI tells:
+- **No em-dashes or en-dashes** (U+2014 / U+2013) anywhere users see. Use commas, periods, colons, parentheses, or `·`.
+- **No marketing polish / fluff words:** elevate, seamless, curated, nestled, boasts, unlock, dive in, in the heart of, effortless, vibrant, genuinely, truly.
+- **No roadmap-speak in product copy** ("we'll add X soon"). Say what's true now, or give an action ("Ask the landlord, or check DHCR").
+- **No hedged AI cadence:** prefer contractions (you're, it's), short sentences, and a real verb over "this is a quiet yes" / "worth it only if the gains matter more to you."
+- **No fake urgency / scarcity** (already a hard rule): no "before it's gone" countdowns, no "X people viewing."
+- **Don't overpromise what the data can't do.** If we can't filter on something (e.g., per-listing qualification or rent-stabilization), don't imply we will. Say the honest version ("you'll need a guarantor here, confirm with the building").
+
+Read each line as if a skeptical NYC renter wrote it for a friend. If it sounds like a brochure or an LLM, rewrite it.
+
 ## Process rule
 
 Visual changes are **mockup-first**: produce a rendered HTML mockup (see `docs/mockups/`), get founder approval, then implement. Do not ship UI to production without an approved look.
