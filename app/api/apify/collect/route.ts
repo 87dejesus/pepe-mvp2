@@ -79,12 +79,11 @@ async function collect() {
     return NextResponse.json({ status: 'pending', runId, runStatus });
   }
 
-  if (runStatus !== 'SUCCEEDED') {
-    await db.from('sync_runs').update({ status: 'failed' }).eq('id', syncRunId);
-    return NextResponse.json({ status: 'failed', runId, runStatus });
-  }
-
-  // 3. Fetch dataset items
+  // 3. Fetch dataset items. The saswave actor occasionally crashes mid-run on a
+  // bad page fetch (exit 91), but the items it collected BEFORE the crash are
+  // complete and valid. So we tolerate non-SUCCEEDED runs as long as the dataset
+  // has items, and only bail when there is genuinely nothing to upsert. This
+  // keeps the cron resilient to the actor's intermittent flakiness.
   const itemsRes = await fetch(
     `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true`,
     { cache: 'no-store' }
@@ -96,7 +95,15 @@ async function collect() {
     );
   }
   const raw: SaswaveItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] saswave: fetched ${raw.length} raw items`);
+  console.log(`[Steady Debug] saswave: fetched ${raw.length} raw items (run status: ${runStatus})`);
+
+  if (raw.length === 0) {
+    await db.from('sync_runs').update({ status: 'failed' }).eq('id', syncRunId);
+    return NextResponse.json({ status: 'failed', runId, runStatus, reason: 'no items' });
+  }
+  if (runStatus !== 'SUCCEEDED') {
+    console.warn(`[Steady Debug] saswave run ${runStatus} but has ${raw.length} usable items — processing partial batch`);
+  }
 
   // 4. Normalize
   const normalized: ApifyListing[] = raw
