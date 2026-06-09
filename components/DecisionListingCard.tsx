@@ -273,7 +273,7 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
   const price = listing.price || 0;
   const incomeNeeded = price * 40;     // NYC landlords prefer income of ~40x monthly rent (annual)
   const moveInEst = price * 2;         // 1-month deposit (capped by law) + first month
-  type Truth = { ic: string; tone: 'ok' | 'warn' | 'plain'; k: string; v: string; note: string };
+  type Truth = { ic: string; tone: 'ok' | 'warn' | 'plain'; k: string; v: string; note: string; href?: string };
   const truths: Truth[] = [];
   if (price > 0) {
     // Qualification semaphore, personalized by the quiz answer + this listing.
@@ -298,7 +298,11 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
   } else {
     truths.push({ ic: '💸', tone: 'plain', k: 'Real cost to move in', v: 'Ask the building', note: 'No rent published. Get the full move-in cost in writing.' });
   }
-  truths.push({ ic: '🏛️', tone: 'warn', k: 'Rent-stabilized?', v: 'Worth checking', note: 'Could mean capped rent and a guaranteed renewal. Ask the landlord, or check DHCR.' });
+  truths.push({
+    ic: '🏛️', tone: 'warn', k: 'Rent-stabilized?', v: 'Check this building',
+    note: 'If it is, you get capped rent and a guaranteed renewal. Tap to look it up.',
+    href: `https://www.google.com/search?q=${encodeURIComponent(`${listing.address} rent stabilized building`)}`,
+  });
 
   return (
     <div
@@ -408,18 +412,25 @@ export default function DecisionListingCard({ listing, answers, matchScore, belo
       <div style={{ padding: '16px 20px 4px', borderTop: `1px solid ${LINE}` }}>
         <h2 style={sectionLabel}>Before you commit · <span style={{ color: GREEN }}>what Heed checked</span></h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: LINE, border: `1px solid ${LINE}`, borderRadius: 14, overflow: 'hidden' }}>
-          {truths.map((t, i) => (
-            <div key={i} style={{ display: 'flex', gap: 11, padding: '11px 13px', background: NAVY, alignItems: 'flex-start' }}>
-              <span style={{ width: 26, height: 26, borderRadius: 8, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, background: t.tone === 'ok' ? 'rgba(0,166,81,.14)' : t.tone === 'warn' ? 'rgba(200,129,75,.16)' : 'rgba(255,255,255,.06)', border: `1px solid ${t.tone === 'ok' ? 'rgba(0,166,81,.4)' : t.tone === 'warn' ? 'rgba(200,129,75,.45)' : LINE}` }}>{t.ic}</span>
-              <div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{t.k}</div>
-                <div style={{ fontSize: 13.5, color: '#fff', fontWeight: 600, marginTop: 2, lineHeight: 1.35 }}>
-                  {t.v}
-                  <span style={{ display: 'block', fontWeight: 400, color: 'rgba(255,255,255,.55)', fontSize: 12, marginTop: 2 }}>{t.note}</span>
+          {truths.map((t, i) => {
+            const rowStyle: React.CSSProperties = { display: 'flex', gap: 11, padding: '11px 13px', background: NAVY, alignItems: 'flex-start', textDecoration: 'none' };
+            const inner = (
+              <>
+                <span style={{ width: 26, height: 26, borderRadius: 8, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, background: t.tone === 'ok' ? 'rgba(0,166,81,.14)' : t.tone === 'warn' ? 'rgba(200,129,75,.16)' : 'rgba(255,255,255,.06)', border: `1px solid ${t.tone === 'ok' ? 'rgba(0,166,81,.4)' : t.tone === 'warn' ? 'rgba(200,129,75,.45)' : LINE}` }}>{t.ic}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{t.k}</div>
+                  <div style={{ fontSize: 13.5, color: '#fff', fontWeight: 600, marginTop: 2, lineHeight: 1.35 }}>
+                    {t.v}
+                    <span style={{ display: 'block', fontWeight: 400, color: 'rgba(255,255,255,.55)', fontSize: 12, marginTop: 2 }}>{t.note}</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+                {t.href && <span style={{ alignSelf: 'center', color: GREEN, fontSize: 12, fontWeight: 700, flex: 'none' }}>Look up →</span>}
+              </>
+            );
+            return t.href
+              ? <a key={i} href={t.href} target="_blank" rel="noopener noreferrer" style={rowStyle}>{inner}</a>
+              : <div key={i} style={rowStyle}>{inner}</div>;
+          })}
         </div>
         <div style={{ marginTop: 10, padding: '12px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 12px 12px 0' }}>
           <div style={{ fontFamily: CASLON, fontStyle: 'italic', color: '#fff', fontSize: 13.5, marginBottom: 9 }}>&ldquo;Before you sign, get these in writing:&rdquo;</div>
