@@ -12,6 +12,10 @@
     {
       "path": "/api/apify/collect",
       "schedule": "25 6 */3 * *"
+    },
+    {
+      "path": "/api/cron/watchdog",
+      "schedule": "0 7 * * *"
     }
   ],
   "redirects": [
