@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>/onboarding/pricing — antes vs agora (aposentada)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start;padding:26px 16px;color:#fff}
+  .col{display:flex;flex-direction:column;align-items:center;max-width:420px}
+  .label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+  .label.old{color:#d4504a}
+  .label.new{color:var(--green)}
+  .sub{color:rgba(255,255,255,.45);font-size:12px;margin-bottom:14px;text-align:center;max-width:36ch;line-height:1.45}
+  .phone{width:400px;max-width:100%;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:640px;position:relative}
+  .phone.old{opacity:.92}
+  .stamp{position:absolute;top:14px;right:14px;z-index:5;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+  .stamp.killed{background:rgba(212,80,74,.16);border:1px solid #d4504a;color:#ffb3ad}
+  .stamp.live{background:rgba(0,166,81,.16);border:1px solid var(--green);color:#86efac}
+  .head{padding:13px 18px;display:flex;align-items:center;gap:8px}
+  .head img{width:24px;height:24px;object-fit:contain}
+  .head span{color:rgba(255,255,255,.9);font-weight:600;font-size:12px;letter-spacing:.05em}
+  .prog{height:3px;background:rgba(255,255,255,.12);margin:0 20px}
+  .prog div{height:100%;background:var(--green)}
+  .wrap{flex:1;padding:18px 20px 8px}
+  .dock{padding:14px 20px 20px;border-top:1px solid var(--line);background:var(--deep)}
+  .cta{width:100%;height:50px;border-radius:12px;background:var(--green);color:#fff;font-weight:700;font-size:15px;border:none;display:flex;align-items:center;justify-content:center}
+  .fine{color:rgba(255,255,255,.4);font-size:11px;text-align:center;margin-top:9px;line-height:1.5}
+
+  /* OLD bubble */
+  .bubble{display:flex;gap:10px;margin-bottom:18px}
+  .bubble img{width:40px;height:40px;object-fit:contain;flex:none}
+  .bubble .box{background:#fff;border-radius:12px 12px 12px 4px;padding:11px 13px}
+  .bubble .box .t{font-size:14px;font-weight:600;color:#0A2540;line-height:1.35}
+  .bubble .box .s{font-size:11px;color:rgba(10,37,64,.5);margin-top:3px}
+  .plan{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .price{display:flex;align-items:baseline;gap:8px}
+  .price .n{font-size:30px;font-weight:700}
+  .price .u{color:rgba(255,255,255,.5);font-size:13px}
+  .psub{color:rgba(255,255,255,.4);font-size:11px;margin:4px 0 16px}
+  .feat{display:flex;gap:9px;font-size:13px;color:rgba(255,255,255,.8);margin-bottom:10px}
+  .feat .c{color:var(--green);font-weight:800}
+  .trial{color:#ffb3ad;background:rgba(212,80,74,.12);border:1px solid rgba(212,80,74,.4);border-radius:8px;padding:4px 8px;font-size:11px;display:inline-block;margin-top:4px}
+
+  /* NEW redirect */
+  .redir{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 24px;gap:14px}
+  .redir .spin{width:30px;height:30px;border:2px solid rgba(255,255,255,.18);border-top-color:var(--green);border-radius:50%}
+  .redir h2{font-family:var(--serif);font-size:20px;font-weight:400}
+  .redir p{color:rgba(255,255,255,.55);font-size:13px;line-height:1.55;max-width:30ch}
+  .arrow{font-size:13px;color:var(--green);font-weight:700}
+
+  /* paywall mini */
+  .get{margin-top:4px;padding:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px}
+  .get .lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:10px}
+  .get .row{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px;font-size:12.5px;color:#fff}
+  .get .row .ic{width:20px;height:20px;border-radius:6px;background:rgba(0,166,81,.14);border:1px solid rgba(0,166,81,.4);display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .pricerow{display:flex;align-items:baseline;gap:8px;margin:14px 0 2px}
+  .pricerow .n{font-family:var(--serif);font-size:28px}
+  .pricerow .u{color:rgba(255,255,255,.5);font-size:12px}
+  .pricerow .b{margin-left:auto;font-size:10px;font-weight:700;color:var(--green);background:rgba(0,166,81,.12);padding:3px 8px;border-radius:6px}
+  .field{margin-top:12px}
+  .field input{width:100%;height:46px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff;font-size:14px;padding:0 13px}
+  .field input::placeholder{color:rgba(255,255,255,.3)}
+  .h1{font-family:var(--serif);font-size:23px;font-weight:400;line-height:1.14;text-align:center;margin-bottom:4px}
+  .lede{color:rgba(255,255,255,.6);font-size:13px;text-align:center;margin-bottom:6px}
+  .heedimg{height:56px;width:auto;display:block;margin:0 auto 10px}
+</style>
+</head>
+<body>
+
+  <!-- BEFORE -->
+  <div class="col">
+    <div class="label old">Antes · /onboarding/pricing</div>
+    <div class="sub">Uma segunda tela de preço, separada do paywall. Carregava a copy de trial velha. Foi removida.</div>
+    <div class="phone old">
+      <div class="stamp killed">removida</div>
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="prog"><div style="width:100%"></div></div>
+      <div class="wrap">
+        <div class="bubble">
+          <img src="../../public/brand/heed-mascot.png" alt="">
+          <div class="box"><div class="t">One decision. One payment.</div><div class="s">No rush. No panic. Just clarity when you need it most.</div></div>
+        </div>
+        <div class="plan">
+          <div class="price"><span class="n">$9.49</span><span class="u">· 30-day access</span></div>
+          <div class="psub">No auto-renewal. No surprise charges.</div>
+          <div class="feat"><span class="c">✓</span><span>Match score based on your real constraints</span></div>
+          <div class="feat"><span class="c">✓</span><span>Apply Today vs Wait Thoughtfully</span></div>
+          <div class="feat"><span class="c">✓</span><span>Incentive detection: free months, no-fee deals</span></div>
+          <div class="feat"><span class="c">✓</span><span>Heed's take on every listing</span></div>
+        </div>
+      </div>
+      <div class="dock">
+        <button class="cta">Start free — then $9.49</button>
+        <div class="fine"><span class="trial">copy de trial: "3 days free, then $9.49"</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div class="col">
+    <div class="label new">Agora · redireciona pro /paywall</div>
+    <div class="sub">Quem acessa /onboarding/pricing é mandado direto pro paywall. Uma fonte de preço só, sem copy de trial.</div>
+    <div class="phone">
+      <div class="stamp live">→ /paywall</div>
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="redir">
+        <div class="spin"></div>
+        <h2>Levando você ao paywall…</h2>
+        <p>/onboarding/pricing não existe mais como tela. Cai aqui:</p>
+        <div class="arrow">▼ /paywall ▼</div>
+        <div class="get" style="width:100%;text-align:left">
+          <img class="heedimg" src="../../public/brand/heed-mascot.png" alt="">
+          <div class="h1">Unlock the truth on every place.</div>
+          <div class="lede">You saw one read free. This is the same honest check on all your matches.</div>
+          <div class="lbl" style="margin-top:6px">What you unlock</div>
+          <div class="row"><span class="ic">🧮</span>Will you qualify</div>
+          <div class="row"><span class="ic">💸</span>The real cost to move in</div>
+          <div class="row"><span class="ic">🛡️</span>A scam check before you pay</div>
+          <div class="pricerow"><span class="n">$9.49</span><span class="u">/ 30 days</span><span class="b">ONE-TIME</span></div>
+          <div class="field"><input type="email" placeholder="you@email.com"></div>
+          <button class="cta" style="margin-top:10px">Unlock my matches</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
