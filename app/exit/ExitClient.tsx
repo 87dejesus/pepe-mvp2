@@ -167,7 +167,7 @@ export default function ExitClient() {
               </Link>
 
               <Link
-                href="/"
+                href="/flow"
                 style={{
                   width: "100%",
                   height: 52,
@@ -183,7 +183,7 @@ export default function ExitClient() {
                   textDecoration: "none",
                 }}
               >
-                Back to home
+                Start a new search
               </Link>
             </div>
           </div>
