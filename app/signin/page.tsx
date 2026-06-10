@@ -8,6 +8,11 @@ import { cacheServerAccess } from '@/lib/access';
 
 const OTP_COOLDOWN_SECONDS = 60;
 
+const NAVY = '#0A2540';
+const GREEN = '#00A651';
+const LINE = 'rgba(255,255,255,.14)';
+const SERIF = 'var(--font-caslon), Georgia, serif';
+
 type Step = 'email' | 'otp';
 
 function createSupabase() {
@@ -16,6 +21,21 @@ function createSupabase() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: 50, borderRadius: 12, background: 'rgba(255,255,255,.06)',
+  border: `1px solid ${LINE}`, color: '#fff', fontSize: 15, padding: '0 14px',
+  fontFamily: 'var(--font-inter), system-ui, sans-serif', outline: 'none',
+};
+const ctaStyle: React.CSSProperties = {
+  width: '100%', height: 52, borderRadius: 12, background: GREEN, color: '#fff',
+  fontWeight: 700, fontSize: 15, border: 'none', marginTop: 14, cursor: 'pointer',
+  boxShadow: '0 6px 24px rgba(0,166,81,.28)',
+};
+const lblStyle: React.CSSProperties = {
+  display: 'block', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase',
+  color: 'rgba(255,255,255,.5)', fontWeight: 700, marginBottom: 7,
+};
 
 function SignInContent() {
   const [step, setStep] = useState<Step>('email');
@@ -146,67 +166,62 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-      <Header variant="light" />
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#0c1a26', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: 420, background: NAVY, minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <Header />
 
-      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-10 overflow-y-auto">
-        <div className="max-w-sm w-full">
-
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-[#0A2540] leading-tight mb-2">
-              Sign in to your account
+        <div style={{ flex: 1, padding: '18px 22px 28px' }}>
+          {/* hero */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase', color: GREEN, fontWeight: 700, marginBottom: 10 }}>
+              Welcome back
+            </div>
+            <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 28, fontWeight: 400, lineHeight: 1.12 }}>
+              {step === 'email' ? 'Sign in to your desk.' : 'Check your inbox.'}
             </h1>
-            <p className="text-sm text-[#666666] leading-relaxed">
-              Enter the email you used when you signed up. We&apos;ll send a one-time code to restore your access.
-            </p>
-            <p className="text-xs text-[#00A651] font-medium mt-2">
-              You will not be charged again just for signing in.
-            </p>
+            {step === 'email' && (
+              <>
+                <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5 }}>
+                  Use the email you signed up with. We send a one-time code, no password to remember.
+                </p>
+                <p style={{ color: GREEN, fontSize: 12.5, fontWeight: 600, marginTop: 10 }}>
+                  Signing in never charges you again.
+                </p>
+              </>
+            )}
           </div>
 
-          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5">
+          {/* card */}
+          <div style={{ padding: 18, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
             {step === 'email' && (
-              <form onSubmit={handleContinue} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wide">
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@email.com"
-                    required
-                    autoFocus
-                    className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
-                  />
-                </div>
+              <form onSubmit={handleContinue}>
+                <label style={lblStyle}>Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  required
+                  autoFocus
+                  style={inputStyle}
+                />
                 {error && (
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p style={{ marginTop: 12, color: '#ff8a80', background: 'rgba(212,80,74,.12)', border: '1px solid rgba(212,80,74,.4)', borderRadius: 10, padding: 12, fontSize: 13, lineHeight: 1.5 }}>
                     {error}
                   </p>
                 )}
-                <button
-                  type="submit"
-                  disabled={loading || !normalizedEmail}
-                  className="w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
-                >
+                <button type="submit" disabled={loading || !normalizedEmail} style={{ ...ctaStyle, opacity: loading || !normalizedEmail ? 0.5 : 1 }}>
                   {loading ? <Spinner /> : 'Send code'}
                 </button>
               </form>
             )}
 
             {step === 'otp' && (
-              <form onSubmit={handleVerifyCode} className="space-y-4">
-                <div className="space-y-1">
-                  <p className="font-semibold text-[#0A2540] text-sm">Check your inbox</p>
-                  <p className="text-sm text-[#666666]">
-                    We sent a 6-digit code to{' '}
-                    <span className="font-medium text-[#0A2540]">{normalizedEmail}</span>.
-                    Enter it below to sign in.
-                  </p>
-                </div>
+              <form onSubmit={handleVerifyCode}>
+                <p style={{ color: '#fff', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Enter your 6-digit code</p>
+                <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
+                  We sent it to <span style={{ color: '#fff', fontWeight: 600 }}>{normalizedEmail}</span>. Enter it below to sign in.
+                </p>
                 <input
                   type="text"
                   value={otp}
@@ -216,51 +231,36 @@ function SignInContent() {
                   pattern="[0-9]*"
                   placeholder="123456"
                   autoFocus
-                  className="w-full text-center text-3xl tracking-[0.3em] font-semibold border border-[#E5E5E5] rounded-lg px-3 py-4 text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0A2540]/20 focus:border-[#0A2540]"
+                  style={{ ...inputStyle, height: 62, textAlign: 'center', fontSize: 30, letterSpacing: '.3em', fontWeight: 600 }}
                 />
                 {error && (
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p style={{ marginTop: 12, color: '#ff8a80', background: 'rgba(212,80,74,.12)', border: '1px solid rgba(212,80,74,.4)', borderRadius: 10, padding: 12, fontSize: 13, lineHeight: 1.5 }}>
                     {error}
                   </p>
                 )}
-                <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] disabled:opacity-50 disabled:pointer-events-none transition-all"
-                >
+                <button type="submit" disabled={loading || otp.length !== 6} style={{ ...ctaStyle, opacity: loading || otp.length !== 6 ? 0.5 : 1 }}>
                   {loading ? <Spinner /> : 'Verify and sign in'}
                 </button>
-                <div className="flex items-center justify-center gap-4 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={resendLoading || resendSecondsLeft > 0}
-                    className="text-sm text-[#0A2540] underline underline-offset-2 hover:text-[#0d2f52] disabled:opacity-50 disabled:no-underline"
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 14 }}>
+                  <button type="button" onClick={handleResend} disabled={resendLoading || resendSecondsLeft > 0} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.75)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', opacity: resendLoading || resendSecondsLeft > 0 ? 0.5 : 1 }}>
                     {resendLoading ? 'Sending…' : resendSecondsLeft > 0 ? `Resend in ${resendSecondsLeft}s` : 'Resend code'}
                   </button>
-                  <span className="text-[#E5E5E5]">|</span>
-                  <button
-                    type="button"
-                    onClick={resetToEmailStep}
-                    className="text-sm text-[#666666] underline underline-offset-2 hover:text-[#0A2540]"
-                  >
+                  <span style={{ color: 'rgba(255,255,255,.2)' }}>|</span>
+                  <button type="button" onClick={resetToEmailStep} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.55)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer' }}>
                     Change email
                   </button>
                 </div>
                 {resendSent && (
-                  <p className="text-sm text-[#00A651] bg-[#DCFCE7] border border-[#86EFAC] rounded-lg p-3 text-center">
-                    Code resent — check your inbox.
+                  <p style={{ marginTop: 12, color: GREEN, background: 'rgba(0,166,81,.12)', border: '1px solid rgba(0,166,81,.3)', borderRadius: 10, padding: 12, textAlign: 'center', fontSize: 13 }}>
+                    Code resent. Check your inbox.
                   </p>
                 )}
               </form>
             )}
           </div>
 
-          <div className="text-center mt-6">
-            <Link href="/" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
-              ← Back to home
-            </Link>
+          <div style={{ textAlign: 'center', marginTop: 18 }}>
+            <Link href="/" style={{ color: 'rgba(255,255,255,.4)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}>← Back to home</Link>
           </div>
         </div>
       </div>
@@ -278,9 +278,10 @@ export default function SignInPage() {
 
 function Spinner() {
   return (
-    <span className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: 999, animation: 'spin 1s linear infinite' }} />
       Loading…
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </span>
   );
 }

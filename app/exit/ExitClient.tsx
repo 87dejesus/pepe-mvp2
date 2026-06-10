@@ -4,46 +4,188 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 
+const NAVY = "#0A2540";
+const GREEN = "#00A651";
+const LINE = "rgba(255,255,255,.14)";
+const SERIF = "var(--font-caslon), Georgia, serif";
+
 export default function ExitClient() {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3] font-sans">
-      <Header />
+    <div
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        background: "#0c1a26",
+        fontFamily: "var(--font-inter), system-ui, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          background: NAVY,
+          minHeight: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* halftone newsprint texture */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,.05) .7px, transparent .7px)",
+            backgroundSize: "4px 4px",
+            opacity: 0.5,
+          }}
+        />
+        {/* etched skyline, bottom-anchored */}
+        <svg
+          aria-hidden
+          viewBox="0 0 420 200"
+          preserveAspectRatio="xMidYMax meet"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100%",
+            height: 200,
+            opacity: 0.14,
+            pointerEvents: "none",
+          }}
+        >
+          <g stroke="#ffffff" strokeWidth="1.1" fill="none">
+            <path d="M0 200 V150 H22 V120 H40 V150 H64 V90 H86 V150 H110 V70 H120 V55 H132 V70 H140 V150 H168 V110 H190 V150 H214 V64 H226 V40 H238 V64 H248 V150 H276 V100 H300 V150 H322 V82 H344 V150 H368 V120 H392 V150 H420 V200 Z" />
+            <path d="M120 55 V40 M226 40 V22" />
+          </g>
+        </svg>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-        <div className="max-w-md w-full text-center">
-          {/* Mascot slot: replace src with a transparent PNG/WebP when available (e.g. /brand/heed-mascot.png) */}
-          <Image
-            src="/brand/heed-mascot.png"
-            alt="Heed mascot"
-            width={96}
-            height={96}
-            className="object-contain mx-auto mb-6"
-          />
+        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", flex: 1 }}>
+          <Header />
 
-          {/* Main message */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0A2540] mb-4 leading-tight">
-            It&apos;s okay to wait thoughtfully!
-          </h1>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "24px 26px 40px",
+            }}
+          >
+            <Image
+              src="/brand/heed-mascot.png"
+              alt="Heed"
+              width={96}
+              height={132}
+              unoptimized
+              style={{
+                height: 96,
+                width: "auto",
+                margin: "0 auto 22px",
+                display: "block",
+                filter: "drop-shadow(0 8px 18px rgba(0,0,0,.4))",
+              }}
+            />
 
-          <p className="text-base text-[#666666] leading-relaxed mb-8">
-            The NYC market moves fast, but rushing into a decision you&apos;re not sure about is worse than waiting. Come back when you&apos;re ready.
-          </p>
-
-          {/* Actions */}
-          <div className="space-y-3">
-            <Link
-              href="/flow"
-              className="flex items-center justify-center w-full bg-[#0A2540] hover:bg-[#0d2f52] text-white font-semibold text-base h-14 rounded-lg active:scale-[0.98] transition-all"
+            <div
+              style={{
+                fontSize: 11,
+                letterSpacing: ".16em",
+                textTransform: "uppercase",
+                color: GREEN,
+                fontWeight: 700,
+                marginBottom: 14,
+              }}
             >
-              Back to Flow
-            </Link>
+              No rush
+            </div>
 
-            <Link
-              href="/"
-              className="flex items-center justify-center w-full border border-[#0A2540] bg-white text-[#0A2540] font-semibold text-base h-14 rounded-lg hover:bg-[#F8F6F3] active:scale-[0.98] transition-all"
+            <h1
+              style={{
+                fontFamily: SERIF,
+                color: "#fff",
+                fontSize: 30,
+                fontWeight: 400,
+                lineHeight: 1.12,
+                textShadow: "0 2px 14px rgba(0,0,0,.4)",
+              }}
             >
-              Back to Home
-            </Link>
+              Waiting is a decision too.
+            </h1>
+
+            <p
+              style={{
+                color: "rgba(255,255,255,.62)",
+                fontSize: 14.5,
+                marginTop: 14,
+                lineHeight: 1.55,
+                maxWidth: "34ch",
+              }}
+            >
+              The NYC market moves fast, but signing a place you&apos;re unsure about
+              is worse than waiting a week. Come back when your head is clear. Your
+              lines will be here.
+            </p>
+
+            <div
+              style={{
+                width: "100%",
+                marginTop: 30,
+                display: "flex",
+                flexDirection: "column",
+                gap: 11,
+              }}
+            >
+              <Link
+                href="/decision"
+                style={{
+                  width: "100%",
+                  height: 54,
+                  borderRadius: 13,
+                  background: GREEN,
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 6px 24px rgba(0,166,81,.3)",
+                  textDecoration: "none",
+                }}
+              >
+                Back to my matches
+              </Link>
+
+              <Link
+                href="/"
+                style={{
+                  width: "100%",
+                  height: 52,
+                  borderRadius: 13,
+                  background: "rgba(255,255,255,.06)",
+                  border: `1px solid ${LINE}`,
+                  color: "rgba(255,255,255,.78)",
+                  fontWeight: 600,
+                  fontSize: 15,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textDecoration: "none",
+                }}
+              >
+                Back to home
+              </Link>
+            </div>
           </div>
         </div>
       </div>

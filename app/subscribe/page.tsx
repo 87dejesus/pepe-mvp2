@@ -10,6 +10,11 @@ import { cacheServerAccess, invalidateAccessCache, type AccessStatus } from '@/l
 
 const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
+const NAVY = '#0A2540';
+const GREEN = '#00A651';
+const LINE = 'rgba(255,255,255,.14)';
+const SERIF = 'var(--font-caslon), Georgia, serif';
+
 type ServerAccessData = {
   status: string;
   trial_ends_at: string | null;
@@ -25,44 +30,48 @@ function hasGrantedAccess(data: ServerAccessData): boolean {
 }
 
 // ── Copy map ──────────────────────────────────────────────────────────────────
+// One-time payment, no trial. Re-unlock language for returning buyers.
 
 const REASON_COPY: Record<string, { heading: string; body: string }> = {
   trial_ended: {
-    heading: 'Your free trial has ended',
-    body: "Your 3-day trial is up. Subscribe to keep access to Heed's NYC apartment analysis — $9.49 / 30 days.",
+    heading: 'Your 30 days are up',
+    body: "Re-unlock the honest read on every place you're weighing. $9.49, one time.",
   },
   canceled: {
-    heading: 'Your subscription has ended',
-    body: 'Your access period has expired. Re-subscribe at $9.49 / 30 days to continue using Heed.',
+    heading: 'Your 30 days are up',
+    body: "Re-unlock the honest read on every place you're weighing. $9.49, one time.",
   },
   payment_failed: {
-    heading: 'Update your payment method',
-    body: "Your card was declined and your subscription is paused. Update your payment method to restore access — no new subscription needed.",
+    heading: 'Update your card',
+    body: 'Your card was declined and your access is paused. Fix the card to turn it back on. No new charge to set up.',
   },
 };
 
 const DEFAULT_COPY = {
-  heading: 'Subscribe to continue',
-  body: "Get full access to Heed's NYC apartment analysis for $9.49 / 30 days.",
+  heading: 'Unlock the truth on every match',
+  body: "The same honest check you saw free, on every place you're weighing. $9.49, one time.",
 };
 
-const FEATURES = [
-  'Match score based on your real constraints',
-  'Apply Today vs Wait Thoughtfully — no false urgency',
-  'Incentive detection: free months, no-fee deals',
-  "Heed's take on every listing",
+const UNLOCK: [string, string, string][] = [
+  ['🧮', 'Will you qualify', 'The income bar and your path, on every listing.'],
+  ['💸', 'The real cost to move in', 'Deposit, first month, fees. Not just the sticker.'],
+  ['🛡️', 'A scam check before you pay', 'Flags places priced too good to be true.'],
+  ['📋', 'The fine print to ask', 'What to confirm before you sign, every time.'],
 ];
 
 // ── Loading screen ────────────────────────────────────────────────────────────
 
 function LoadingScreen({ message }: { message: string }) {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-      <Header variant="light" />
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#0A2540]/40 border-t-[#0A2540] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-[#666666]">{message}</p>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#0c1a26', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: 420, background: NAVY, minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <Header />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ display: 'block', width: 30, height: 30, border: '2px solid rgba(255,255,255,.18)', borderTopColor: GREEN, borderRadius: 999, margin: '0 auto 14px', animation: 'spin 1s linear infinite' }} />
+            <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13.5 }}>{message}</p>
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          </div>
         </div>
       </div>
     </div>
@@ -73,12 +82,32 @@ function LoadingScreen({ message }: { message: string }) {
 
 function Spinner() {
   return (
-    <span className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: 999, animation: 'spin 1s linear infinite' }} />
       Loading…
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </span>
   );
 }
+
+// ── Page shell ────────────────────────────────────────────────────────────────
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#0c1a26', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: 420, background: NAVY, minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <Header />
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const ctaStyle: React.CSSProperties = {
+  width: '100%', height: 54, borderRadius: 13, background: GREEN, color: '#fff',
+  fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer',
+  boxShadow: '0 6px 24px rgba(0,166,81,.3)',
+};
 
 // ── Main content ──────────────────────────────────────────────────────────────
 
@@ -366,44 +395,29 @@ function SubscribeContent() {
     const pendingHeading =
       pendingContext === 'portal'
         ? 'Payment update in progress'
-        : 'Checkout complete — activating access';
+        : 'Payment received';
     const pendingBody =
       pendingContext === 'portal'
-        ? "Your payment method was updated. Stripe is retrying your invoice — this usually takes a few seconds."
-        : "Your payment was received. Access confirmation is taking a moment longer than usual — click below to check. You will not be charged again.";
+        ? 'Your card was updated. Stripe is retrying your invoice, this usually takes a few seconds.'
+        : "Activation is taking a moment longer than usual. Tap below to check. You won't be charged again.";
 
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-        <Header variant="light" />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-          <div className="max-w-sm w-full">
-            <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⏳</span>
-              </div>
-              <h1 className="text-lg font-bold text-[#0A2540] mb-2">{pendingHeading}</h1>
-              <p className="text-sm text-[#666666] leading-relaxed mb-6">{pendingBody}</p>
-              <button
-                onClick={handleRecheck}
-                className="w-full h-12 rounded-xl bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] transition-all mb-3"
-              >
-                Check access now
-              </button>
-              <p className="text-xs text-[#999999] leading-relaxed mb-3">
-                {retryCountdown !== null
-                  ? `Checking automatically in ${retryCountdown}s…`
-                  : 'Still processing? Click above to check again. You can also close this page and come back — your access will be ready once it activates.'}
-              </p>
-              <Link
-                href="/paywall"
-                className="text-xs text-[#666666] underline underline-offset-2 hover:text-[#0A2540]"
-              >
-                ← Back to sign-in
-              </Link>
-            </div>
+      <Shell>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ width: '100%', padding: 24, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 18, textAlign: 'center' }}>
+            <div style={{ width: 46, height: 46, borderRadius: 999, background: 'rgba(0,166,81,.12)', border: '1px solid rgba(0,166,81,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto 14px' }}>⏳</div>
+            <h2 style={{ fontFamily: SERIF, color: '#fff', fontSize: 21, fontWeight: 400, marginBottom: 8 }}>{pendingHeading}</h2>
+            <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13.5, lineHeight: 1.55, marginBottom: 18 }}>{pendingBody}</p>
+            <button onClick={handleRecheck} style={ctaStyle}>Check access now</button>
+            <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 12, lineHeight: 1.55 }}>
+              {retryCountdown !== null
+                ? `Checking automatically in ${retryCountdown}s…`
+                : 'Still processing? Tap above to check again. You can also close this page and come back, your access will be ready once it activates.'}
+            </p>
+            <Link href="/paywall" style={{ display: 'inline-block', marginTop: 12, color: 'rgba(255,255,255,.4)', fontSize: 12.5, textDecoration: 'underline', textUnderlineOffset: 2 }}>← Back to sign-in</Link>
           </div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
@@ -412,152 +426,101 @@ function SubscribeContent() {
   // payment_failed: simplified card — update payment method, no new subscription
   if (isPaymentFailed) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-        <Header variant="light" />
-
-        <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-8 overflow-y-auto">
-          <div className="max-w-sm w-full">
-            <div className="text-center mb-5">
-              <Image
-                src="/brand/heed-mascot.png"
-                alt="Heed mascot"
-                width={80}
-                height={80}
-                className="object-contain mx-auto mb-3"
-              />
-              <h1 className="text-xl font-bold text-[#0A2540] leading-tight">{copy.heading}</h1>
-              <p className="text-sm text-[#666666] mt-2 leading-relaxed">{copy.body}</p>
-            </div>
-
-            <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5 mb-4">
-              {noCustomer ? (
-                // stripe_customer_id missing — no retry possible
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-[#0A2540] mb-2">Billing account not found</p>
-                  <p className="text-sm text-[#666666] leading-relaxed mb-4">
-                    We couldn&apos;t locate your billing account. This is unusual — please contact support and we&apos;ll sort it out.
-                  </p>
-                  <a
-                    href="mailto:support@thesteadyone.com"
-                    className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] transition-all"
-                  >
-                    Contact support
-                  </a>
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={handlePortal}
-                    disabled={portalLoading}
-                    className="w-full h-12 rounded-xl bg-[#00A651] text-white font-semibold text-sm hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none transition-all"
-                  >
-                    {portalLoading ? <Spinner /> : 'Update payment method'}
-                  </button>
-
-                  {error && (
-                    <div className="mt-3">
-                      <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                        {error}
-                      </p>
-                      <button
-                        onClick={() => setError(null)}
-                        className="mt-2 w-full h-10 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
-                      >
-                        Try again
-                      </button>
-                    </div>
-                  )}
-
-                  <p className="text-[10px] text-[#999999] text-center leading-relaxed mt-3">
-                    You&apos;ll be taken to a secure Stripe page to update your card. Your subscription remains active.
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div className="text-center pb-safe">
-              <Link href="/paywall" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
-                ← Back to sign-in
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // trial_ended / canceled / default: full subscribe form with features + price
-  return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#F8F6F3]">
-      <Header variant="light" />
-
-      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 py-8 overflow-y-auto">
-        <div className="max-w-sm w-full">
-          <div className="text-center mb-5">
-            <Image
-              src="/brand/heed-mascot.png"
-              alt="Heed mascot"
-              width={80}
-              height={80}
-              className="object-contain mx-auto mb-3"
-            />
-            <h1 className="text-xl font-bold text-[#0A2540] leading-tight">{copy.heading}</h1>
-            <p className="text-sm text-[#666666] mt-2 leading-relaxed">{copy.body}</p>
+      <Shell>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '8px 22px 0', textAlign: 'center' }}>
+            <Image src="/brand/heed-mascot.png" alt="Heed" width={68} height={94} unoptimized style={{ height: 68, width: 'auto', margin: '0 auto 12px', display: 'block', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.4))' }} />
+            <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 26, fontWeight: 400, lineHeight: 1.14 }}>{copy.heading}</h1>
+            <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5, maxWidth: '32ch', marginInline: 'auto' }}>{copy.body}</p>
           </div>
 
-          <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5 mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#666666] mb-3">
-              What you get
-            </p>
-            <ul className="space-y-2.5 mb-5">
-              {FEATURES.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[#1A1A1A]">
-                  <span className="text-[#00A651] font-bold mt-0.5">✓</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-3xl font-bold text-[#0A2540]">$9.49</span>
-              <span className="text-[#666666] text-sm">/ 30 days</span>
-            </div>
-
-            <button
-              onClick={handleSubscribe}
-              disabled={checkoutLoading}
-              className="w-full h-12 rounded-xl bg-[#00A651] text-white font-semibold text-sm hover:bg-[#00913f] disabled:opacity-50 disabled:pointer-events-none transition-all"
-            >
-              {checkoutLoading ? <Spinner /> : 'Subscribe now'}
-            </button>
-
-            {error && (
-              <div className="mt-3">
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                  {error}
+          <div style={{ margin: '18px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
+            {noCustomer ? (
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ color: '#fff', fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Billing account not found</p>
+                <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13.5, lineHeight: 1.55, marginBottom: 16 }}>
+                  We couldn&apos;t locate your billing account. This is unusual. Email us and we&apos;ll sort it out.
                 </p>
-                <button
-                  onClick={() => setError(null)}
-                  className="mt-2 w-full h-10 rounded-lg border border-[#E5E5E5] bg-white text-[#0A2540] font-semibold text-sm hover:bg-[#F8F6F3] transition-all"
-                >
-                  Try again
-                </button>
+                <a href="mailto:support@thesteadyone.com" style={{ ...ctaStyle, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', width: 'auto', padding: '0 24px' }}>Contact support</a>
               </div>
+            ) : (
+              <>
+                <button onClick={handlePortal} disabled={portalLoading} style={{ ...ctaStyle, opacity: portalLoading ? 0.5 : 1 }}>
+                  {portalLoading ? <Spinner /> : 'Update payment method'}
+                </button>
+                {error && (
+                  <>
+                    <p style={{ marginTop: 12, color: '#ff8a80', background: 'rgba(212,80,74,.12)', border: '1px solid rgba(212,80,74,.4)', borderRadius: 10, padding: 12, textAlign: 'center', fontSize: 13 }}>{error}</p>
+                    <button onClick={() => setError(null)} style={{ marginTop: 8, width: '100%', height: 44, borderRadius: 12, background: 'rgba(255,255,255,.06)', border: `1px solid ${LINE}`, color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Try again</button>
+                  </>
+                )}
+                <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11, lineHeight: 1.5 }}>
+                  You&apos;ll go to a secure Stripe page to update your card. Your access stays linked to this email.
+                </p>
+              </>
             )}
           </div>
 
-          <p className="text-[10px] text-[#999999] text-center leading-relaxed mb-4">
-            Secure checkout via Stripe. You will not be charged during any active free trial period.
-          </p>
-
-          <div className="text-center pb-safe">
-            <Link href="/paywall" className="text-xs text-[#666666] hover:text-[#0A2540] underline">
-              ← Back to sign-in
-            </Link>
+          <div style={{ textAlign: 'center', padding: '18px 0 24px', marginTop: 'auto' }}>
+            <Link href="/paywall" style={{ color: 'rgba(255,255,255,.4)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}>← Back to sign-in</Link>
           </div>
         </div>
+      </Shell>
+    );
+  }
+
+  // trial_ended / canceled / default: re-unlock with truths panel + one-time price
+  return (
+    <Shell>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* hero */}
+        <div style={{ padding: '8px 22px 0', textAlign: 'center' }}>
+          <Image src="/brand/heed-mascot.png" alt="Heed" width={68} height={94} unoptimized style={{ height: 68, width: 'auto', margin: '0 auto 12px', display: 'block', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.4))' }} />
+          <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 26, fontWeight: 400, lineHeight: 1.14 }}>{copy.heading}</h1>
+          <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5, maxWidth: '32ch', marginInline: 'auto' }}>{copy.body}</p>
+        </div>
+
+        {/* what you unlock */}
+        <div style={{ margin: '18px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
+          <div style={{ fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', fontWeight: 700, marginBottom: 12 }}>What you unlock</div>
+          {UNLOCK.map(([ic, t, d]) => (
+            <div key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 11 }}>
+              <span style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(0,166,81,.14)', border: '1px solid rgba(0,166,81,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flex: 'none' }}>{ic}</span>
+              <span style={{ fontSize: 13.5, color: '#fff', fontWeight: 600, lineHeight: 1.35 }}>{t}<small style={{ display: 'block', fontWeight: 400, color: 'rgba(255,255,255,.55)', fontSize: 12, marginTop: 1 }}>{d}</small></span>
+            </div>
+          ))}
+        </div>
+
+        {/* pay card */}
+        <div style={{ margin: '16px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: SERIF, color: '#fff', fontSize: 32 }}>$9.49</span>
+            <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>/ 30 days</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: GREEN, background: 'rgba(0,166,81,.12)', padding: '4px 9px', borderRadius: 7 }}>ONE-TIME</span>
+          </div>
+          <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, marginBottom: 14 }}>No subscription. No auto-renew. Pay again only if you come back.</p>
+
+          <button onClick={handleSubscribe} disabled={checkoutLoading} style={{ ...ctaStyle, opacity: checkoutLoading ? 0.5 : 1 }}>
+            {checkoutLoading ? <Spinner /> : 'Re-unlock my matches'}
+          </button>
+
+          {error && (
+            <>
+              <p style={{ marginTop: 12, color: '#ff8a80', background: 'rgba(212,80,74,.12)', border: '1px solid rgba(212,80,74,.4)', borderRadius: 10, padding: 12, textAlign: 'center', fontSize: 13 }}>{error}</p>
+              <button onClick={() => setError(null)} style={{ marginTop: 8, width: '100%', height: 44, borderRadius: 12, background: 'rgba(255,255,255,.06)', border: `1px solid ${LINE}`, color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Try again</button>
+            </>
+          )}
+
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11, lineHeight: 1.5 }}>
+            Secure checkout via Stripe. One-time charge, no auto-renew.
+          </p>
+        </div>
+
+        <div style={{ textAlign: 'center', padding: '18px 0 24px', marginTop: 'auto' }}>
+          <Link href="/paywall" style={{ color: 'rgba(255,255,255,.4)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}>← Back to sign-in</Link>
+        </div>
       </div>
-    </div>
+    </Shell>
   );
 }
 
