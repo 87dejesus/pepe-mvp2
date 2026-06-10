@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Subscribe — Dark Broadsheet, no trial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--clay:#C8814B;--miss:#d4504a;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:row;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-start;padding:24px 16px}
+  .col{display:flex;flex-direction:column;align-items:center}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:14px}
+  .phone{width:100%;max-width:420px;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:600px}
+
+  .head{padding:14px 18px;display:flex;align-items:center;gap:8px}
+  .head img{width:26px;height:26px;object-fit:contain}
+  .head span{color:rgba(255,255,255,.9);font-weight:600;font-size:13px;letter-spacing:.06em}
+
+  .hero{padding:8px 22px 0;text-align:center}
+  .hero img{height:68px;width:auto;margin:0 auto 12px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+  .hero h1{font-family:var(--serif);color:#fff;font-size:26px;font-weight:400;line-height:1.14}
+  .hero p{color:rgba(255,255,255,.6);font-size:14px;margin-top:9px;line-height:1.5;max-width:32ch;margin-left:auto;margin-right:auto}
+
+  .get{margin:18px 22px 0;padding:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px}
+  .get .lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+  .get .row{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px}
+  .get .row:last-child{margin-bottom:0}
+  .get .ic{width:24px;height:24px;border-radius:7px;background:rgba(0,166,81,.14);border:1px solid rgba(0,166,81,.4);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+  .get .t{font-size:13.5px;color:#fff;font-weight:600;line-height:1.35}
+  .get .t small{display:block;font-weight:400;color:rgba(255,255,255,.55);font-size:12px;margin-top:1px}
+
+  .pay{margin:16px 22px 0;padding:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px}
+  .price{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+  .price .n{font-family:var(--serif);color:#fff;font-size:32px}
+  .price .u{color:rgba(255,255,255,.5);font-size:13px}
+  .price .b{margin-left:auto;font-size:11px;font-weight:700;color:var(--green);background:rgba(0,166,81,.12);padding:4px 9px;border-radius:7px}
+  .paysub{color:rgba(255,255,255,.5);font-size:12px;margin-bottom:14px}
+  .cta{width:100%;height:54px;border-radius:13px;background:var(--green);color:#fff;font-weight:700;font-size:16px;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(0,166,81,.3)}
+  .cta.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff;box-shadow:none}
+  .fine{text-align:center;color:rgba(255,255,255,.4);font-size:11.5px;margin-top:11px;line-height:1.5}
+  .back{text-align:center;padding:16px 0 22px}
+  .back a{color:rgba(255,255,255,.4);font-size:13px;text-decoration:underline;text-underline-offset:2px}
+
+  /* pending / loading shell */
+  .center{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+  .pcard{width:100%;padding:24px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;text-align:center}
+  .pdot{width:46px;height:46px;border-radius:50%;background:rgba(0,166,81,.12);border:1px solid rgba(0,166,81,.4);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 14px}
+  .pcard h2{font-family:var(--serif);color:#fff;font-size:21px;font-weight:400;margin-bottom:8px}
+  .pcard p{color:rgba(255,255,255,.6);font-size:13.5px;line-height:1.55;margin-bottom:18px}
+  .spin{width:30px;height:30px;border:2px solid rgba(255,255,255,.18);border-top-color:var(--green);border-radius:50%;margin:0 auto 14px;animation:s 1s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .muted{color:rgba(255,255,255,.4);font-size:11.5px;margin-top:12px}
+</style>
+</head>
+<body>
+
+  <!-- STATE: ready / re-subscribe (no trial) -->
+  <div class="col">
+    <div class="label">/subscribe · re-unlock (canceled / expired) · NO TRIAL</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="hero">
+        <img src="../../public/brand/heed-mascot.png" alt="Heed">
+        <h1>Your 30 days are up.</h1>
+        <p>Re-unlock the honest read on every place you're weighing.</p>
+      </div>
+
+      <div class="get">
+        <div class="lbl">What you unlock</div>
+        <div class="row"><span class="ic">🧮</span><span class="t">Will you qualify<small>The income bar and your path, on every listing.</small></span></div>
+        <div class="row"><span class="ic">💸</span><span class="t">The real cost to move in<small>Deposit, first month, fees. Not just the sticker.</small></span></div>
+        <div class="row"><span class="ic">🛡️</span><span class="t">A scam check before you pay<small>Flags places priced too good to be true.</small></span></div>
+        <div class="row"><span class="ic">📋</span><span class="t">The fine print to ask<small>What to confirm before you sign, every time.</small></span></div>
+      </div>
+
+      <div class="pay">
+        <div class="price"><span class="n">$9.49</span><span class="u">/ 30 days</span><span class="b">ONE-TIME</span></div>
+        <div class="paysub">No subscription. No auto-renew. Pay again only if you come back.</div>
+        <button class="cta">Re-unlock my matches</button>
+        <div class="fine">Secure checkout via Stripe. One-time charge, no auto-renew.</div>
+      </div>
+      <div class="back"><a href="#">← Back to sign-in</a></div>
+    </div>
+  </div>
+
+  <!-- STATE: payment_failed -->
+  <div class="col">
+    <div class="label">/subscribe · payment failed · update card</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="hero">
+        <img src="../../public/brand/heed-mascot.png" alt="Heed">
+        <h1>Update your card.</h1>
+        <p>Your card was declined and your access is paused. Fix the card to turn it back on. No new charge to set up.</p>
+      </div>
+      <div class="pay" style="margin-top:18px">
+        <button class="cta">Update payment method</button>
+        <div class="fine">You'll go to a secure Stripe page to update your card. Your access stays linked to this email.</div>
+      </div>
+      <div class="back"><a href="#">← Back to sign-in</a></div>
+    </div>
+  </div>
+
+  <!-- STATE: verifying (post-checkout spinner) + pending -->
+  <div class="col">
+    <div class="label">/subscribe · confirming + pending</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="center">
+        <div class="pcard">
+          <div class="spin"></div>
+          <h2>Confirming your access.</h2>
+          <p>One moment. We're turning your desk back on.</p>
+        </div>
+      </div>
+    </div>
+    <div class="phone" style="margin-top:22px">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="center">
+        <div class="pcard">
+          <div class="pdot">⏳</div>
+          <h2>Payment received.</h2>
+          <p>Activation is taking a moment longer than usual. Tap below to check. You won't be charged again.</p>
+          <button class="cta">Check access now</button>
+          <div class="muted">Checking automatically in 12s. You can close this page and come back, your access will be ready once it activates.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
