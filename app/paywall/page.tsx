@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 import { cacheServerAccess } from '@/lib/access';
+import { trackFunnel } from '@/lib/funnel';
 
 const OTP_COOLDOWN_SECONDS = 60;
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
@@ -50,6 +51,11 @@ function PaywallContent() {
   const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
 
   const normalizedEmail = email.trim().toLowerCase();
+
+  // Funnel: paywall reached. Fires once on mount.
+  useEffect(() => {
+    trackFunnel('paywall_view');
+  }, []);
 
   useEffect(() => {
     if (!nextResendAt) return;

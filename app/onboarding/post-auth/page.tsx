@@ -24,6 +24,7 @@
 import { useEffect, useState } from 'react';
 import { cacheServerAccess } from '@/lib/access';
 import { STRIPE_PRICES } from '@/lib/stripe-prices';
+import { trackFunnel } from '@/lib/funnel';
 
 type AccessStatus = 'new_user' | 'trialing' | 'active' | 'canceled' | 'payment_failed' | 'none';
 
@@ -44,6 +45,8 @@ async function goToStripeCheckout(priceId: string): Promise<void> {
   console.log('[post-auth] Stripe checkout response:', res.status, data);
   if (!res.ok || !data.url) throw new Error(data.error ?? `Checkout failed (${res.status})`);
   localStorage.removeItem('heed_selected_price_id');
+  // Funnel: leaving for Stripe checkout. keepalive carries the beacon through the redirect.
+  trackFunnel('checkout_start');
   console.log('[post-auth] → redirecting to Stripe');
   window.location.href = data.url;
 }
