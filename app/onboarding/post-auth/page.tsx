@@ -23,6 +23,7 @@
 
 import { useEffect, useState } from 'react';
 import { cacheServerAccess } from '@/lib/access';
+import { STRIPE_PRICES } from '@/lib/stripe-prices';
 
 type AccessStatus = 'new_user' | 'trialing' | 'active' | 'canceled' | 'payment_failed' | 'none';
 
@@ -110,39 +111,14 @@ export default function PostAuthPage() {
           return;
         }
 
-        // ── 3. new_user ────────────────────────────────────────────────────
+        // ── 3. new_user → checkout (NO trial) ──────────────────────────────
+        // The free read in onboarding is the try-before-buy. New users pay the
+        // one-time $9.49 directly; we never start a free trial anymore.
         if (accessData.status === 'new_user') {
-          const priceId = localStorage.getItem('heed_selected_price_id');
-          console.log('[post-auth] new_user — priceId:', priceId ?? '(none)');
-
-          if (priceId) {
-            // Came from /onboarding/pricing — go straight to paid Stripe checkout
-            setMessage('Redirecting to checkout…');
-            await goToStripeCheckout(priceId);
-            return;
-          }
-
-          // No plan selected — start free trial
-          setMessage('Starting your free trial…');
-          console.log('[post-auth] new_user — calling /api/auth/start-trial...');
-          const trialRes = await fetch('/api/auth/start-trial', { method: 'POST' });
-          console.log('[post-auth] start-trial HTTP status:', trialRes.status);
-          if (trialRes.ok) {
-            const trialData = await trialRes.json() as { status: string; trial_ends_at: string };
-            console.log('[post-auth] start-trial response:', JSON.stringify(trialData));
-            cacheServerAccess({ status: 'trialing', trial_ends_at: trialData.trial_ends_at });
-            console.log('[post-auth] → /decision (new trial started)');
-            window.location.href = '/decision';
-          } else if (trialRes.status === 409) {
-            const retryData = await trialRes.json() as AccessData;
-            console.log('[post-auth] start-trial 409 (race/duplicate):', JSON.stringify(retryData));
-            cacheServerAccess({ ...retryData, status: retryData.status as Exclude<AccessStatus, 'new_user'> });
-            console.log('[post-auth] → /decision (trial already existed)');
-            window.location.href = '/decision';
-          } else {
-            const errBody = await trialRes.text().catch(() => '');
-            throw new Error(`start-trial ${trialRes.status}: ${errBody}`);
-          }
+          const priceId = localStorage.getItem('heed_selected_price_id') || STRIPE_PRICES.access30days;
+          console.log('[post-auth] new_user — checkout priceId:', priceId);
+          setMessage('Redirecting to checkout…');
+          await goToStripeCheckout(priceId);
           return;
         }
 
