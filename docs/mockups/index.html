@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Steady One — mockups</title>
+<style>
+  :root{--navy:#0A2540;--green:#00A651;--line:rgba(255,255,255,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;color:#fff;font-family:Inter,system-ui,sans-serif;padding:24px 20px 70px}
+  h1{font-size:21px;font-weight:700;margin-bottom:4px}
+  .lead{color:rgba(255,255,255,.5);font-size:13px;max-width:80ch;line-height:1.5;margin-bottom:6px}
+  .group{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin:34px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .group.now{color:var(--green)}
+  .group.ref{color:rgba(255,255,255,.4)}
+  .item{margin-bottom:26px}
+  .cap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom:none;border-radius:12px 12px 0 0}
+  .cap .name{font-size:14px;font-weight:600}
+  .cap .desc{font-size:12px;color:rgba(255,255,255,.45)}
+  .cap a{font-size:12px;color:var(--green);text-decoration:none;white-space:nowrap}
+  .fr{width:100%;height:840px;border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;background:var(--navy);overflow:hidden}
+  iframe{width:100%;height:100%;border:0;display:block}
+</style>
+</head>
+<body>
+  <h1>The Steady One — mockups</h1>
+  <p class="lead">All design mockups, rendered. The top group is what is up for your approval right now. Scroll inside a frame if it is taller than the box, or click "open" to see it full-screen.</p>
+
+  <div id="root"></div>
+
+  <script>
+    const GROUPS = [
+      ['Review now — this round', 'now', [
+        ['partners-broadsheet.html', '/storage + /low-credit', 'partner pages, dark broadsheet'],
+        ['blog-broadsheet.html', '/blog index + post', 'navy + serif, gold dropped'],
+        ['onboarding-broadsheet.html', '/onboarding source / tradeoffs / pricing', 'broadsheet + no-trial copy'],
+      ]],
+      ['Already shipped (live)', 'ref', [
+        ['home-A-broadsheet.html', 'Home', 'editorial hero'],
+        ['paywall-broadsheet.html', 'Paywall', 'one-time, sells the truths'],
+        ['exit-broadsheet.html', 'Exit', 'two routes'],
+        ['signin-broadsheet.html', 'Sign in', 'OTP dark'],
+        ['subscribe-broadsheet.html', 'Subscribe', 're-unlock, no trial'],
+        ['decision-card-A-broadsheet.html', 'Decision card', 'the locked template'],
+      ]],
+      ['Reference / earlier explorations', 'ref', [
+        ['onboarding-aha.html', 'Onboarding aha', 'free read concept'],
+        ['card-truth-panel.html', 'Truth panel', 'card component study'],
+        ['decision-card-B-newsprint.html', 'Decision card B', 'newsprint (shelved)'],
+        ['decision-chrome-now-vs-proposed.html', 'Decision chrome', 'now vs proposed (declined)'],
+      ]],
+    ];
+
+    const root = document.getElementById('root');
+    for (const [title, cls, items] of GROUPS) {
+      const g = document.createElement('div');
+      g.className = 'group ' + cls;
+      g.textContent = title;
+      root.appendChild(g);
+      for (const [file, name, desc] of items) {
+        const it = document.createElement('div');
+        it.className = 'item';
+        it.innerHTML =
+          '<div class="cap"><span class="name">' + name + '</span>' +
+          '<span class="desc">' + desc + '</span>' +
+          '<a href="' + file + '" target="_blank">open ↗</a></div>' +
+          '<div class="fr"><iframe loading="lazy" src="' + file + '"></iframe></div>';
+        root.appendChild(it);
+      }
+    }
+  </script>
+</body>
+</html>

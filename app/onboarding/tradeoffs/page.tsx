@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { OnboardingProgress } from '@/components/OnboardingProgress';
+
+const SERIF = 'var(--font-caslon), Georgia, serif';
 
 const TRADEOFFS = [
   {
     emoji: '🚇 💰',
     title: 'Commute vs Rent',
-    body: 'A shorter commute often means higher rent. The "convenient" apartment could cost you hours or hundreds of dollars every month.',
+    body: 'A shorter commute often means higher rent. The convenient apartment can cost you hours or hundreds of dollars every month.',
   },
   {
     emoji: '📍 🏠',
@@ -31,25 +32,24 @@ export default function TradeoffsPage() {
       <Header />
 
       <div className="flex-1 overflow-y-auto px-5 max-w-lg mx-auto w-full">
-        <OnboardingProgress step={9} />
-
-        {/* Heed speech bubble */}
-        <div className="flex items-start gap-3 mb-6">
+        {/* Heed voice */}
+        <div className="flex items-start gap-3 mb-6 mt-2">
           <Image
             src="/brand/heed-mascot.png"
             alt="Heed"
-            width={40}
-            height={40}
-            className="object-contain shrink-0 mt-0.5"
+            width={44}
+            height={60}
+            unoptimized
+            className="object-contain shrink-0"
+            style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,.4))' }}
           />
-          <div className="bg-white rounded-xl rounded-tl-sm px-4 py-3 flex-1">
-            <p className="text-sm font-semibold text-[#0A2540] leading-snug">
-              Know your trade-offs
-            </p>
-            <p className="text-[11px] text-[#0A2540]/50 mt-0.5">
-              Most people think they&apos;re choosing apartments. In reality,
-              they&apos;re choosing trade-offs.
-            </p>
+          <div>
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#00A651] mb-1.5">
+              Heed&apos;s take
+            </div>
+            <h1 className="text-white text-[26px] leading-[1.12]" style={{ fontFamily: SERIF }}>
+              You&apos;re choosing tradeoffs, not apartments.
+            </h1>
           </div>
         </div>
 
@@ -58,12 +58,10 @@ export default function TradeoffsPage() {
           {TRADEOFFS.map((t) => (
             <div
               key={t.title}
-              className="bg-white/[0.07] border border-white/20 rounded-2xl p-5"
+              className="bg-white/[0.04] border border-white/15 rounded-2xl p-5"
             >
               <div className="text-2xl mb-2">{t.emoji}</div>
-              <h3 className="text-white font-semibold text-base mb-1">
-                {t.title}
-              </h3>
+              <h3 className="text-white font-semibold text-base mb-1">{t.title}</h3>
               <p className="text-white/55 text-sm leading-relaxed">{t.body}</p>
             </div>
           ))}
@@ -74,7 +72,7 @@ export default function TradeoffsPage() {
 
       <div className="px-5 pb-6 pt-3 max-w-lg mx-auto w-full">
         <button
-          onClick={() => router.push('/onboarding/decision')}
+          onClick={() => router.push('/onboarding/preview')}
           className="w-full h-14 rounded-xl bg-[#00A651] text-white font-semibold text-base hover:bg-[#00913f] active:scale-[0.98] transition-all"
         >
           I understand

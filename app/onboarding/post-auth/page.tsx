@@ -129,8 +129,8 @@ export default function PostAuthPage() {
           setMessage('Redirecting to checkout…');
           await goToStripeCheckout(priceId);
         } else {
-          console.log('[post-auth] → /subscribe?reason=trial_ended (status:', accessData.status + ')');
-          window.location.href = '/onboarding/pricing';
+          console.log('[post-auth] → /paywall (status:', accessData.status + ', no priceId)');
+          window.location.href = '/paywall';
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
