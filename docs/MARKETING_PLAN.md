@@ -53,21 +53,44 @@ Foco em quem está **mudando para / dentro de NYC no verão**, em ordem de conve
 
 ---
 
+## 2.5 Mensagens-âncora (validadas por pesquisa)
+
+Fonte: `docs/RENTER_RESEARCH.md` (deep-research 2026-06-09, 21 fontes, 25 claims verificados). **Toda copy de Reddit, vídeo e blog deve puxar de uma destas 4 forças** — não de dores genéricas.
+
+| Força (a dor real) | Como usamos no marketing |
+|---|---|
+| **1. Caixa + qualificação** (dominante) | O aluguel anunciado esconde ~**$13k de move-in**. Regra 40x renda, fiador 80x + 700 score. Limite legal: depósito = 1 mês, taxa = $20 (excesso é red flag). |
+| **2. Golpes** | Ghost listings, "não posso mostrar a unidade", pagar por app antes de ver. Conteúdo de verificação antes de pagar. |
+| **3. Estrutura invisível** | Rent stabilization (~1M unidades, aumento limitado, renovação garantida) não aparece no listing. "Verifique você mesmo." |
+| **4. Confusão de moradia** | Co-living/quarto x apê inteiro têm contratos e regras de renda diferentes. ~30% do nosso catálogo vinha mal rotulado. |
+
+**Postura anti-pânico = diferencial (validado):** a pesquisa **refutou** o mito "aluga em horas / espere e perca". Logo, todo o mercado vende FOMO e nós vendemos calma com **respaldo factual**. Esse é o nosso ângulo único.
+
+**Correção importante (FARE Act, jun/2025):** a taxa de corretor agora cai sobre quem **contrata** o corretor, então a maioria dos renters **não paga** mais os 12-15%. Tratar broker fee como "possível", não garantido. **Não usar como âncora de preço.**
+
+---
+
 ## 3. Os 3 motores orgânicos
 
 ### Motor 1 — Reddit (custo $0, público no pico de busca)
 
-**Antes de promover qualquer coisa: aquecer as contas.** Contas novas com pouco karma que postam link tomam ban e shadowban. Plano de aquecimento abaixo.
+**Conta principal:** `takeitslow` (u/Resident_Leading9499). 136 karma, ~5 meses, sem ban nos subs-alvo. Confirmado em 2026-06-10.
+
+**Ferramenta que já temos:** a skill `reddit-comment-drafter`. O fluxo operacional é: **founder cola a thread → Claude roda a skill → sai um comentário pronto.** Ela já embute a regra de ouro do aquecimento (abaixo).
+
+**A "Regra das 2 interações" (da skill, crítica):**
+- **1ª resposta:** empatia pura + 1 pergunta aberta. **Nunca** mencionar produto, Heed, link. Mencionar mata a confiança.
+- **2ª resposta:** só se o OP responder e a conversa fluir, aí dá pra citar "The Steady One" uma vez, de forma orgânica. Se soar forçado, fica calado.
+
+**Quais threads comentar (taxonomia de dor da skill):** speed pressure, burnout, forced compromise, fear of regret, financial humiliation (fiador/40x/broker fee), invisible competition, opaque process, anxiety/shame. Se a thread não tem nenhuma dessas dores (ex.: "looking for 1BR Astoria $1800"), **não comentar** — economiza goodwill.
 
 **Fase de aquecimento (semana 1–2):**
-1. **Descobrir qual das 3 contas tem mais karma** (perfil → aba de karma). Usar essa como principal.
-2. 2–3 comentários **genuinamente úteis por dia** em r/AskNYC, r/NYCapartments, r/Brooklyn, r/Queens, r/movingtonyc. **Zero link.** Só ajudar.
-3. Subir karma de comentário acima de ~100–200 antes de qualquer menção ao produto.
-4. Ler as regras de cada sub (alguns proíbem qualquer autopromoção — respeitar).
+- 2–3 comentários úteis/dia nos subs em escopo (r/NYCapartments, r/AskNYC, r/nyc, r/Brooklyn, r/Astoria, r/Manhattan). **Zero link.**
+- Meta: comment karma ~136 → ~250–300 antes de qualquer link.
 
 **Fase ativa (semana 3+):**
-- Responder threads "help me choose between these 2 apartments" / "is this rent worth it" com o framework do Heed (non-negotiables). Linkar **só quando agregar de verdade**, e no máximo 1 a cada ~10 comentários.
-- 1 post de valor/semana, formato "Eu montei um checklist de red flags de apê em NYC" → valor puro, link discreto no fim.
+- Continuar comentando via skill; deixar a 2ª interação fazer o trabalho de menção.
+- 1 post de valor/semana ancorado nas 4 forças da pesquisa (ver §2.5), link discreto só no fim.
 - Medir tudo com UTM (`?utm_source=reddit`).
 
 ### Motor 2 — Vídeo faceless com o Heed (TikTok + IG Reels + YouTube Shorts)
@@ -76,7 +99,8 @@ Sem câmera, sem rosto. 100% produzível com gravação de tela + Heed + voz/leg
 
 - **"Heed reage a 1 listing":** gravação de tela de um listing real → texto/voz aponta 2 red flags + 1 pergunta que ninguém faz. 20–35s. Fundo navy, calmo.
 - **"Tell me your lines":** texto na tela: 3 non-negotiables → mostra como cortam 80% dos apês → CTA pro quiz.
-- **"NYC rent reality check":** comparar 2 listings pelo número real (rent + taxa + first/last) — usa o ângulo "taxa de corretor é o vilão".
+- **"O número real de move-in":** mostrar que o aluguel anunciado esconde ~$13k de entrada (depósito + 1º mês + taxas) e o que a lei de NYC limita (depósito = 1 mês, taxa de aplicação = $20). Ângulo validado pela pesquisa.
+- **"Anti-pânico":** desmontar o mito do "aluga em horas, decide já" (a pesquisa refutou). Postura calma como diferencial.
 
 **Produção lean (founder + Claude):**
 - Eu posso escrever **todos os roteiros + legendas + hooks** em lote.
@@ -86,8 +110,8 @@ Sem câmera, sem rosto. 100% produzível com gravação de tela + Heed + voz/leg
 
 ### Motor 3 — SEO (blog já tem 5 posts certos)
 
-Base já existe: burnout, ansiedade de decisão, taxa de corretor, red flags, decidir rápido. Expandir para intenção alta:
-- "no fee apartments nyc explained", "40x rent rule nyc", "guarantor service nyc worth it", "co-living vs studio nyc", "moving to nyc apartment checklist", "is [neighborhood] safe nyc".
+Base já existe: burnout, ansiedade de decisão, taxa de corretor, red flags, decidir rápido. Expandir para intenção alta, **ancorado nas 4 forças da pesquisa** (§2.5):
+- "true cost to move into a nyc apartment" (os ~$13k), "40x rent rule nyc explained", "guarantor service nyc worth it", "FARE Act broker fee who pays 2026", "how to spot a nyc rental scam", "rent stabilized apartment how to verify nyc", "co-living vs studio nyc".
 - **Eu (Claude) escrevo os posts** no mesmo formato/voz dos existentes. Meta: 2/mês, cada um terminando no quiz.
 - **SEO técnico que eu corrijo no código:** metadata por página (o brief aponta `/paywall`, `/subscribe` sem metadata própria), schema de Article nos posts, conferir sitemap/robots e indexabilidade do blog.
 
@@ -115,7 +139,7 @@ Reddit / Vídeo / SEO
 3. **E-mail de recuperação de quiz abandonado (via Resend, já no stack).**
    Quem completa o quiz e não paga → e-mail com os resultados parciais + link pra voltar. Recupera vendas de graça.
 
-Bônus de copy (sem código): ancorar o preço contra **taxa de corretor de NYC** ("menos que 0,3% de uma taxa de corretor"). É o vilão perfeito.
+Bônus de copy (sem código): **NÃO** ancorar contra taxa de corretor (o FARE Act de jun/2025 fez a maioria dos renters não pagar mais — ver §2.5). Ancorar contra a dor real: "$9.49 contra ~$13.000 de move-in" e "menos que um café por semana para não errar a maior conta fixa do seu ano".
 
 ---
 
