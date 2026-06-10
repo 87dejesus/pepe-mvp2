@@ -41,6 +41,27 @@ export default function FlowPage() {
   const [bedrooms, setBedrooms] = useState<string>("");
   const [pets, setPets] = useState<string>("");
 
+  // Prefill from a previous session so "Start a new search" lets the user
+  // tweak their answers instead of redoing the quiz from scratch.
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time hydrate from a prior session, not a render-driven sync */
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<Answers>;
+      if (Array.isArray(saved.boroughs)) setBoroughs(saved.boroughs);
+      if (typeof saved.housingType === "string") setHousingType(saved.housingType);
+      if (typeof saved.budget === "number") setBudget(saved.budget);
+      if (typeof saved.upfrontCash === "string") setUpfrontCash(saved.upfrontCash);
+      if (typeof saved.qualification === "string") setQualification(saved.qualification);
+      if (typeof saved.bedrooms === "string") setBedrooms(saved.bedrooms);
+      if (typeof saved.pets === "string") setPets(saved.pets);
+    } catch {
+      // ignore malformed cache
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
   function toggleArray(arr: string[], value: string): string[] {
     return arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value];
   }
