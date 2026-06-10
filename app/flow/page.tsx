@@ -110,7 +110,7 @@ export default function FlowPage() {
       } catch {
         // fall through to new-user onboarding
       }
-      window.location.href = "/onboarding/source";
+      window.location.href = "/onboarding/preview";
     }, 3000);
     return () => clearTimeout(timer);
   }, [showDiagnosis]);

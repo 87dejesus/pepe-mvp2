@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Onboarding aha — free taste + journey summary + honest paywall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 16px}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;text-align:center;max-width:430px}
+  .phone{width:100%;max-width:430px;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+
+  /* journey summary (mirror) */
+  .summary{padding:18px 20px;border-bottom:1px solid var(--line)}
+  .summary .k{color:var(--green);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:9px}
+  .summary h1{font-family:var(--serif);color:#fff;font-size:23px;font-weight:400;line-height:1.15;margin-bottom:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12px;color:#fff;font-weight:500}
+  .chip .t{width:14px;height:14px;border-radius:999px;background:var(--green);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .found{margin-top:13px;color:rgba(255,255,255,.6);font-size:13.5px}
+  .found b{color:#fff;font-family:var(--serif);font-size:16px}
+
+  /* the free match (aha) */
+  .tag{padding:14px 20px 0;color:rgba(255,255,255,.45);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .photo{position:relative;height:140px;margin:10px 20px 0;border-radius:14px;overflow:hidden;background:#16384f}
+  .photo img{width:100%;height:100%;object-fit:cover;opacity:.92}
+  .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,27,48,.1),rgba(7,27,48,0) 40%,rgba(7,27,48,.85))}
+  .stamp{position:absolute;top:10px;right:10px;background:var(--green);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+  .mh{padding:12px 20px 0}
+  .mh .v{font-family:var(--serif);color:#fff;font-size:19px}
+  .mh .p{display:flex;align-items:baseline;gap:8px;margin-top:5px}
+  .mh .p .n{font-family:var(--serif);color:#fff;font-size:18px}.mh .p .u{color:rgba(255,255,255,.5);font-size:12px}
+  .mh .p .d{margin-left:auto;color:var(--green);font-size:12px;font-weight:600}
+
+  /* UNLOCKED truth panel — the free taste */
+  .truths{margin:14px 20px 0;display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .tr{display:flex;gap:11px;padding:11px 13px;background:var(--navy);align-items:flex-start}
+  .tr .ic{width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .tr.ok .ic{background:rgba(0,166,81,.14);border-color:rgba(0,166,81,.4)}
+  .tr.warn .ic{background:rgba(200,129,75,.16);border-color:rgba(200,129,75,.45)}
+  .tr .k{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.05em}
+  .tr .v{font-size:13px;color:#fff;font-weight:600;margin-top:2px}
+  .tr .v small{display:block;font-weight:400;color:rgba(255,255,255,.55);font-size:12px;margin-top:1px}
+  .freeflag{display:inline-flex;align-items:center;gap:6px;margin:13px 20px 0;color:var(--green);font-size:12px;font-weight:600}
+
+  /* honest paywall */
+  .dock{margin-top:16px;padding:16px 20px 22px;background:var(--deep);border-top:1px solid var(--line)}
+  .dock h2{font-family:var(--serif);color:#fff;font-size:18px;font-weight:400;text-align:center;line-height:1.25;margin-bottom:4px}
+  .dock .sub{color:rgba(255,255,255,.55);font-size:12.5px;text-align:center;margin-bottom:14px}
+  .cta{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px;border-radius:14px;background:var(--green);color:#fff;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,166,81,.34)}
+  .cta small{font-weight:500;font-size:12px;opacity:.85;margin-top:1px}
+  .fine{text-align:center;color:rgba(255,255,255,.4);font-size:11.5px;margin-top:11px}
+</style>
+</head>
+<body>
+  <div class="label">Onboarding aha · free read on match #1, then unlock the rest</div>
+  <div class="phone">
+    <!-- 1. journey summary (mirror their answers) -->
+    <div class="summary">
+      <div class="k">Here's what you told me</div>
+      <h1>Brooklyn or Queens, up to $2,500, a place of your own.</h1>
+      <div class="chips">
+        <span class="chip"><span class="t">✓</span> A place of my own</span>
+        <span class="chip"><span class="t">✓</span> 1 bed</span>
+        <span class="chip"><span class="t">✓</span> Guarantor ok</span>
+        <span class="chip"><span class="t">✓</span> Pets ok</span>
+      </div>
+      <div class="found">I found <b>38 places</b> that fit your lines. Here's the honest read on your top one.</div>
+    </div>
+
+    <!-- 2. the free match + UNLOCKED truths (the aha) -->
+    <div class="tag">Your #1 match · free read</div>
+    <div class="photo">
+      <span class="stamp">★ Strong match</span>
+      <img src="https://images1.apartments.com/i2/MO4fr7jIBOgJUZaeWRa9_vxIBENYwYX50i2Bs6fslbY/111/371-95th-st-brooklyn-ny-primary-photo.jpg" alt="371 95th St">
+    </div>
+    <div class="mh">
+      <div class="v">A steady pick in Bay Ridge.</div>
+      <div class="p"><span class="n">$1,650</span><span class="u">/ mo</span><span class="d">$350 under your ceiling</span></div>
+    </div>
+    <div class="truths">
+      <div class="tr ok"><span class="ic">🧮</span><div><div class="k">Will you qualify</div><div class="v">≈ $66,000 / yr<small>You'll lean on your guarantor. Confirm they earn ~$132k.</small></div></div></div>
+      <div class="tr"><span class="ic">💸</span><div><div class="k">Real cost to move in</div><div class="v">≈ $3,300 up front<small>1 month deposit + first month. Broker fee possible.</small></div></div></div>
+      <div class="tr ok"><span class="ic">🛡️</span><div><div class="k">Scam check</div><div class="v">Priced in range for Brooklyn<small>No obvious scam signals.</small></div></div></div>
+      <div class="tr warn"><span class="ic">🏛️</span><div><div class="k">Rent-stabilized?</div><div class="v">Check this building<small>Tap to look it up. Could mean capped rent.</small></div></div></div>
+    </div>
+    <div class="freeflag">✓ This read is on the house.</div>
+
+    <!-- 3. honest paywall: unlock the rest -->
+    <div class="dock">
+      <h2>Get this honest read on all 38 of your matches.</h2>
+      <div class="sub">One place is easy. The truth across your whole search is the hard part.</div>
+      <div class="cta">Unlock all my matches <small>$9.49 · one-time, 30 days. No subscription.</small></div>
+      <div class="fine">You just saw exactly what you're paying for.</div>
+    </div>
+  </div>
+</body>
+</html>
