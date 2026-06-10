@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { createBrowserClient } from "@supabase/ssr";
 import { readAccess, hasAccess } from "@/lib/access";
+import { trackFunnel } from "@/lib/funnel";
 
 const LS_KEY = "heed_answers_v2";
 
@@ -62,6 +63,11 @@ export default function FlowPage() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
+  // Funnel: top of the quiz. Fires once on mount.
+  useEffect(() => {
+    trackFunnel("quiz_start");
+  }, []);
+
   function toggleArray(arr: string[], value: string): string[] {
     return arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value];
   }
@@ -102,6 +108,7 @@ export default function FlowPage() {
         qualification,
       };
       localStorage.setItem(LS_KEY, JSON.stringify(answers));
+      trackFunnel("quiz_complete");
       setShowDiagnosis(true);
     }
   }

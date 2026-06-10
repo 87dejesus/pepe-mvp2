@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import { cacheServerAccess, invalidateAccessCache, type AccessStatus } from '@/lib/access';
+import { trackFunnel } from '@/lib/funnel';
 
 const ADMIN_EMAIL = 'luhciano.sj@gmail.com';
 
@@ -231,6 +232,7 @@ function SubscribeContent() {
           if (granted) {
             // Just paid: ask the one-time referral question (it self-skips if
             // already answered), then on to the decision desk.
+            trackFunnel('paid');
             router.replace('/onboarding/source');
             return;
           }
@@ -239,6 +241,7 @@ function SubscribeContent() {
         // Fallback: poll access-status waiting for webhook to update the DB
         const granted = await pollForAccess();
         if (granted) {
+          trackFunnel('paid');
           router.replace('/onboarding/source');
           return;
         }

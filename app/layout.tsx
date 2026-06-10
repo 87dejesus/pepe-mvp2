@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Libre_Caslon_Display } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import FunnelInit from "@/components/FunnelInit";
 import "./globals.css";
 
 const inter = Inter({
@@ -124,6 +125,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         {children}
+        <FunnelInit />
         <ServiceWorkerRegistration />
         <GoogleAnalytics gaId="G-0LQ1VL0PMG" />
       </body>
