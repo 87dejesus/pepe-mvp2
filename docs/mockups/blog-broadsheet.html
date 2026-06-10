@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blog (index + post) — Dark Broadsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;padding:24px 16px;color:#fff}
+  .col{display:flex;flex-direction:column;align-items:center;max-width:480px}
+  .label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#8aa0b2;margin-bottom:12px}
+  .page{width:480px;max-width:100%;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .wrap{padding:30px 26px}
+  .backlink{display:inline-block;margin-bottom:24px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);text-decoration:none;font-weight:600}
+  h1{font-family:var(--serif);font-size:34px;font-weight:400;line-height:1.1}
+  .lede{color:rgba(255,255,255,.6);font-size:15px;line-height:1.6;margin-top:12px}
+
+  .meta{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .date{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+  .dot{color:rgba(255,255,255,.2)}
+  .author{font-size:11px;color:var(--green);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .post{padding:26px 0;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}
+  .post h2{font-family:var(--serif);font-size:21px;font-weight:400;line-height:1.2;color:#fff}
+  .post p{font-size:14px;color:rgba(255,255,255,.6);line-height:1.6;margin:9px 0 13px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{font-size:11px;font-weight:500;color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);border:1px solid var(--line);padding:3px 10px;border-radius:20px}
+
+  /* article body */
+  .art h2{font-family:var(--serif);font-size:22px;font-weight:400;color:#fff;margin:34px 0 12px;line-height:1.25}
+  .art p{font-size:15.5px;line-height:1.75;color:rgba(255,255,255,.75);margin:0 0 16px}
+  .art p b{color:#fff;font-weight:600}
+  .art a{color:var(--green);text-decoration:underline;text-underline-offset:3px}
+  .art ul{margin:14px 0 18px 20px;line-height:1.7;color:rgba(255,255,255,.75)}
+  .art hr{border:none;border-top:1px solid var(--line);margin:34px 0}
+  .cta-box{margin-top:48px;padding:28px;background:var(--deep);border:1px solid var(--line);border-radius:18px;text-align:center}
+  .cta-box .k{font-size:11px;font-weight:700;color:var(--green);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+  .cta-box .h{font-family:var(--serif);font-size:22px;color:#fff;margin-bottom:9px;line-height:1.25}
+  .cta-box p{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:22px;line-height:1.55}
+  .cta-box a{display:inline-block;background:var(--green);color:#fff;font-weight:700;font-size:14px;padding:13px 28px;border-radius:11px;text-decoration:none}
+</style>
+</head>
+<body>
+
+  <!-- INDEX -->
+  <div class="col">
+    <div class="label">/blog · index</div>
+    <div class="page">
+      <div class="wrap">
+        <a class="backlink" href="#">← The Steady One</a>
+        <h1>NYC Rental Guides</h1>
+        <p class="lede">Real talk about apartment hunting in New York City, from pressure to decision to lease.</p>
+        <div style="margin-top:14px">
+          <div class="post">
+            <div class="meta"><span class="date">June 7, 2026</span><span class="dot">·</span><span class="author">Heed</span></div>
+            <h2>How to decide on an NYC apartment fast</h2>
+            <p>The market moves in days. Here is how to hold your lines and commit without panic-signing.</p>
+            <div class="tags"><span class="pill">deciding</span><span class="pill">nyc</span><span class="pill">process</span></div>
+          </div>
+          <div class="post">
+            <div class="meta"><span class="date">June 1, 2026</span><span class="dot">·</span><span class="author">Heed</span></div>
+            <h2>Is the broker fee worth it in NYC?</h2>
+            <p>When 15% of annual rent buys you something real, and when it does not.</p>
+            <div class="tags"><span class="pill">fees</span><span class="pill">money</span></div>
+          </div>
+          <div class="post" style="border-bottom:none">
+            <div class="meta"><span class="date">May 24, 2026</span><span class="dot">·</span><span class="author">Heed</span></div>
+            <h2>NYC apartment decision anxiety</h2>
+            <p>Why the scroll never ends, and the one question that stops it.</p>
+            <div class="tags"><span class="pill">mindset</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POST -->
+  <div class="col">
+    <div class="label">/blog/[slug] · article + CTA</div>
+    <div class="page">
+      <div class="wrap art">
+        <a class="backlink" href="#">← All guides</a>
+        <div class="meta"><span class="date">June 7, 2026</span><span class="dot">·</span><span class="author">Heed</span></div>
+        <div class="tags" style="margin-bottom:26px"><span class="pill">deciding</span><span class="pill">nyc</span></div>
+        <h1 style="margin-bottom:22px">How to decide on an NYC apartment fast</h1>
+        <p>The New York market does not wait. A place you saw this morning can be gone by dinner. That speed is real, but it is also what makes people sign things they regret.</p>
+        <h2>Hold your lines first</h2>
+        <p>Before you open a single listing, write down your <b>non-negotiables</b>: budget ceiling, borough, beds. When a place breaks one, it is a no, even if the photos are good.</p>
+        <ul><li>Set the ceiling, not the wish.</li><li>Pick the borough you will actually live in.</li><li>Decide the smallest space you can accept.</li></ul>
+        <hr>
+        <p>Then, when a place meets your lines, you move fast with a clear head, not a panicked one. That is the whole game.</p>
+
+        <div class="cta-box">
+          <div class="k">The Steady One</div>
+          <div class="h">Stop scrolling. Start deciding.</div>
+          <p>NYC apartments checked against your lines. No broker. No FOMO.</p>
+          <a href="#">Try The Steady One →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

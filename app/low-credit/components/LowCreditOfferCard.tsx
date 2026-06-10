@@ -1,5 +1,7 @@
 import type { LowCreditPartner } from '../lib/low-credit-partners';
 
+const SERIF = 'var(--font-caslon), Georgia, serif';
+
 export default function LowCreditOfferCard({
   id,
   name,
@@ -15,34 +17,28 @@ export default function LowCreditOfferCard({
     `&source=low-credit`;
 
   return (
-    <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex flex-col overflow-hidden">
-      {/* Colored header strip */}
-      <div
-        className="px-4 py-3"
-        style={{ backgroundColor: accentColor }}
-      >
-        <span className="text-white font-semibold text-xs uppercase tracking-wider">
+    <div className="bg-white/[0.04] border border-white/15 rounded-2xl overflow-hidden flex flex-col">
+      {/* Thin partner-color accent strip */}
+      <div className="h-[3px] w-full" style={{ backgroundColor: accentColor }} />
+
+      <div className="p-5 flex flex-col flex-1">
+        <span className="self-start text-[10px] font-bold uppercase tracking-wider text-white/70 bg-white/[0.08] border border-white/15 rounded-md px-2 py-1 mb-3">
           {badge}
         </span>
-      </div>
 
-      {/* Card body */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1">
-        <h3 className="font-bold text-lg text-[#0A2540] leading-tight mb-1">
+        <h3 className="text-lg text-white leading-tight" style={{ fontFamily: SERIF }}>
           {name}
         </h3>
-        <p className="font-medium text-sm text-[#666666] mb-3">{benefit}</p>
-        <p className="text-sm text-[#1A1A1A] leading-relaxed flex-1 mb-5">
-          {description}
-        </p>
+        <p className="text-sm text-[#00A651] font-semibold mt-1">{benefit}</p>
+        <p className="text-sm text-white/60 leading-relaxed mt-2 flex-1">{description}</p>
 
         <a
           href={trackUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-full h-12 rounded-lg bg-[#0A2540] text-white font-semibold text-sm hover:bg-[#0d2f52] active:scale-[0.98] transition-all select-none"
+          className="mt-4 flex items-center justify-center w-full h-12 rounded-xl bg-[#00A651] text-white font-semibold text-sm hover:bg-[#00913f] active:scale-[0.98] transition-all select-none"
         >
-          Get Guaranteed Now →
+          Get guaranteed →
         </a>
       </div>
     </div>

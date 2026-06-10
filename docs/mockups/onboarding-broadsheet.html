@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Onboarding (source / tradeoffs / pricing) — Dark Broadsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-start;padding:24px 16px;color:#fff}
+  .col{display:flex;flex-direction:column;align-items:center;max-width:420px}
+  .label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#8aa0b2;margin-bottom:12px}
+  .phone{width:420px;max-width:100%;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:680px}
+  .head{padding:13px 18px;display:flex;align-items:center;gap:8px}
+  .head img{width:26px;height:26px;object-fit:contain}
+  .head span{color:rgba(255,255,255,.9);font-weight:600;font-size:13px;letter-spacing:.05em}
+  .prog{height:3px;background:rgba(255,255,255,.12);margin:0 20px 0}
+  .prog div{height:100%;background:var(--green);border-radius:99px}
+  .wrap{flex:1;padding:20px 22px 8px}
+
+  /* Heed voice: small mascot + serif headline (replaces the old white bubble) */
+  .voice{display:flex;align-items:flex-start;gap:11px;margin-bottom:20px}
+  .voice img{width:42px;height:auto;object-fit:contain;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+  .voice .k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:5px}
+  .voice h1{font-family:var(--serif);font-size:24px;font-weight:400;line-height:1.14}
+  .voice p{color:rgba(255,255,255,.55);font-size:12.5px;line-height:1.45;margin-top:6px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .opt{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;cursor:pointer}
+  .opt.sel{border-color:rgba(0,166,81,.6);background:rgba(0,166,81,.1)}
+  .opt .ic{font-size:24px;margin-bottom:9px}
+  .opt .t{font-size:13px;font-weight:600}
+
+  .tcard{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:10px}
+  .tcard .e{font-size:20px;margin-bottom:7px}
+  .tcard h3{font-size:15px;font-weight:600;margin-bottom:4px}
+  .tcard p{color:rgba(255,255,255,.55);font-size:12.5px;line-height:1.5}
+
+  .plan{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:4px}
+  .price{display:flex;align-items:baseline;gap:8px}
+  .price .n{font-family:var(--serif);font-size:30px}
+  .price .u{color:rgba(255,255,255,.5);font-size:13px}
+  .price .b{margin-left:auto;font-size:11px;font-weight:700;color:var(--green);background:rgba(0,166,81,.12);padding:4px 9px;border-radius:7px}
+  .psub{color:rgba(255,255,255,.5);font-size:12px;margin:4px 0 14px}
+  .feat{display:flex;gap:9px;font-size:13px;color:rgba(255,255,255,.8);margin-bottom:9px}
+  .feat .c{color:var(--green);font-weight:800}
+
+  .dock{padding:16px 22px 22px;border-top:1px solid var(--line);background:var(--deep)}
+  .cta{width:100%;height:52px;border-radius:13px;background:var(--green);color:#fff;font-weight:700;font-size:15px;border:none;display:flex;align-items:center;justify-content:center}
+  .fineprint{color:rgba(255,255,255,.4);font-size:11px;text-align:center;margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+  <!-- SOURCE -->
+  <div class="col">
+    <div class="label">/onboarding/source</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="prog"><div style="width:65%"></div></div>
+      <div class="wrap">
+        <div class="voice">
+          <img src="../../public/brand/heed-mascot.png" alt="Heed">
+          <div><div class="k">Heed asks</div><h1>Where did you hear about us?</h1><p>Helps Heed know what's working.</p></div>
+        </div>
+        <div class="grid2">
+          <div class="opt sel"><span class="ic">🎵</span><span class="t">TikTok</span></div>
+          <div class="opt"><span class="ic">👽</span><span class="t">Reddit</span></div>
+          <div class="opt"><span class="ic">🐦</span><span class="t">X (Twitter)</span></div>
+          <div class="opt"><span class="ic">🔍</span><span class="t">Google</span></div>
+          <div class="opt"><span class="ic">📷</span><span class="t">Instagram</span></div>
+          <div class="opt"><span class="ic">👥</span><span class="t">Friend or family</span></div>
+        </div>
+      </div>
+      <div class="dock"><button class="cta">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- TRADEOFFS -->
+  <div class="col">
+    <div class="label">/onboarding/tradeoffs</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="prog"><div style="width:75%"></div></div>
+      <div class="wrap">
+        <div class="voice">
+          <img src="../../public/brand/heed-mascot.png" alt="Heed">
+          <div><div class="k">Heed's take</div><h1>You're choosing tradeoffs, not apartments.</h1></div>
+        </div>
+        <div class="tcard"><div class="e">🚇 💰</div><h3>Commute vs Rent</h3><p>A shorter commute often means higher rent. The convenient place can cost you hundreds every month.</p></div>
+        <div class="tcard"><div class="e">📍 🏠</div><h3>Location vs Space</h3><p>Prime location usually means less square footage. A quieter block gets you the room you need.</p></div>
+        <div class="tcard"><div class="e">🛡️ 👥</div><h3>Privacy vs Social life</h3><p>A doorman building feels secure but less social. A walk-up has more community, less protection.</p></div>
+      </div>
+      <div class="dock"><button class="cta">I understand</button></div>
+    </div>
+  </div>
+
+  <!-- PRICING (trial copy fixed: no trial) -->
+  <div class="col">
+    <div class="label">/onboarding/pricing · NO TRIAL (copy fixed)</div>
+    <div class="phone">
+      <div class="head"><img src="../../public/brand/heed-mascot.png" alt=""><span>THE STEADY ONE</span></div>
+      <div class="prog"><div style="width:100%"></div></div>
+      <div class="wrap">
+        <div class="voice">
+          <img src="../../public/brand/heed-mascot.png" alt="Heed">
+          <div><div class="k">Heed</div><h1>One decision. One payment.</h1><p>No rush, no panic. Clarity when you need it.</p></div>
+        </div>
+        <div class="plan">
+          <div class="price"><span class="n">$9.49</span><span class="u">/ 30 days</span><span class="b">ONE-TIME</span></div>
+          <div class="psub">No subscription. No auto-renew. Pay again only if you come back.</div>
+          <div class="feat"><span class="c">✓</span><span>Match score on your real constraints</span></div>
+          <div class="feat"><span class="c">✓</span><span>The real cost to move in, per place</span></div>
+          <div class="feat"><span class="c">✓</span><span>A scam check before you pay</span></div>
+          <div class="feat"><span class="c">✓</span><span>Heed's take on every listing</span></div>
+        </div>
+      </div>
+      <div class="dock">
+        <button class="cta">Unlock my matches</button>
+        <p class="fineprint">$9.49 for 30-day access. One-time charge, no auto-renew.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

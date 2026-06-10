@@ -229,7 +229,9 @@ function SubscribeContent() {
         if (sessionId?.startsWith('cs_')) {
           const granted = await checkSessionDirect(sessionId);
           if (granted) {
-            router.replace('/decision');
+            // Just paid: ask the one-time referral question (it self-skips if
+            // already answered), then on to the decision desk.
+            router.replace('/onboarding/source');
             return;
           }
         }
@@ -237,7 +239,7 @@ function SubscribeContent() {
         // Fallback: poll access-status waiting for webhook to update the DB
         const granted = await pollForAccess();
         if (granted) {
-          router.replace('/decision');
+          router.replace('/onboarding/source');
           return;
         }
         setPendingContext('checkout');

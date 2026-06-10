@@ -131,7 +131,8 @@ export default function FlowPage() {
       } catch {
         // fall through to new-user onboarding
       }
-      window.location.href = "/onboarding/preview";
+      // Brand-new user: educate on tradeoffs, then the free read.
+      window.location.href = "/onboarding/tradeoffs";
     }, 3000);
     return () => clearTimeout(timer);
   }, [showDiagnosis]);
