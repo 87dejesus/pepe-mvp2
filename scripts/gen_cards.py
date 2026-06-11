@@ -137,8 +137,9 @@ def card_cta(benefit, path_out, pill="Link in bio", free=True):
     f, lines, lh = fit(d, benefit, SANS, 52, 38, 940, 220)
     y = draw_lines(d, lines, f, lh, y, WHITE)
     if free:
-        ff = F(SANS_R, 38); fw = d.textlength("Free. 7 questions, about 2 minutes.", font=ff)
-        d.text(((W-fw)/2, y+10), "Free. 7 questions, about 2 minutes.", font=ff, fill=WHITE)
+        line = "Free quiz. 7 questions, about 2 minutes."
+        ff = F(SANS_R, 38); fw = d.textlength(line, font=ff)
+        d.text(((W-fw)/2, y+10), line, font=ff, fill=WHITE)
         y += 80
     pf = F(SANS, 54); pw = d.textlength(pill, font=pf)
     px0 = (W-pw)/2-56; px1 = (W+pw)/2+56; py0 = y+30; py1 = y+150
