@@ -163,7 +163,7 @@ build("01_movein", [
     lambda p: card_numbers("THE ONLY LEGAL UPFRONT",
         [("First month", "$2,800"), ("Security deposit", "$2,800")],
         "deposit capped at 1 month, by law", "= $5,600 minimum", "before you buy a single fork.", p),
-    lambda p: card_statement("Add moving, fees, and setup. The average NYC move-in is about", p, green_tail="$13,000."),
+    lambda p: card_statement("In 2023, the average New Yorker paid about", p, green_tail="$10,454 to move in."),
     lambda p: card_statement("Most people learn this after they've fallen for the place. That's when you overpay.", p),
     lambda p: card_cta("Know your real move-in number on every place, before you commit.", p),
 ])
