@@ -190,4 +190,15 @@ build("03_fareact", [
     lambda p: card_cta("Heed shows the real cost and the catch on every place you're weighing.", p),
 ])
 
+# 4) Borough comparison (curiosity / tradeoff -> core)
+build("04_boroughs", [
+    lambda p: card_hook("The same budget rents completely different apartments across NYC. Here's the 2025 gap.", p),
+    lambda p: card_statement("Manhattan, the priciest. Median rent", p, green_tail="$4,995/mo"),
+    lambda p: card_statement("Brooklyn, right behind it. Median rent", p, green_tail="$4,000/mo"),
+    lambda p: card_statement("Queens, more room, a bit further out. Median rent", p, green_tail="$3,750/mo"),
+    lambda p: card_statement("The Bronx, the most space per dollar. Median rent", p, green_tail="$3,132/mo"),
+    lambda p: card_statement("Your budget is fixed. The tradeoff is yours: space, location, or commute.", p, green_tail="Which line won't you cross?"),
+    lambda p: card_cta("Heed takes your budget and your lines, then shows the places that actually fit.", p),
+])
+
 print("DONE")
