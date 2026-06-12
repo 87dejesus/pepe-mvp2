@@ -22,7 +22,10 @@ HEED = "public/brand/heed-mascot.png"
 
 def F(p, s): return ImageFont.truetype(p, s)
 
-def bg():
+SKYLINE_IMG = Image.open("docs/assets/skyline.png").convert("RGBA")
+SKYLINE_ON = False  # set True per round to match the homepage etched-skyline look
+
+def _gradient():
     img = Image.new("RGB", (W, H), NAVY)
     d = ImageDraw.Draw(img)
     for y in range(H):
@@ -31,7 +34,31 @@ def bg():
             int(NAVY[0]*(1-t)+DEEP[0]*t),
             int(NAVY[1]*(1-t)+DEEP[1]*t),
             int(NAVY[2]*(1-t)+DEEP[2]*t)))
-    return img, d
+    return img
+
+def _sky_texture():
+    # faint dot grid + etched skyline at the bottom (mirrors components/Hero.tsx)
+    tex = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dd = ImageDraw.Draw(tex)
+    for yy in range(0, H, 6):
+        for xx in range(0, W, 6):
+            dd.point((xx, yy), fill=(255, 255, 255, 8))
+    sky = SKYLINE_IMG.copy()
+    sky.putalpha(sky.split()[3].point(lambda v: int(v * 0.22)))
+    tex.alpha_composite(sky, (0, H - 140 - sky.height))
+    return tex
+
+_GRAD = _gradient()
+_SKY = _sky_texture()
+
+def bg():
+    if SKYLINE_ON:
+        base = _GRAD.convert("RGBA")
+        base.alpha_composite(_SKY)
+        img = base.convert("RGB")
+    else:
+        img = _GRAD.copy()
+    return img, ImageDraw.Draw(img)
 
 def masthead(d):
     f = F(SANS, 30)
@@ -189,6 +216,9 @@ build("03_fareact", [
     lambda p: card_statement("Read what you're actually signing, not the headline.", p),
     lambda p: card_cta("Heed shows the real cost and the catch on every place you're weighing.", p),
 ])
+
+# ---- Round 2: etched-skyline background (matches the homepage Hero) ----
+SKYLINE_ON = True
 
 # 4) Borough comparison (curiosity / tradeoff -> core)
 build("04_boroughs", [
