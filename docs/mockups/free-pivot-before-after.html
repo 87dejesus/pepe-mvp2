@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Steady One — Modelo Grátis (antes / depois)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Caslon+Display&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#0A2540; --deep:#071b30; --green:#00A651; --line:rgba(255,255,255,.14);
+    --serif:'Libre Caslon Display', Georgia, serif; --sans:'Inter', system-ui, sans-serif;
+    --del:#d4504a; --add:#00A651;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;color:#fff;font-family:var(--sans);padding:34px 18px 60px;}
+  h1.page{font-family:var(--serif);font-weight:400;font-size:30px;text-align:center;margin-bottom:6px;}
+  p.sub{text-align:center;color:rgba(255,255,255,.55);font-size:14px;margin-bottom:30px;}
+  .legend{display:flex;gap:18px;justify-content:center;margin-bottom:34px;font-size:12.5px;color:rgba(255,255,255,.6);flex-wrap:wrap}
+  .legend b{font-weight:600}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:6px}
+  section{max-width:840px;margin:0 auto 46px;}
+  h2.screen{font-family:var(--serif);font-weight:400;font-size:21px;margin-bottom:4px;text-align:center}
+  .route{text-align:center;color:rgba(255,255,255,.4);font-size:12px;letter-spacing:.08em;margin-bottom:20px;font-family:var(--sans)}
+  .pair{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{width:340px;max-width:100%}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:11px}
+  .tag.before{background:rgba(212,80,74,.14);color:#ff938c;border:1px solid rgba(212,80,74,.4)}
+  .tag.after{background:rgba(0,166,81,.14);color:#4fd99a;border:1px solid rgba(0,166,81,.4)}
+  .phone{background:var(--navy);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+  /* shared inner bits */
+  .lbl{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+  .matchhint{padding:13px 16px;border-bottom:1px solid var(--line);color:rgba(255,255,255,.4);font-size:12px;display:flex;align-items:center;gap:8px}
+  .matchhint .box{flex:1;height:34px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .wall{padding:18px 20px 22px;background:var(--deep);border-top:1px solid var(--line)}
+  .wall h3{font-family:var(--serif);font-weight:400;font-size:18px;text-align:center;line-height:1.25;margin-bottom:5px}
+  .wall .pp{color:rgba(255,255,255,.55);font-size:12px;text-align:center;margin-bottom:14px}
+  .cta{width:100%;border:none;border-radius:14px;background:var(--green);color:#fff;font-weight:700;font-size:15.5px;padding:11px;cursor:default;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15;font-family:var(--sans)}
+  .cta small{font-weight:500;font-size:11.5px;opacity:.85}
+  .foot{text-align:center;color:rgba(255,255,255,.4);font-size:11px;margin-top:10px}
+  /* paywall card */
+  .pw{padding:22px 18px 18px}
+  .heed{display:block;height:64px;width:auto;margin:0 auto 12px}
+  .pw h1{font-family:var(--serif);font-weight:400;font-size:22px;text-align:center;line-height:1.14;margin-bottom:8px}
+  .pw .lede{color:rgba(255,255,255,.6);font-size:13px;text-align:center;line-height:1.5;margin-bottom:16px}
+  .card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+  .feat{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px}
+  .feat:last-child{margin-bottom:0}
+  .feat .ic{width:22px;height:22px;border-radius:6px;background:rgba(0,166,81,.14);border:1px solid rgba(0,166,81,.4);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+  .feat .ft{font-size:13px;color:#fff;font-weight:600;line-height:1.3}
+  .feat .ft small{display:block;font-weight:400;color:rgba(255,255,255,.55);font-size:11.5px;margin-top:1px}
+  .pricerow{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+  .pricerow .big{font-family:var(--serif);font-size:30px}
+  .pricerow .per{color:rgba(255,255,255,.5);font-size:12px}
+  .pricerow .pill{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--green);background:rgba(0,166,81,.12);padding:4px 8px;border-radius:7px}
+  .freerow .big{font-family:var(--serif);font-size:30px;color:#fff}
+  .note{color:rgba(255,255,255,.5);font-size:11.5px;margin-bottom:13px}
+  .field{width:100%;height:44px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:rgba(255,255,255,.45);font-size:14px;padding:0 13px;display:flex;align-items:center;margin-bottom:10px}
+  .ctab{width:100%;border:none;border-radius:12px;background:var(--green);color:#fff;font-weight:700;font-size:15px;padding:12px;font-family:var(--sans)}
+  .hint{text-align:center;color:rgba(255,255,255,.4);font-size:11px;margin-top:10px;line-height:1.5}
+  /* change markers */
+  del{color:#ff938c;text-decoration-color:rgba(212,80,74,.7)}
+  ins{color:#7ff0b6;text-decoration:none}
+  .changes{margin-top:14px;background:rgba(0,166,81,.06);border:1px solid rgba(0,166,81,.22);border-radius:12px;padding:12px 14px}
+  .changes b{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4fd99a;display:block;margin-bottom:7px}
+  .changes li{font-size:12.5px;color:rgba(255,255,255,.72);margin:0 0 5px 16px;line-height:1.45}
+</style>
+</head>
+<body>
+  <h1 class="page">Modelo grátis — antes / depois</h1>
+  <p class="sub">As 2 telas que cobram hoje, no modo grátis (sem cobrança, só e-mail). Sem mexer no Stripe (fica dormindo).</p>
+  <div class="legend">
+    <span><span class="swatch" style="background:#d4504a"></span><b>vermelho</b> = sai (cobrança)</span>
+    <span><span class="swatch" style="background:#00A651"></span><b>verde</b> = entra (grátis)</span>
+    <span>Identidade: Dark Broadsheet (navy + serif + verde só no CTA)</span>
+  </div>
+
+  <section>
+    <h2 class="screen">Tela 1 — A amostra grátis</h2>
+    <div class="route">/onboarding/preview · o rodapé que leva ao paywall</div>
+    <div class="pair">
+      <div class="col">
+        <span class="tag before">Antes · cobra</span>
+        <div class="phone">
+          <div class="matchhint"><span class="box">↑ seu match #1, leitura grátis (igual)</span></div>
+          <div class="wall">
+            <h3>Get this honest read on all 6 of your matches.</h3>
+            <div class="pp">One place is easy. The truth across your whole search is the hard part.</div>
+            <div class="cta">Unlock all my matches<small>$9.49 · one-time, 30 days. No subscription.</small></div>
+            <div class="foot">You just saw exactly what you're paying for.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <span class="tag after">Depois · grátis</span>
+        <div class="phone">
+          <div class="matchhint"><span class="box">↑ seu match #1, leitura grátis (igual)</span></div>
+          <div class="wall">
+            <h3>Get this honest read on all 6 of your matches.</h3>
+            <div class="pp">This was one. You've got a full list that holds the same lines.</div>
+            <div class="cta">See all your matches</div>
+            <div class="foot">That read was free. So are the rest.</div>
+          </div>
+        </div>
+        <div class="changes">
+          <b>O que muda</b>
+          <li><del>"Unlock all my matches"</del> → <ins>"See all your matches"</ins></li>
+          <li><del>"$9.49 · one-time, 30 days"</del> → <ins>"This was one. You've got a full list that holds the same lines."</ins></li>
+          <li><del>"...what you're paying for."</del> → <ins>"That read was free. So are the rest."</ins></li>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="screen">Tela 2 — O paywall</h2>
+    <div class="route">/paywall · vira um portão de e-mail grátis (login por e-mail, sem cobrança)</div>
+    <div class="pair">
+      <div class="col">
+        <span class="tag before">Antes · cobra</span>
+        <div class="phone">
+          <div class="pw">
+            <img class="heed" src="../../public/brand/heed-mascot.png" alt="Heed" />
+            <h1>Unlock the truth on every place you're weighing.</h1>
+            <div class="lede">You saw one read free. This is the same honest check on all your matches.</div>
+            <div class="card">
+              <div class="lbl" style="margin-bottom:11px">What you unlock</div>
+              <div class="feat"><span class="ic">🧮</span><span class="ft">Will you qualify<small>The income bar and your path, on every listing.</small></span></div>
+              <div class="feat"><span class="ic">💸</span><span class="ft">The real cost to move in<small>Deposit, first month, fees. Not just the sticker.</small></span></div>
+              <div class="feat"><span class="ic">🛡️</span><span class="ft">A scam check before you pay<small>Flags places priced too good to be true.</small></span></div>
+            </div>
+            <div class="card">
+              <div class="pricerow"><span class="big">$9.49</span><span class="per">/ 30 days</span><span class="pill">ONE-TIME</span></div>
+              <div class="note">No subscription. No auto-renew. Pay again only if you come back.</div>
+              <div class="field">you@email.com</div>
+              <button class="ctab">Unlock my matches</button>
+              <div class="hint">We email you a code to sign in, then take you to checkout.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <span class="tag after">Depois · grátis</span>
+        <div class="phone">
+          <div class="pw">
+            <img class="heed" src="../../public/brand/heed-mascot.png" alt="Heed" />
+            <h1>Your list is ready when you are.</h1>
+            <div class="lede">You saw one read free. This is the same honest check on all your matches.</div>
+            <div class="card">
+              <div class="lbl" style="margin-bottom:11px">What you get</div>
+              <div class="feat"><span class="ic">🧮</span><span class="ft">Will you qualify<small>The income bar and your path, on every listing.</small></span></div>
+              <div class="feat"><span class="ic">💸</span><span class="ft">The real cost to move in<small>Deposit, first month, fees. Not just the sticker.</small></span></div>
+              <div class="feat"><span class="ic">🛡️</span><span class="ft">A scam check before you pay<small>Flags places priced too good to be true.</small></span></div>
+            </div>
+            <div class="card">
+              <div class="note" style="font-size:13px;color:rgba(255,255,255,.62);margin-bottom:13px">Sign in so your list is here when you come back.</div>
+              <div class="field">you@email.com</div>
+              <button class="ctab">Send me the code</button>
+              <div class="hint">We email a 6-digit code to confirm it's you. Takes a minute.</div>
+            </div>
+          </div>
+        </div>
+        <div class="changes">
+          <b>O que muda</b>
+          <li><del>"Unlock the truth..."</del> → <ins>"Your list is ready when you are."</ins></li>
+          <li><del>"What you unlock"</del> → <ins>"What you get"</ins></li>
+          <li><del>"$9.49 / 30 days · ONE-TIME" (todo o bloco de preço)</del> → <ins>"Sign in so your list is here when you come back." (sem citar preço nem "card")</ins></li>
+          <li><del>"Unlock my matches" / "...checkout"</del> → <ins>"Send me the code" / "...confirm it's you. Takes a minute."</ins></li>
+          <li>O e-mail + código continuam (é assim que capturamos o lead). Stripe fica dormindo.</li>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

@@ -14,19 +14,24 @@
  *   APIFY_TOKEN                     (required)
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { denyIfNotCron } from '@/lib/cron-auth';
 import type { ApifyListing } from '@/lib/apify-normalize';
 import { normalizeSaswaveItem, type SaswaveItem } from '@/lib/saswave-normalize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const denied = denyIfNotCron(req);
+  if (denied) return denied;
   return collect();
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const denied = denyIfNotCron(req);
+  if (denied) return denied;
   return collect();
 }
 

@@ -179,13 +179,13 @@ function PaywallContent() {
         {/* hero */}
         <div style={{ padding: '26px 22px 8px', textAlign: 'center' }}>
           <Image src="/brand/heed-mascot.png" alt="Heed" width={74} height={102} style={{ height: 74, width: 'auto', margin: '0 auto 14px', display: 'block' }} unoptimized />
-          <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 26, fontWeight: 400, lineHeight: 1.12 }}>Unlock the truth on every place you&apos;re weighing.</h1>
+          <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 26, fontWeight: 400, lineHeight: 1.12 }}>Your list is ready when you are.</h1>
           <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5, maxWidth: '32ch', marginInline: 'auto' }}>You saw one read free. This is the same honest check on all your matches.</p>
         </div>
 
         {/* what you unlock */}
         <div style={{ margin: '18px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
-          <div style={{ fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', fontWeight: 700, marginBottom: 12 }}>What you unlock</div>
+          <div style={{ fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', fontWeight: 700, marginBottom: 12 }}>What you get</div>
           {UNLOCK.map(([ic, t, d]) => (
             <div key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 11 }}>
               <span style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(0,166,81,.14)', border: '1px solid rgba(0,166,81,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flex: 'none' }}>{ic}</span>
@@ -196,22 +196,17 @@ function PaywallContent() {
 
         {/* pay card */}
         <div style={{ margin: '16px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontFamily: SERIF, color: '#fff', fontSize: 32 }}>$9.49</span>
-            <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>/ 30 days</span>
-            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: GREEN, background: 'rgba(0,166,81,.12)', padding: '4px 9px', borderRadius: 7 }}>ONE-TIME</span>
-          </div>
-          <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, marginBottom: 14 }}>No subscription. No auto-renew. Pay again only if you come back.</p>
+          <p style={{ color: 'rgba(255,255,255,.62)', fontSize: 13, marginBottom: 14 }}>Sign in so your list is here when you come back.</p>
 
           {step === 'email' && (
             <form onSubmit={handleContinue}>
               <label style={lblStyle}>Email address</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" required autoFocus style={inputStyle} />
               <button type="submit" disabled={loading || !normalizedEmail} style={{ ...ctaStyle, opacity: loading || !normalizedEmail ? 0.5 : 1 }}>
-                {loading ? <Spinner /> : 'Unlock my matches'}
+                {loading ? <Spinner /> : 'Send me the code'}
               </button>
               <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11, lineHeight: 1.5 }}>
-                We email you a code to sign in, then take you to checkout.<br />Already a member? Signing in never charges you again.
+                We email a 6-digit code to confirm it&apos;s you. Takes a minute.
               </p>
             </form>
           )}

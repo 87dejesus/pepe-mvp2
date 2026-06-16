@@ -36,11 +36,12 @@
 ## Communication
 - Founder has no technical background — prefer step-by-step with screenshots
 - Prompts to Claude Code → English, complete in one shot
-- End of session → generate updated CONTEXT.md
+- End of session → update PROJECT_BRIEF.md (the canonical record), bump its revision. (Do NOT create a separate CONTEXT.md — PROJECT_BRIEF.md is the living state doc.)
 - "Don't say anything yet" → respond only 👍
 - Be direct and objective — zero fluff
 
 ## Memory Reminders
 - Keep this file updated when project facts change
+- **Docs must stay in sync (canonical = PROJECT_BRIEF.md).** When the model/pricing/funnel/tracking changes, update PROJECT_BRIEF.md AND every other doc that restates it — especially docs/MARKETING_PLAN.md — in the SAME pass. No doc may contradict the canonical record. Never claim "updated everything" without checking each doc that carries the changed fact.
 - If context gets long, summarize key facts at the top of responses
 - Use plan mode for tasks touching multiple files
