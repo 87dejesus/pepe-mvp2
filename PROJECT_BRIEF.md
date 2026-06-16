@@ -79,7 +79,8 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
-- [ ] **Distribution / Reddit (founder):** traffic is ~zero (~14 funnel events, mostly tests). This is THE bottleneck, not the product. Warm up the `takeitslow` account via the `reddit-comment-drafter` skill: helpful comments, ZERO links for the first ~2 weeks.
+- [ ] **Verify OTP email delivery BEFORE driving traffic.** The whole free funnel now gates on the 6-digit sign-in code arriving. Confirm Supabase Auth sends via Resend (volume-safe), not the default SMTP (rate-limited ~3-4/hour) — if default, real signups silently fail. Test end-to-end with a non-admin email.
+- [ ] **Distribution / Reddit (founder):** traffic is ~zero (~14 funnel events, mostly tests). This is THE bottleneck, not the product. Warm up the `takeitslow` account via the `reddit-comment-drafter` skill: helpful comments, ZERO links for the first ~2 weeks. When links do go out, UTM-tag them (`?utm_source=reddit`) so funnel attribution works.
 - [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
 - [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
 - [ ] **Write the kill metric** for the 90-day test (e.g. by date X: N tracked visitors and M leads, or change/pause).
