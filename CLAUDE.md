@@ -42,5 +42,6 @@
 
 ## Memory Reminders
 - Keep this file updated when project facts change
+- **Docs must stay in sync (canonical = PROJECT_BRIEF.md).** When the model/pricing/funnel/tracking changes, update PROJECT_BRIEF.md AND every other doc that restates it — especially docs/MARKETING_PLAN.md — in the SAME pass. No doc may contradict the canonical record. Never claim "updated everything" without checking each doc that carries the changed fact.
 - If context gets long, summarize key facts at the top of responses
 - Use plan mode for tasks touching multiple files

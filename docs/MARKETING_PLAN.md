@@ -1,16 +1,16 @@
 # Plano de Marketing — The Steady One
 
-**Versão:** 2
-**Data:** 2026-06-10
+**Versão:** 3
+**Data:** 2026-06-17 (revisão 3: pivô para o modelo grátis)
 **Produto:** The Steady One (thesteadyone.com)
 **Mascote:** Heed, o jacaré
-**Modelo:** pagamento único, $9.49 / 30 dias de acesso
+**Modelo:** GRÁTIS + afiliado. O paywall de $9.49 foi aposentado (dorme no código); o acesso é liberado por login de e-mail. Fonte canônica do estado: `PROJECT_BRIEF.md`.
 
 > **Decisões travadas com o founder (2026-06-10):**
 > - **Orçamento:** ~$0. **Tudo orgânico.** Nada de ads pagos nesta fase.
 > - **Execução:** founder + Claude Code. O que destravar conversão e for código, **eu implemento** (tracking, e-mail, prévia de match, blog).
 > - **Público inicial:** mercado geral de NYC **em inglês**. (Nicho BR/latino = expansão futura, não agora.)
-> - **Meta dos 90 dias:** **máximo de pagantes**, aproveitando o pico de verão.
+> - **Meta dos 90 dias (rev 3):** máximo de **tráfego + e-mails capturados (leads)**, no pico de verão. A receita vem de **afiliado**, não do paywall.
 > - **Vídeo:** **faceless** (Heed + gravação de tela + voz/legenda). Founder não aparece.
 > - **Reddit:** founder tem ~3 contas de ~4 meses, pouco karma. Precisa de aquecimento antes de promover.
 
@@ -20,9 +20,9 @@
 
 - O jogo é **volume orgânico no pico de verão (jun–set), agora.** Sem orçamento, a alavanca é tempo + execução + código.
 - **3 motores, todos $0:** (1) Reddit + comunidades NYC, (2) vídeo faceless com Heed, (3) SEO de cauda longa (blog já existe).
-- **O quiz é o produto grátis.** Toda copy empurra pro `/flow`, nunca direto pro preço.
-- **Tracking de funil não existe hoje** (o `/api/track` só cobre clique de afiliado). Sem medir quiz→pago, marketing orgânico é cego. **Construir isso é o passo 0.**
-- Meu trabalho (Claude Code) destrava 3 coisas de código que aumentam pagantes sem gastar 1 dólar: **tracking de funil, prévia de match no paywall, e-mail de recuperação de quiz.**
+- **Tudo é grátis agora** (quiz e resultados). Toda copy empurra pro `/flow`. Não há preço; a conversão é **deixar o e-mail** pra liberar os matches.
+- **Tracking de funil já existe e funciona** (`lib/funnel.ts`, `app/api/track/event/route.ts`, tabela `funnel_events`): captura UTM first-touch + os eventos `quiz_start → quiz_complete → paywall_view → checkout_start → paid`. Era o "passo 0" do plano antigo; está **concluído**.
+- Alavancas de código que ainda valem: **e-mail de follow-up (Resend, ainda NÃO construído)** e **SEO técnico**.
 
 ---
 
@@ -122,24 +122,25 @@ Base já existe: burnout, ansiedade de decisão, taxa de corretor, red flags, de
 ```
 Reddit / Vídeo / SEO
    → / (hero)
-      → /flow (quiz 7 perguntas)   ← produto grátis, captura intenção
-         → /paywall ($9.49)
-            → /decision (match score)
-               → cross-sell: /storage + /low-credit (afiliado)
+      → /flow (quiz 7 perguntas)
+         → /onboarding/preview (1 match grátis)
+            → /paywall (login por e-mail, GRÁTIS, sem cobrança)
+               → /decision (todos os matches, grátis)
+                  → cross-sell: /storage + /low-credit (afiliado)
 ```
 
-**Sem orçamento de ads, ganhar pagante = espremer mais conversão do tráfego que já chega.** Três coisas de código fazem isso de graça:
+**Sem orçamento de ads, ganhar lead = espremer mais conversão do tráfego que já chega.** Estado atual:
 
-1. **Tracking de funil (PASSO 0, bloqueia todo o resto).**
-   Hoje não existe. Vou instrumentar eventos: `quiz_start`, `quiz_complete`, `paywall_view`, `checkout_start`, `paid`, com a UTM de origem. Sem isso não dá pra saber qual motor traz pagante.
+1. **Tracking de funil — CONCLUÍDO.**
+   `quiz_start → quiz_complete → paywall_view → checkout_start → paid`, cada um com a UTM de origem, gravando em `funnel_events`. Já dá pra ver qual motor traz lead.
 
-2. **Prévia de match antes do paywall.**
-   Mostrar "3 lugares batem com suas linhas" (com 1 listing borrado) → "desbloqueie por $9.49". Pagar às cegas mata conversão; mostrar valor real primeiro aumenta.
+2. **Captura de e-mail no gate grátis.**
+   `/onboarding/preview` mostra 1 match grátis; o gate seguinte pede só o **e-mail** (sem cobrança) pra liberar todos. O e-mail é o lead capturado.
 
-3. **E-mail de recuperação de quiz abandonado (via Resend, já no stack).**
-   Quem completa o quiz e não paga → e-mail com os resultados parciais + link pra voltar. Recupera vendas de graça.
+3. **E-mail de follow-up (via Resend) — ainda NÃO construído.**
+   Quem deixa o e-mail e some → sequência de retorno. (Não prometer "novos matches por e-mail" na copy até existir.)
 
-Bônus de copy (sem código): **NÃO** ancorar contra taxa de corretor (o FARE Act de jun/2025 fez a maioria dos renters não pagar mais — ver §2.5). Ancorar contra a dor real: "$9.49 contra ~$13.000 de move-in" e "menos que um café por semana para não errar a maior conta fixa do seu ano".
+Regra de copy (sem código): **NÃO** ancorar em preço (não há mais $9.49) nem em taxa de corretor (FARE Act, ver §2.5). Ancorar na dor real e na postura **anti-pânico**. E **nunca expor o modelo de receita** (afiliado/comissão) na copy do usuário.
 
 ---
 
@@ -155,14 +156,14 @@ Páginas de **storage** e **guarantor/low-credit** já existem e já têm tracki
 ## 6. Calendário 90 dias (pico de verão, tudo orgânico)
 
 ### Semanas 1–2 (junho): fundação + começar orgânico
-- [ ] **(Claude)** Implementar tracking de funil — **isto primeiro, é o passo 0.**
+- [x] **(Claude)** Tracking de funil — **CONCLUÍDO** (já em produção).
 - [ ] **(Founder)** Conferir qual das 3 contas Reddit tem mais karma; começar aquecimento (2–3 comentários úteis/dia, zero link).
 - [ ] **(Founder)** Criar/organizar TikTok + IG + YouTube. **(Claude)** entregar os 12 primeiros roteiros faceless.
 - [ ] **(Claude)** Corrigir metadata por página + schema de blog.
 
 ### Semanas 3–6 (junho/julho): volume no pico
 - [ ] **(Founder)** Reddit fase ativa + 3 vídeos/semana.
-- [ ] **(Claude)** Implementar prévia de match no paywall.
+- [ ] **(Claude)** E-mail de follow-up via Resend (a prévia/captura de e-mail no gate grátis já está no ar).
 - [ ] **(Claude)** Implementar e-mail de recuperação de quiz (Resend).
 - [ ] **(Claude)** 2 posts novos de blog.
 
@@ -175,17 +176,17 @@ Páginas de **storage** e **guarantor/low-credit** já existem e já têm tracki
 
 ## 7. Métricas
 
-**Métrica-norte: pagantes por semana** (meta do founder). Sem ads, a 2ª métrica é **qual motor traz cada pagante**.
+**Métrica-norte (rev 3): e-mails capturados (leads) por semana.** Sem ads, a 2ª métrica é **qual motor traz cada lead**.
 
 | Métrica | Por que |
 |---|---|
 | Quiz start rate (visita → começa) | Hero/promessa funciona? |
 | Quiz completion rate | Fricção das 7 perguntas |
-| **Quiz → pago (%)** | A conversão que paga as contas |
-| Pagantes/semana por motor (via UTM) | Onde colocar o tempo |
-| Receita afiliada / pagante | LTV real além dos $9.49 |
+| **Quiz → e-mail capturado (%)** | A conversão que vira lista |
+| Leads/semana por motor (via UTM) | Onde colocar o tempo |
+| Receita de afiliado / lead | A receita real (clique → comissão) |
 
-Sem o tracking do passo 0, nenhuma destas existe. Por isso ele vem primeiro.
+O tracking que alimenta isso já existe (`funnel_events`); falta só uma forma fácil de ler (painel ou query).
 
 ---
 
@@ -197,13 +198,14 @@ Sem o tracking do passo 0, nenhuma destas existe. Por isso ele vem primeiro.
 - **Sem** em-dash/en-dash em copy visível. Use vírgula, dois-pontos, ponto, hífen ASCII.
 - Voz calma, editorial. Verde `#00A651` só em CTA. Fundo navy.
 - Prova social só se **real**.
+- **Nunca expor o modelo de receita** (afiliado/comissão) na copy do usuário. Rodapé/CTA mata atrito com fato de UX (grátis, sem cartão), não explicando como a empresa lucra.
 
 ---
 
 ## 9. Próximos passos concretos
 
 **Eu (Claude Code) posso começar agora:**
-1. Implementar o **tracking de funil** (passo 0).
+1. **E-mail de follow-up (Resend)** — a alavanca de código que falta (o tracking já está feito).
 2. Escrever os **12 primeiros roteiros de vídeo faceless** do Heed.
 3. Corrigir **SEO técnico** (metadata por página + schema de blog).
 
@@ -211,4 +213,4 @@ Sem o tracking do passo 0, nenhuma destas existe. Por isso ele vem primeiro.
 1. Conferir qual das 3 contas Reddit tem mais karma e começar o aquecimento (comentários úteis, zero link).
 2. Abrir/organizar TikTok + IG + YouTube Shorts.
 
-> Estamos na melhor janela do ano e sem custo de mídia. A vitória vem de execução consistente + medir quiz→pago + espremer conversão com as 3 alavancas de código.
+> Estamos na melhor janela do ano e sem custo de mídia. A vitória vem de execução consistente + medir quiz→e-mail (lead) + espremer conversão.
