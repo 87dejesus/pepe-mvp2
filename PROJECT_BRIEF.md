@@ -80,6 +80,7 @@ Apply on every UI change without being asked.
 
 ### High priority (next session)
 - [ ] **Distribution / Reddit (founder):** traffic is ~zero (~14 funnel events, mostly tests). This is THE bottleneck, not the product. Warm up the `takeitslow` account via the `reddit-comment-drafter` skill: helpful comments, ZERO links for the first ~2 weeks. When links do go out, UTM-tag them (`?utm_source=reddit`) so funnel attribution works.
+  - Profile assets live (2026-06-17): branded banner (`public/brand/reddit-banner.png`, centered editorial copy, no mascot) + Heed avatar (`public/brand/reddit-avatar.png`). Profile link UTM-tagged (`utm_source=reddit&utm_medium=profile`). Warm-up comments (no links) still pending.
 - [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
 - [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
 - [ ] **Write the kill metric** for the 90-day test (e.g. by date X: N tracked visitors and M leads, or change/pause).
