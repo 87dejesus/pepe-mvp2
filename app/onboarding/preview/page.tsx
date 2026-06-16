@@ -126,6 +126,17 @@ export default function PreviewPage() {
   if (answers.qualification) chips.push(({ income40x: 'Income clears 40x', guarantor: 'Guarantor', service: 'Guarantor service', lowbarrier: 'Low-barrier' } as Record<string, string>)[answers.qualification]);
   if (answers.pets && answers.pets !== 'none') chips.push('Pets ok');
 
+  // Copy guards the low-count edge: "all 0/1 of your matches" reads wrong, and
+  // "so are the rest" would be false when the free read was the only match.
+  const hasMany = count >= 2;
+  const headline = hasMany
+    ? `Get this honest read on all ${count} of your matches.`
+    : 'Get this honest read on your whole search.';
+  const subline = hasMany
+    ? "This was one. You've got a full list that holds the same lines."
+    : 'The same honest read, on every place you weigh.';
+  const footline = hasMany ? 'That read was free. So are the rest.' : 'That read was free.';
+
   if (loading) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: NAVY, padding: 24, fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
@@ -166,12 +177,12 @@ export default function PreviewPage() {
 
         {/* honest paywall */}
         <div style={{ marginTop: 18, padding: '18px 22px 26px', background: DEEP, borderTop: `1px solid ${LINE}` }}>
-          <h2 style={{ fontFamily: SERIF, color: '#fff', fontSize: 19, fontWeight: 400, textAlign: 'center', lineHeight: 1.25, marginBottom: 4 }}>Get this honest read on all {count} of your matches.</h2>
-          <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 12.5, textAlign: 'center', marginBottom: 15 }}>This was one. You&apos;ve got a full list that holds the same lines.</p>
+          <h2 style={{ fontFamily: SERIF, color: '#fff', fontSize: 19, fontWeight: 400, textAlign: 'center', lineHeight: 1.25, marginBottom: 4 }}>{headline}</h2>
+          <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 12.5, textAlign: 'center', marginBottom: 15 }}>{subline}</p>
           <button onClick={() => router.push('/paywall')} style={{ width: '100%', height: 58, borderRadius: 14, background: GREEN, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 6px 24px rgba(0,166,81,.34)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1.15 }}>
             See all your matches
           </button>
-          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11 }}>That read was free. So are the rest.</p>
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11 }}>{footline}</p>
         </div>
       </div>
     </div>
