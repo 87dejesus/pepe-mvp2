@@ -231,4 +231,15 @@ build("04_boroughs", [
     lambda p: card_cta("Heed takes your budget and your lines, then shows the places that actually fit.", p),
 ])
 
+# 5) Co-living vs your own place (decision / tradeoff -> core)
+build("05_coliving", [
+    lambda p: card_hook("That 'studio' might actually be a room with three strangers.", p),
+    lambda p: card_statement("A lot of NYC listings that look like a studio or 1BR are really a private room in a shared or co-living apartment.", p),
+    lambda p: card_statement("Co-living: your own room, shared kitchen and living room.", p, green_tail="You lease the room, not the place."),
+    lambda p: card_statement("The upside: cheaper, often furnished, looser income rules, and usually no guarantor.", p),
+    lambda p: card_statement("The catch: roommates you didn't pick, less privacy, and house rules that aren't yours.", p),
+    lambda p: card_statement("Neither is wrong. It's a tradeoff: price and ease, or space and privacy.", p, green_tail="Which one is your line?"),
+    lambda p: card_cta("Heed asks this up front, then shows only the kind of place you actually want.", p),
+])
+
 print("DONE")
