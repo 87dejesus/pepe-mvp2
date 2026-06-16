@@ -24,6 +24,12 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+// FREE MODEL (2026-06): the $9.49 paywall is retired for the 90-day test.
+// Any authenticated (email-verified) user gets access. The Stripe webhook, the
+// users.subscription_status column, and /subscribe stay intact but dormant, so
+// flipping this back to false fully restores the paywall.
+const FREE_ACCESS: boolean = true;
+
 export async function GET(_req: NextRequest) {
   // Authenticate via session cookie
   const cookieStore = await cookies();
@@ -42,6 +48,16 @@ export async function GET(_req: NextRequest) {
   if (authError || !user) {
     console.warn('[access-status] 401 — not authenticated. authError:', authError?.message ?? 'none');
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  // Free model: any authenticated user has access. See FREE_ACCESS note above.
+  if (FREE_ACCESS) {
+    console.log('[access-status] FREE_ACCESS — granting access to', user.email);
+    return NextResponse.json({
+      status: 'active',
+      trial_ends_at: null,
+      current_period_end: null,
+    });
   }
 
   // Query users table via service role (bypasses RLS)

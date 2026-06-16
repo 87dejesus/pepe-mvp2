@@ -160,19 +160,18 @@ export default function PreviewPage() {
           {match ? (
             <DecisionListingCard listing={match} answers={cardAnswers} matchScore={85} recommendation="ACT_NOW" belowMarket={belowMarket} />
           ) : (
-            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, padding: 20, textAlign: 'center' }}>Fresh listings are loading from NYC sources. Unlock to see your matches.</div>
+            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, padding: 20, textAlign: 'center' }}>Fresh listings are loading from NYC sources. Sign in to see your matches.</div>
           )}
         </div>
 
         {/* honest paywall */}
         <div style={{ marginTop: 18, padding: '18px 22px 26px', background: DEEP, borderTop: `1px solid ${LINE}` }}>
           <h2 style={{ fontFamily: SERIF, color: '#fff', fontSize: 19, fontWeight: 400, textAlign: 'center', lineHeight: 1.25, marginBottom: 4 }}>Get this honest read on all {count} of your matches.</h2>
-          <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 12.5, textAlign: 'center', marginBottom: 15 }}>One place is easy. The truth across your whole search is the hard part.</p>
-          <button onClick={() => router.push('/paywall')} style={{ width: '100%', height: 58, borderRadius: 14, background: GREEN, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 6px 24px rgba(0,166,81,.34)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.15 }}>
-            Unlock all my matches
-            <span style={{ fontWeight: 500, fontSize: 12, opacity: 0.85 }}>$9.49 · one-time, 30 days. No subscription.</span>
+          <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 12.5, textAlign: 'center', marginBottom: 15 }}>This was one. You&apos;ve got a full list that holds the same lines.</p>
+          <button onClick={() => router.push('/paywall')} style={{ width: '100%', height: 58, borderRadius: 14, background: GREEN, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 6px 24px rgba(0,166,81,.34)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1.15 }}>
+            See all your matches
           </button>
-          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11 }}>You just saw exactly what you&apos;re paying for.</p>
+          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11 }}>That read was free. So are the rest.</p>
         </div>
       </div>
     </div>
