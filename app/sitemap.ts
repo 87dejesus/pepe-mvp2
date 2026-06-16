@@ -1,20 +1,11 @@
 import type { MetadataRoute } from 'next';
-import fs from 'node:fs';
-import path from 'node:path';
+import { getAllSlugs } from '../lib/posts';
 
 const SITE_URL = 'https://thesteadyone.com';
 
-function listBlogSlugs(): string[] {
-  try {
-    const dir = path.join(process.cwd(), 'content', 'posts');
-    return fs
-      .readdirSync(dir)
-      .filter((f) => f.endsWith('.md') || f.endsWith('.mdx'))
-      .map((f) => f.replace(/\.(md|mdx)$/, ''));
-  } catch {
-    return [];
-  }
-}
+// Regenerate periodically so scheduled posts enter the sitemap on their date
+// without waiting for a redeploy.
+export const revalidate = 3600;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -26,7 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/signin`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  const blogRoutes: MetadataRoute.Sitemap = listBlogSlugs().map((slug) => ({
+  // getAllSlugs() only returns posts whose publish date has arrived, so
+  // scheduled (future-dated) posts stay out of the sitemap until they go live.
+  const blogRoutes: MetadataRoute.Sitemap = getAllSlugs().map((slug) => ({
     url: `${SITE_URL}/blog/${slug}`,
     lastModified: now,
     changeFrequency: 'monthly',
