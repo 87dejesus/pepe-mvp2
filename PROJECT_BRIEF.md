@@ -79,7 +79,6 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
-- [ ] **Verify OTP email delivery BEFORE driving traffic.** The whole free funnel now gates on the 6-digit sign-in code arriving. Confirm Supabase Auth sends via Resend (volume-safe), not the default SMTP (rate-limited ~3-4/hour) — if default, real signups silently fail. Test end-to-end with a non-admin email.
 - [ ] **Distribution / Reddit (founder):** traffic is ~zero (~14 funnel events, mostly tests). This is THE bottleneck, not the product. Warm up the `takeitslow` account via the `reddit-comment-drafter` skill: helpful comments, ZERO links for the first ~2 weeks. When links do go out, UTM-tag them (`?utm_source=reddit`) so funnel attribution works.
 - [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
 - [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
@@ -87,6 +86,7 @@ Apply on every UI change without being asked.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
 ### Done since revision 4
+- [x] **OTP email delivery verified** (2026-06-17): Supabase Auth custom SMTP is ON via Resend (`smtp.resend.com`, sender noreply@contact.thesteadyone.com); end-to-end test delivered the code to the inbox. The free funnel's email gate is volume-safe.
 - [x] **Cron auth on Apify sync/collect routes** (2026-06-16): both require `CRON_SECRET` via `lib/cron-auth.ts`, matching cleanup + watchdog.
 - [x] **Empty-scraper monitoring** (PR #27): `app/api/cron/watchdog/route.ts` raises a Sentry alert when listings go low/stale.
 - [x] **Funnel tracking** (PR #30): `funnel_events` table + first-touch UTM (`lib/funnel.ts`). Works, but real traffic is ~zero.
