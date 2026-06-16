@@ -36,7 +36,7 @@
 ## Communication
 - Founder has no technical background — prefer step-by-step with screenshots
 - Prompts to Claude Code → English, complete in one shot
-- End of session → generate updated CONTEXT.md
+- End of session → update PROJECT_BRIEF.md (the canonical record), bump its revision. (Do NOT create a separate CONTEXT.md — PROJECT_BRIEF.md is the living state doc.)
 - "Don't say anything yet" → respond only 👍
 - Be direct and objective — zero fluff
 

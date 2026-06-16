@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 4
-**Last updated:** 2026-06-08 (scraper migration to saswave — bundled proxy)
+**Revision:** 5
+**Last updated:** 2026-06-16 (free-model pivot; Apify cron auth; affiliate signups)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -17,26 +17,26 @@
 
 ## 2. Billing model
 
-- **Mode:** Stripe `payment` (NEVER `subscription` — see CLAUDE.md)
-- **Price:** $9.49 / 30 days
-- **Price ID:** `price_1TELqs08QwenlVoW1ECZCj4s`
-- **Customer creation:** `always` on checkout so the billing portal works for one-time buyers
-- **Webhook:** signature verified before business logic at `app/api/webhooks/stripe/route.ts`
+- **CURRENT (2026-06-16): FREE.** The $9.49 paywall is retired for the 90-day distribution test. Access is granted to any authenticated (email-verified) user via the `FREE_ACCESS` flag in `app/api/auth/access-status/route.ts`. The whole funnel opens after free email sign-in (OTP code), not payment. To restore the paywall, flip `FREE_ACCESS` to false. Decision recorded in memory `business-model-90day-test.md`.
+- **Stripe (dormant, intact — do NOT delete):** Mode `payment` (NEVER `subscription`). Price $9.49 / 30 days, ID `price_1TELqs08QwenlVoW1ECZCj4s`. Webhook signature-verified at `app/api/webhooks/stripe/route.ts`. All Stripe code, the webhook, `subscription_status`, and `/subscribe` remain in place but unused while free.
+- **Monetization plan:** affiliate referrals (free + affiliate model). Applied 2026-06-15, in review: Lemonade (renters insurance, Impact network) and Self (credit-builder, FlexOffers). Rhino/LeaseLock/TheGuarantors have NO affiliate program — see memory `affiliate-partners-status.md`.
 
 ## 3. User flow
 
 ```
-/ (Hero video + CTA)
+/ (Hero + CTA)
   └─ /flow (7-question quiz, answers in localStorage)
-      └─ /paywall (OTP signin + checkout)
-          └─ /subscribe (post-checkout activation poll)
-              └─ /decision (listings, filtered + scored)
-                  ├─ /exit (back out)
-                  ├─ /storage (affiliate offers)
-                  └─ /low-credit (guarantor partners)
+      └─ /onboarding/tradeoffs (education)
+          └─ /onboarding/preview (1 free sample match + honest read)
+              └─ /paywall (FREE email sign-in: OTP code, NO charge)
+                  └─ /onboarding/post-auth (access router → /decision)
+                      └─ /decision (listings, filtered + scored)
+                          ├─ /exit (back out)
+                          ├─ /storage (affiliate offers)
+                          └─ /low-credit (guarantor partners)
 ```
 
-Admin (`luhciano.sj@gmail.com`) bypasses paywall via `supabase.auth.getUser()` check, also via `?admin=heed` query.
+`/subscribe` (re-payment) and the Stripe checkout branch of `/onboarding/post-auth` are dormant under the free model. Admin (`luhciano.sj@gmail.com`) bypasses straight to `/decision`. To test the real free flow, use a NON-admin email.
 
 ## 4. Data sources
 
@@ -79,13 +79,16 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
-- [ ] **Evaluate `parseforge/apartments-com-scraper`** via the `/scraper-provider-evaluator` skill. Current Apify actor (`epctex/apartments-scraper-api`) regressed on 2026-05-19 — no longer returns the `rent` field. Quick fix in PR #7 patches around it with "Contact for pricing" but the proper fix is a replacement actor.
-- [ ] **Decide on ScraperAPI plan** before mid-June 2026. Free tier (1000 credits/month) burns out in ~20 days at current daily RentHop sync rate. Options: upgrade to Hobby (~$49/mo, 100k credits), reduce cron from daily to weekly, or reduce borough coverage.
-- [ ] **Rotate the ScraperAPI API key** that was leaked in chat (`30e0384ce6a3acd0d3fb0181dd651e2b`). Login at dashboard.scraperapi.com → Manage → regenerate → update `RENTHOP_PROXY_URL` in Vercel and redeploy.
+- [ ] **Distribution / Reddit (founder):** traffic is ~zero (~14 funnel events, mostly tests). This is THE bottleneck, not the product. Warm up the `takeitslow` account via the `reddit-comment-drafter` skill: helpful comments, ZERO links for the first ~2 weeks.
+- [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
+- [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
+- [ ] **Write the kill metric** for the 90-day test (e.g. by date X: N tracked visitors and M leads, or change/pause).
+- [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
-### Medium priority
-- [ ] **Cron auth on apify/renthop sync routes:** no `CRON_SECRET` check exists, only the cleanup route is protected. Vercel cron header (`x-vercel-cron`) is not verified either.
-- [ ] **Monitoring for empty scraper runs:** the 2026-05-19 incident persisted because nothing alerted when `synced: 0` happened day after day. Add a Sentry alert or a health endpoint.
+### Done since revision 4
+- [x] **Cron auth on Apify sync/collect routes** (2026-06-16): both require `CRON_SECRET` via `lib/cron-auth.ts`, matching cleanup + watchdog.
+- [x] **Empty-scraper monitoring** (PR #27): `app/api/cron/watchdog/route.ts` raises a Sentry alert when listings go low/stale.
+- [x] **Funnel tracking** (PR #30): `funnel_events` table + first-touch UTM (`lib/funnel.ts`). Works, but real traffic is ~zero.
 
 ### Low priority
 - [ ] **CI:** no GitHub Actions workflow for lint/typecheck/build/smoke
@@ -102,6 +105,7 @@ Apply on every UI change without being asked.
 - **No em-dashes or en-dashes** in user-visible strings (U+2014, U+2013). Use commas, colons, periods, or ASCII hyphens
 - **No fake commitments:** no SLAs, no "we'll get back in 24h", no money-back promises unless founder explicitly approves
 - **No fake scarcity:** no "ACT NOW" badges, countdown timers, or fabricated low-availability counts
+- **Never expose the revenue model** in user-facing copy (no "we earn from partners", no commission/affiliate mechanics). A CTA footer kills click friction with UX facts only (free, no card, no account). See memory `copy-no-business-model-exposure.md`.
 
 ## 8. Operational watch
 
