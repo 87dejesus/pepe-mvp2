@@ -33,8 +33,9 @@
  *   );
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { denyIfNotCron } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -74,11 +75,19 @@ async function startApifyRun(): Promise<string> {
   return runId;
 }
 
-export async function GET() {
-  return POST();
+export async function GET(req: NextRequest) {
+  const denied = denyIfNotCron(req);
+  if (denied) return denied;
+  return runSync();
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const denied = denyIfNotCron(req);
+  if (denied) return denied;
+  return runSync();
+}
+
+async function runSync() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
