@@ -176,6 +176,39 @@ def card_cta(benefit, path_out, pill="Link in bio", free=True):
 
 # ---------- carousels ----------
 
+def _shadow_lines(d, lines, font, lh, y, fill=WHITE):
+    for i, ln in enumerate(lines):
+        w = d.textlength(ln, font=font); x = (W-w)/2
+        d.text((x+3, y+i*lh+3), ln, font=font, fill=(7, 27, 48))  # drop shadow for legibility on photo
+        d.text((x, y+i*lh), ln, font=font, fill=fill)
+    return y + len(lines)*lh
+
+def card_photo_hook(photo_path, text, path_out):
+    """Cover card: real photo, cover-fit to 9:16, dark scrims, hook text + masthead."""
+    img = Image.open(photo_path).convert("RGB")
+    scale = max(W/img.width, H/img.height)
+    img = img.resize((int(img.width*scale), int(img.height*scale)))
+    left = (img.width-W)//2; top = (img.height-H)//2
+    img = img.crop((left, top, left+W, top+H)).convert("RGBA")
+    ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
+    for y in range(H):
+        a_top = 190*max(0.0, 1 - y/980)
+        a_bot = 150*max(0.0, (y-1520)/(H-1520))
+        a = int(max(a_top, a_bot))
+        if a:
+            od.line([(0, y), (W, y)], fill=(7, 27, 48, a))
+    img.alpha_composite(Image.new("RGBA", (W, H), (7, 27, 48, 45)))
+    img.alpha_composite(ov)
+    img = img.convert("RGB"); d = ImageDraw.Draw(img)
+    mf = F(SANS, 30); mt = "T H E   S T E A D Y   O N E"; mw = d.textlength(mt, font=mf)
+    d.text(((W-mw)/2, 150), mt, font=mf, fill=WHITE)
+    d.line([(W/2-90, 210), (W/2+90, 210)], fill=GREEN, width=3)
+    f, lines, lh = fit(d, text, SERIF, 100, 58, 900, 560)
+    _shadow_lines(d, lines, f, lh, 300, WHITE)
+    sf = F(SANS, 30); st = "S W I P E   >"; sw = d.textlength(st, font=sf)
+    d.text(((W-sw)/2, 1745), st, font=sf, fill=GREEN)
+    img.save(path_out)
+
 def build(slug, cards):
     out = f"docs/carousels/{slug}"
     os.makedirs(out, exist_ok=True)
@@ -240,6 +273,17 @@ build("05_coliving", [
     lambda p: card_statement("The catch: roommates you didn't pick, less privacy, and house rules that aren't yours.", p),
     lambda p: card_statement("Neither is wrong. It's a tradeoff: price and ease, or space and privacy.", p, green_tail="Which one is your line?"),
     lambda p: card_cta("Heed asks this up front, then shows only the kind of place you actually want.", p),
+])
+
+# 6) Hidden costs (photo cover test, force #1, regret angle -> core)
+build("06_hiddencosts", [
+    lambda p: card_photo_hook("docs/assets/cover_hiddencosts.png", "In NYC, the rent is the cheap part.", p),
+    lambda p: card_statement("The rent is the number you compare. The costs around it are what wreck the budget.", p),
+    lambda p: card_statement("Utilities, heat, and internet, often not included.", p),
+    lambda p: card_statement("Laundry, amenity, and parking fees that never show in the listing.", p),
+    lambda p: card_statement("Plus the move-in cash: first month and a one month deposit, due at once.", p),
+    lambda p: card_statement("Cheap rent with hidden costs isn't cheap.", p, green_tail="Compare the real monthly, not the sticker."),
+    lambda p: card_cta("Heed shows the real monthly cost on every place you weigh.", p),
 ])
 
 print("DONE")
