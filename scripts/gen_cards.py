@@ -61,11 +61,12 @@ def bg():
     return img, ImageDraw.Draw(img)
 
 def masthead(d):
+    # y pushed down to clear the TikTok top UI safe zone (status bar + tab bar)
     f = F(SANS, 30)
     txt = "T H E   S T E A D Y   O N E"
     w = d.textlength(txt, font=f)
-    d.text(((W-w)/2, 150), txt, font=f, fill=WHITE)
-    d.line([(W/2-90, 210), (W/2+90, 210)], fill=GREEN, width=3)
+    d.text(((W-w)/2, 280), txt, font=f, fill=WHITE)
+    d.line([(W/2-90, 340), (W/2+90, 340)], fill=GREEN, width=3)
 
 def wrap(d, text, font, maxw):
     out, cur = [], ""
@@ -114,14 +115,14 @@ def swipe_hint(d):
 
 def card_hook(text, path_out, hint=True):
     img, d = bg(); masthead(d)
-    center_block(d, text, SERIF, 96, 60, WHITE, top=360, bottom=1380)
+    center_block(d, text, SERIF, 96, 60, WHITE, top=430, bottom=1380)
     if hint: swipe_hint(d)
     img.save(path_out)
 
 def card_statement(text, path_out, green_tail=None):
     img, d = bg(); masthead(d)
     if green_tail:
-        top, bottom = 360, 1430
+        top, bottom = 430, 1430
         wf, wl, wlh = fit(d, text, SERIF, 80, 50, 900, 520)
         gf, gl, glh = fit(d, green_tail, SERIF, 124, 60, 900, 360)
         gap = 56
@@ -130,7 +131,7 @@ def card_statement(text, path_out, green_tail=None):
         y = draw_lines(d, wl, wf, wlh, y, WHITE)
         draw_lines(d, gl, gf, glh, y + gap, GREEN)
     else:
-        center_block(d, text, SERIF, 84, 54, WHITE, top=360, bottom=1430)
+        center_block(d, text, SERIF, 84, 54, WHITE, top=430, bottom=1430)
     img.save(path_out)
 
 def card_numbers(kicker, rows, note, total, sub, path_out):
@@ -201,10 +202,10 @@ def card_photo_hook(photo_path, text, path_out):
     img.alpha_composite(ov)
     img = img.convert("RGB"); d = ImageDraw.Draw(img)
     mf = F(SANS, 30); mt = "T H E   S T E A D Y   O N E"; mw = d.textlength(mt, font=mf)
-    d.text(((W-mw)/2, 150), mt, font=mf, fill=WHITE)
-    d.line([(W/2-90, 210), (W/2+90, 210)], fill=GREEN, width=3)
-    f, lines, lh = fit(d, text, SERIF, 100, 58, 900, 560)
-    _shadow_lines(d, lines, f, lh, 300, WHITE)
+    d.text(((W-mw)/2, 280), mt, font=mf, fill=WHITE)
+    d.line([(W/2-90, 340), (W/2+90, 340)], fill=GREEN, width=3)
+    f, lines, lh = fit(d, text, SERIF, 100, 58, 900, 540)
+    _shadow_lines(d, lines, f, lh, 430, WHITE)
     sf = F(SANS, 30); st = "S W I P E   >"; sw = d.textlength(st, font=sf)
     d.text(((W-sw)/2, 1745), st, font=sf, fill=GREEN)
     img.save(path_out)
