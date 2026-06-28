@@ -286,4 +286,15 @@ build("06_hiddencosts", [
     lambda p: card_cta("Heed shows the real monthly cost on every place you weigh.", p),
 ])
 
+# 7) Timing / anti-panic (photo cover, from SEO post how-long-do-nyc-apartments-stay-on-market)
+build("07_timing", [
+    lambda p: card_photo_hook("docs/assets/cover_street.png", "That apartment won't be gone by tonight.", p),
+    lambda p: card_statement("'Apply now or lose it' is the oldest pressure in renting. The research says it's mostly a myth.", p),
+    lambda p: card_statement("NYC apartments don't rent in hours. And a short, careful wait doesn't cost you hundreds. Both were refuted.", p),
+    lambda p: card_statement("Urgency is a claim to verify,", p, green_tail="not a fact to obey."),
+    lambda p: card_statement("The tell: the pressure shows up before the tour, the scam check, or a look at the real costs.", p),
+    lambda p: card_statement("The calmest renters move fastest. They set their non-negotiables first.", p, green_tail="So what are yours?"),
+    lambda p: card_cta("Heed helps you set your lines, then checks every place against them.", p),
+])
+
 print("DONE")
