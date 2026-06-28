@@ -7,7 +7,19 @@
 
 ---
 
-## Estado atual (o que já está no ar)
+## Regra de conteúdo: SEMPRE puxar inspiração das fontes vivas (de 2026-06-16)
+
+**Antes de gerar qualquer post (carrossel, vídeo, legenda), ler primeiro:**
+1. `docs/reddit-insights/copy-bank.md` — frases reais por dor + arsenal de leis (capturado de threads do Reddit). **Fonte principal de linguagem fresca/autêntica.**
+2. `docs/reddit-insights/raw/` — capturas cruas de threads (contexto bruto).
+3. `content/posts/` — artigos SEO (ângulos e dados já pesquisados).
+4. `docs/RENTER_RESEARCH.md` — as 4 forças validadas.
+
+O objetivo é que cada post use a **voz real dos renters** (do copy-bank), não copy genérica, e fique mais fresco. Puxar 1-2 frases/ângulos do banco por peça.
+
+> Status (2026-06-16): `docs/reddit-insights/` ainda NÃO está no GitHub (vive local na sessão do desktop). Assim que for pushada, fazer `git pull` e ler antes de cada post.
+
+
 
 - **Tracking de funil:** LIVE (tabela `funnel_events`). Eventos: quiz_start, quiz_complete, paywall_view, checkout_start, paid (o `paid` agora = acesso grátis liberado), com UTM de origem.
 - **TikTok @thesteadyonenyc:** conta Business, categoria Education, **link do site clicável** no campo Website com `?utm_source=tiktok`. Bio nova.
