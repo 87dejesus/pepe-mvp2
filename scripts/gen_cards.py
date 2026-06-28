@@ -286,15 +286,15 @@ build("06_hiddencosts", [
     lambda p: card_cta("Heed shows the real monthly cost on every place you weigh.", p),
 ])
 
-# 7) Timing / anti-panic (photo cover, from SEO post how-long-do-nyc-apartments-stay-on-market)
+# 7) Don't pay before you verify (photo cover; FTC 2025 data + the real risk)
 build("07_timing", [
-    lambda p: card_photo_hook("docs/assets/cover_street.png", "That apartment won't be gone by tonight.", p),
-    lambda p: card_statement("'Apply now or lose it' is the oldest pressure in renting. The research says it's mostly a myth.", p),
-    lambda p: card_statement("NYC apartments don't rent in hours. And a short, careful wait doesn't cost you hundreds. Both were refuted.", p),
-    lambda p: card_statement("Urgency is a claim to verify,", p, green_tail="not a fact to obey."),
-    lambda p: card_statement("The tell: the pressure shows up before the tour, the scam check, or a look at the real costs.", p),
-    lambda p: card_statement("The calmest renters move fastest. They set their non-negotiables first.", p, green_tail="So what are yours?"),
-    lambda p: card_cta("Heed helps you set your lines, then checks every place against them.", p),
+    lambda p: card_photo_hook("docs/assets/cover_street.png", "An apartment can get taken. That's not the part that should scare you.", p),
+    lambda p: card_statement("Yes, a good place can go fast. Competition is real. But losing one only costs you time.", p),
+    lambda p: card_statement("The real risk is paying or signing before you've seen it in person and confirmed it's real.", p, green_tail="That's the costly mistake."),
+    lambda p: card_statement("The FTC counts $65 million lost to rental scams. The typical hit: $1,000, paid before ever seeing the place.", p),
+    lambda p: card_statement("And renters 18 to 29 get hit 3x more often.", p, green_tail="First apartment, highest risk."),
+    lambda p: card_statement("Move fast if a place fits your lines. Just never pay or sign before an in-person check.", p, green_tail="That's the one line you don't cross."),
+    lambda p: card_cta("Heed sets your lines and the checks to run before you commit.", p),
 ])
 
 print("DONE")
