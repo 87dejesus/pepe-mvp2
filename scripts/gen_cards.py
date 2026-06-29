@@ -298,4 +298,15 @@ build("07_timing", [
     lambda p: card_cta("Heed sets your lines and the checks to run before you commit.", p),
 ])
 
+# 8) Dealbreakers are personal (from reddit-insights copy-bank, real renter quotes)
+build("08_dealbreakers", [
+    lambda p: card_hook("Stop borrowing other people's dealbreakers.", p),
+    lambda p: card_statement('"Lack of natural light is a HARD NO. I need houseplants to survive the concrete jungle."', p),
+    lambda p: card_statement('"I don\'t care as much about looks or natural light."', p),
+    lambda p: card_statement("Same feature. Opposite answers. Both right.", p, green_tail="Your list isn't theirs."),
+    lambda p: card_statement("A pros-and-cons list won't decide it. It weighs 'second bathroom' the same as 'my sanity.'", p),
+    lambda p: card_statement("The fix is knowing your 2 or 3 hard lines before you tour.", p, green_tail="Decide them calm, on paper."),
+    lambda p: card_cta("Heed turns your hard lines into a filter, then scores every place against them.", p),
+])
+
 print("DONE")

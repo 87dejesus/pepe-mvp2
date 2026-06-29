@@ -17,7 +17,7 @@
 
 O objetivo é que cada post use a **voz real dos renters** (do copy-bank), não copy genérica, e fique mais fresco. Puxar 1-2 frases/ângulos do banco por peça.
 
-> Status (2026-06-16): `docs/reddit-insights/` ainda NÃO está no GitHub (vive local na sessão do desktop). Assim que for pushada, fazer `git pull` e ler antes de cada post.
+> Status (2026-06-17): `docs/reddit-insights/` ESTÁ no GitHub, na branch `content/seo-aeo-batch-jun2026`. Ler com `git show origin/content/seo-aeo-batch-jun2026:docs/reddit-insights/copy-bank.md` antes de cada post. Já em uso (ex.: carrossel 08_dealbreakers).
 
 
 
