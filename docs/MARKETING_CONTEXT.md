@@ -80,3 +80,6 @@ Comparar: vídeo manim x carrossel, e qual ângulo trouxe lead. **Métrica-norte
 2. Gerar rodada 2 restante: co-living, custos escondidos (carrosséis) + 3 vídeos.
 3. Construir e-mail de follow-up (Resend) — alavanca de código que falta.
 4. Em 3-5 dias: rodar a query, comparar formato x ângulo, dobrar no que traz lead.
+
+## Regra de copy emocional (aprendida 2026-06-17)
+Empatia = nomear a dor/auto-duvida REAL do renter primeiro ("you are not doing it wrong"), depois a pequena graca. Registro tenro e vulneravel, em "voce". NUNCA esperto/ironico (afasta). Puxar o sentimento do copy-bank. Ex.: carrossel 09_whystay (levou 3 tentativas; v1/v2 falharam por serem "espertas").
