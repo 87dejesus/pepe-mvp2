@@ -66,9 +66,9 @@ def closing(out):
     for y in range(H):
         t=min(1.0,max(0.0,abs(y-H/2)/(H/2)-0.45)/0.55)*0.6
         d.line([(0,y),(W,y)],fill=(int(NAVY[0]*(1-t)+DEEP[0]*t),int(NAVY[1]*(1-t)+DEEP[1]*t),int(NAVY[2]*(1-t)+DEEP[2]*t)))
-    top=fit(d,"The rent is brutal. The brokers are worse.",SANS_R,46,34,900,160,lh=1.3)
+    top=fit(d,"The rent is brutal.",SANS_R,46,34,900,160,lh=1.3)
     cshadow(d,top[1],top[0],top[2],470,(210,225,235))
-    big=F(SERIF,130); t="We stay anyway."; 
+    big=F(SERIF,120); t="The reasons are stubborn."; 
     tl=wrap(d,t,big,940); a,de=big.getmetrics(); lh=int((a+de)*1.05); yy=620
     for i,ln in enumerate(tl):
         w=d.textlength(ln,font=big); d.text(((W-w)/2,yy+i*lh),ln,font=big,fill=WHITE)
@@ -81,11 +81,11 @@ def closing(out):
     img.save(out)
 
 out="docs/carousels/09_whystay"; os.makedirs(out,exist_ok=True)
-thumb_cover("docs/assets/magic_rooftop_sunset.png","Why we still live in NYC","Even with the rent, the brokers, and the chaos.",f"{out}/01.png")
-feeling("docs/assets/magic_bridge.png","Walking home over the bridge, the whole skyline lit up.",f"{out}/02.png")
-feeling("docs/assets/magic_bodega.png","The guy who starts your coffee before you ask.",f"{out}/03.png")
-feeling("docs/assets/magic_street.png","A block so quiet you forget where you are.",f"{out}/04.png")
-feeling("docs/assets/magic_subway.png","A stranger playing something beautiful while you wait.",f"{out}/05.png")
-feeling("docs/assets/magic_rooftop.png","The city glowing all at once, and nothing else matters.",f"{out}/06.png")
+thumb_cover("docs/assets/magic_rooftop_sunset.png","Reasons We Renew","The rent is indefensible. The rest of it isn't.",f"{out}/01.png")
+feeling("docs/assets/magic_bridge.png","You crossed it a thousand times for work. This time you slowed down.",f"{out}/02.png")
+feeling("docs/assets/magic_bodega.png","Open 24 hours, knows your order, never once asked about your credit.",f"{out}/03.png")
+feeling("docs/assets/magic_street.png","You can't afford this block. You can afford to walk down it.",f"{out}/04.png")
+feeling("docs/assets/magic_subway.png","A delayed train, a violin, and suddenly the platform is worth it.",f"{out}/05.png")
+feeling("docs/assets/magic_rooftop.png","You paid too much to live near this, and near this is enough.",f"{out}/06.png")
 closing(f"{out}/07.png")
 print("DONE 09_whystay")
