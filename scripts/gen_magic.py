@@ -51,19 +51,14 @@ def thumb_cover(photo,title,subtitle,out):
     d.text(((W-bw)/2,1800),bt,font=bf,fill=WHITE); d.line([(W/2-70,1846),(W/2+70,1846)],fill=GREEN,width=3)
     img.save(out)
 
-def rating(photo,caption,score,out,note=None):
+def feeling(photo,text,out):
     img=coverfit(photo); ov=Image.new("RGBA",(W,H),(0,0,0,0)); od=ImageDraw.Draw(ov)
     for y in range(H):
-        a=int(min(190,50+130*max(0.0,1-abs(y-1180)/460)))
+        a=int(min(195,55+135*max(0.0,1-abs(y-1180)/500)))
         od.line([(0,y),(W,y)],fill=(7,27,48,a))
     img.alpha_composite(ov); img=img.convert("RGB"); d=ImageDraw.Draw(img)
-    cf,cl,clh=fit(d,caption,SANS,58,38,900,260,lh=1.2)
-    y=cshadow(d,cl,cf,clh,1000,WHITE)
-    sf=F(SERIF,150); sw=d.textlength(score,font=sf); x=(W-sw)/2
-    d.text((x+3,y+30+3),score,font=sf,fill=DEEP); d.text((x,y+30),score,font=sf,fill=GREEN)
-    if note:
-        nf=F(SANS_R,36); nw=d.textlength(note,font=nf)
-        d.text(((W-nw)/2,y+30+170),note,font=nf,fill=(210,225,235))
+    tf,tl,tlh=fit(d,text,SERIF,78,48,920,420,lh=1.16)
+    cshadow(d,tl,tf,tlh,1030,WHITE)
     img.save(out)
 
 def closing(out):
@@ -87,10 +82,10 @@ def closing(out):
 
 out="docs/carousels/09_whystay"; os.makedirs(out,exist_ok=True)
 thumb_cover("docs/assets/magic_rooftop_sunset.png","Why we still live in NYC","Even with the rent, the brokers, and the chaos.",f"{out}/01.png")
-rating("docs/assets/magic_bridge.png","Walking the bridge at sunset.","10/10",f"{out}/02.png")
-rating("docs/assets/magic_bodega.png","Your bodega guy knows your order.","11/10",f"{out}/03.png")
-rating("docs/assets/magic_street.png","A quiet block that feels like yours.","9/10",f"{out}/04.png")
-rating("docs/assets/magic_subway.png","A subway musician who's actually incredible.","10/10",f"{out}/05.png",note="(the 20-minute delay: 3/10)")
-rating("docs/assets/magic_rooftop.png","Golden hour with your people.","100/10",f"{out}/06.png")
+feeling("docs/assets/magic_bridge.png","Walking home over the bridge, the whole skyline lit up.",f"{out}/02.png")
+feeling("docs/assets/magic_bodega.png","The guy who starts your coffee before you ask.",f"{out}/03.png")
+feeling("docs/assets/magic_street.png","A block so quiet you forget where you are.",f"{out}/04.png")
+feeling("docs/assets/magic_subway.png","A stranger playing something beautiful while you wait.",f"{out}/05.png")
+feeling("docs/assets/magic_rooftop.png","The city glowing all at once, and nothing else matters.",f"{out}/06.png")
 closing(f"{out}/07.png")
 print("DONE 09_whystay")
