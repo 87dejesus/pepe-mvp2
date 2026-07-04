@@ -45,3 +45,11 @@ nul
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Claude Code internal state (worktrees, not project files)
+.claude/worktrees/
+
+# Local media / capture artifacts (keep binaries out of the repo)
+steady-one-videos/
+videos/
+app-screens/

@@ -11,7 +11,7 @@
 > - **Execução:** founder + Claude Code. O que destravar conversão e for código, **eu implemento** (tracking, e-mail, prévia de match, blog).
 > - **Público inicial:** mercado geral de NYC **em inglês**. (Nicho BR/latino = expansão futura, não agora.)
 > - **Meta dos 90 dias (rev 3):** máximo de **tráfego + e-mails capturados (leads)**, no pico de verão. A receita vem de **afiliado**, não do paywall.
-> - **Vídeo:** **faceless** (Heed + gravação de tela + voz/legenda). Founder não aparece.
+> - **Vídeo (REVISADO 2026-07-03):** founder decidiu aparecer. Teste de 1 dia (2026-07-04): 3 vídeos curtos com rosto, roteiros em `marketing/video-scripts-2026-07-04.md`. Avaliar em 2 semanas via UTM; só vira rotina se superar o Reddit. O formato faceless com Heed continua disponível como alternativa, não como regra.
 > - **Reddit:** founder tem ~3 contas de ~4 meses, pouco karma. Precisa de aquecimento antes de promover.
 
 ---
@@ -177,6 +177,8 @@ Páginas de **storage** e **guarantor/low-credit** já existem e já têm tracki
 ## 7. Métricas
 
 **Métrica-norte (rev 3): e-mails capturados (leads) por semana.** Sem ads, a 2ª métrica é **qual motor traz cada lead**.
+
+**Kill metric do teste de 90 dias (decidida 2026-07-03):** até **14/set/2026**, ≥**300 visitas rastreadas por UTM** (acumuladas) E ≥**30 e-mails capturados**. Bateu → dobrar no motor vencedor. Não bateu → pausar a abordagem atual e repensar o topo do funil (mantendo só Reddit + SEO).
 
 | Métrica | Por que |
 |---|---|

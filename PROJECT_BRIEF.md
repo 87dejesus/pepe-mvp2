@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 9
-**Last updated:** 2026-06-17 (Reddit session 4: high-performing Good Cause comment 37↑/1158 views; dealbreaker thesis posts mined; top-commenter targeting strategy)
+**Revision:** 10
+**Last updated:** 2026-07-03 (Lapidan Sprint 002 consolidated; kill metric decided; founder greenlit on-camera video test for 2026-07-04, superseding the faceless lock)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -89,7 +89,8 @@ Apply on every UI change without being asked.
   - **In-scope subs ranked:** r/NYCapartments + r/AskNYC (high), r/brooklyn + r/astoria (med), r/nyc + r/manhattan (only clear pain/decision posts). Skip r/movingtoNYC, r/personalfinance, r/legaladvice, and any "Looking For Apartment"-flair listing requests.
 - [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
 - [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
-- [ ] **Write the kill metric** for the 90-day test (e.g. by date X: N tracked visitors and M leads, or change/pause).
+- [x] **Kill metric (decided 2026-07-03):** by 2026-09-14, ≥300 UTM-tracked visits (cumulative) AND ≥30 captured emails. Hit → double down on the winning UTM source. Miss → pause the current approach and rethink the funnel top (keep only Reddit + SEO).
+- [ ] **On-camera video test (founder decision 2026-07-03, supersedes the "faceless" lock):** founder records 3 short videos with his face on Sat 2026-07-04. Scripts: `marketing/video-scripts-2026-07-04.md`. Post spread over the following week; bio links UTM-tagged (`utm_source=tiktok|instagram|youtube&utm_medium=bio&utm_campaign=face_test`). Evaluate after 2 weeks against Reddit traffic in `funnel_events`; video earns a routine slot only if it outperforms.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
 ### Done since revision 4
