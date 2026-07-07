@@ -22,6 +22,25 @@ sem follow; a numeração puxa o estranho pro perfil pra ver os outros episódio
 **Regra de marca nos 3:** tom calmo, sem música agitada, sem corte frenético, sem
 urgência. Você é o "yoga teacher, not salesperson". Nunca mencionar afiliado/receita.
 
+### Padrões de edição (do ep 1 em diante — feedback do founder 2026-07-06)
+
+1. **Legenda menor, em coluna.** No ep 1 a legenda foi de ponta a ponta. Ajustado na
+   skill (`render.py` SUB_FORCE_STYLE): FontSize 18→14 + MarginL/MarginR=90, coluna
+   centralizada ~70% da largura, nunca encosta na borda. Confirmar no preview do ep 2.
+2. **Montagens animadas sincronizadas com a fala** (estilo onboarding do app). Quando o
+   founder LISTA coisas, os itens montam na tela item a item conforme ele fala, no visual
+   da marca: fundo navy `#0A2540`, card `bg-white/[0.07]` borda `white/20` arredondado,
+   check verde `#00A651` aparecendo com easing (ease_out_cubic), um item por vez (nunca
+   dois revelando juntos). Sync: o item aterrissa na palavra falada. Segurar frame final
+   ≥1s. Ferramenta: overlay PNG/PIL ou HyperFrames; ver skill video-use §Animations.
+   - **Ep 2 (scam) — lista dos 3 red flags:** ✓ "Pay before anyone's inside" → ✓ "'First
+     month' line = the trick" → ✓ "Paying to hold before you apply". Monta enquanto ele
+     fala cada um.
+   - **Ep 3 (dealbreakers) — lado-a-lado:** "Natural light: HARD NO" vs "Natural light:
+     don't care" aparecendo conforme ele conta os dois renters.
+   - **Ep 1 (se repostar):** dois cards "Exclusive right to represent" + "Commission
+     agreement" ao citar.
+
 ---
 
 ## Setup (uma vez, antes de gravar)
@@ -36,28 +55,38 @@ urgência. Você é o "yoga teacher, not salesperson". Nunca mencionar afiliado/
 
 ---
 
-## Episódio 1 (Rule #1) — "The landlord pays the broker" (FARE Act)
+## Episódio 1 (Rule #1) — "You don't owe a broker fee unless YOU hired the broker" (FARE Act + workaround)
 
-**Duração alvo:** ~45s. **Por quê este:** fato verificado que quase ninguém sabe; foi
-o tipo de conteúdo que rendeu 37 upvotes no Reddit. Papel: confiança + compartilhamento.
+**Duração alvo:** ~60s. **Por quê este:** fato verificado que quase ninguém sabe.
+**Decisão 2026-07-03:** reescrito da v1 ("landlord pays") porque na PRÁTICA o inquilino
+ainda paga — brokers contornam o FARE Act te fazendo assinar exclusividade/comissão.
+A v1 soava desconectada da realidade e convidava o comentário "yeah right, I still paid".
+A v2 usa essa tensão como o miolo do vídeo: mais honesta, mais street-smart, e é a
+inteligência calma que É a marca (não recitar a lei). Papel: confiança + compartilhamento.
+Fusão: absorve a regra futura "never sign an exclusive just to tour". Fatos no copy bank
+(FARE Act workaround, verificado DCWP/NYC.gov).
 
 **ABERTURA:**
-> "Steady Rule number one for renting in New York: if the landlord listed it, the landlord pays the broker. Not you."
+> "Steady Rule number one for renting in New York: you don't owe a broker fee unless you hired the broker."
 
 **CORPO:**
-> "Since June 2025, there's a law called the FARE Act. Whoever hires the broker pays the broker. If the landlord listed the apartment, that fee is not yours to pay."
+> "Since June 2025, the FARE Act says whoever hires the broker pays. Landlord lists the apartment, landlord pays. Simple."
 >
-> "The fine is 750 dollars for the first violation. Up to 2,000 if they keep doing it."
+> "So why are people still paying broker fees? Because they get you to sign for it."
 >
-> "And before you sign anything, they have to hand you a written list of every fee. That is not a courtesy. It is the law."
+> "A broker sends you a form before you've even seen the place. 'Exclusive right to represent.' A commission agreement. You sign it, and now, on paper, you hired them. The fee is yours again."
 >
-> "If someone charges you anyway, you can report it. Call 311, or go to the DCWP website."
+> "So here's the line: never sign an exclusive or a commission agreement just to tour an apartment. Seeing a place does not require representation."
+>
+> "If someone pushes paperwork on you before you've seen the apartment, that's the tell."
+>
+> "And a straight illegal fee, you can still report. Call 311, or go to the DCWP website."
 
 **ASSINATURA (fixa):**
 > "Know your lines."
 
 **Legenda do post:**
-"Rule #1: landlord listed it, landlord pays the broker. FARE Act, since June 2025. Fine: $750 to $2,000. Report via 311. #nycapartments #nycrenting #brokerfee"
+"Rule #1: you don't owe a broker fee unless YOU hired the broker. The FARE Act says the landlord pays, but brokers get you to sign an 'exclusive' so the fee lands back on you. Never sign just to tour. Report illegal fees via 311. #nycapartments #nycrenting #brokerfee"
 
 ---
 
@@ -126,7 +155,6 @@ Não gravar agora. Prova de que "Steady Rules" tem combustível pra meses:
 - Rule: "A 2-year lease doesn't cost more this year." (Rent Freeze 2026, 0% em 1 e 2 anos)
 - Rule: "'Complaint closed' does not mean the problem was fixed." (como ler um registro HPD)
 - Rule: "There's no magic credit score that approves you." (é o quadro todo: 40x + crédito + guarantor)
-- Rule: "Never sign an exclusive just to tour." (o workaround do FARE Act pelos brokers)
 - Rule: "An apartment doesn't vanish over a weekend." (anti-FOMO, mito refutado pela pesquisa)
 - Rule: "Your dealbreakers come from how you live, not a checklist." (tamanho nasce de uma rotina)
 
