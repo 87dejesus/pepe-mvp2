@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 11
-**Last updated:** 2026-07-07 (Reddit session 5: more thesis/scam posts mined; RPL §226-b assign-vs-sublet + full FARE trio added to copy bank)
+**Revision:** 12
+**Last updated:** 2026-07-08 (Steady Rules: ep1 posted, ep2 final ready with animated list, ep3 scheduled ~Jul 10)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -91,7 +91,11 @@ Apply on every UI change without being asked.
 - [ ] **Swap dead `/low-credit` partners** for Lemonade + Self once their affiliate programs approve. Rhino/LeaseLock/TheGuarantors pay nothing.
 - [ ] **Resend follow-up email:** not built. Until it is, do NOT promise "new matches by email" in copy.
 - [x] **Kill metric (decided 2026-07-03):** by 2026-09-14, ≥300 UTM-tracked visits (cumulative) AND ≥30 captured emails. Hit → double down on the winning UTM source. Miss → pause the current approach and rethink the funnel top (keep only Reddit + SEO).
-- [ ] **On-camera video test (founder decision 2026-07-03, supersedes the "faceless" lock):** founder records 3 short videos with his face on Sat 2026-07-04. Scripts: `marketing/video-scripts-2026-07-04.md`. Post spread over the following week; bio links UTM-tagged (`utm_source=tiktok|instagram|youtube&utm_medium=bio&utm_campaign=face_test`). Evaluate after 2 weeks against Reddit traffic in `funnel_events`; video earns a routine slot only if it outperforms.
+- [~] **"Steady Rules" on-camera video series (founder decision 2026-07-03, supersedes the "faceless" lock):** scripts in `marketing/video-scripts-2026-07-04.md`; bio links UTM-tagged (`utm_campaign=steady_rules`). Progress:
+  - **Ep 1 (FARE Act / broker fee) POSTED to TikTok 2026-07-07.** Edited via video-use skill (13 takes → 70s best-take cut, captions, brand end-card with Link in bio).
+  - **Ep 2 (the $500 scam) FINAL ready 2026-07-08** (`videos/steady-rules-ep1/steady-rules-ep2-FINAL.mp4`) — first ep with narration-synced animated list ("3 RED FLAGS" card, app-onboarding style) + smaller column captions. Post ~2026-07-09/10.
+  - **Ep 3 (decide-your-lines thesis + quiz CTA):** founder records ~2026-07-10.
+  - Evaluate ~2026-07-20: `utm_campaign=steady_rules` visits vs Reddit in `funnel_events`; video earns a routine slot only if it outperforms.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
 ### Done since revision 4
