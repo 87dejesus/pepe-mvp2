@@ -70,7 +70,10 @@ textual + link da fonte. É de lá que as copies puxam linguagem real, não inve
 - **Frase textual > paráfrase.** O valor está na palavra exata do renter. Marcar com aspas e link.
 - **Sempre guardar o link** da fonte na captura — para citar e re-verificar.
 - **Nunca expor modelo de negócio** em nada que vire copy de usuário.
-- Subreddits no escopo: r/NYCapartments, r/AskNYC, r/nyc, r/brooklyn, r/astoria, r/manhattan.
+- **O filtro é o POST, não a sala.** Engajar posts de decisão/dor/sobrecarga em QUALQUER sala relevante; pular pedidos de "lista de bairro" em qualquer sala. Não descartar uma sala inteira.
+- Salas principais: r/NYCapartments, r/AskNYC, r/nyc, r/brooklyn, r/astoria, r/manhattan.
+- **r/movingtoNYC ESTÁ no escopo** (correção 2026-07-09): a audiência é premium — gente no momento exato da decisão de mudança, muitas de fora, alta intenção, exatamente o cliente do produto. Engajar os decision-moments/pain posts ali (ex.: "não consigo decidir entre LES/Brooklyn/Harlem"); pular só os "me recomenda um bairro". [Antes eu pulava a sala inteira — erro; o problema era o tipo de post, não a sala.]
+- Fora do escopo de verdade: r/personalfinance, r/legaladvice, qualquer sala fora de NYC.
 
 ## Arquivos
 - `copy-bank.md` — banco de frases curado, por dor. **É o entregável que alimenta as copies.**
