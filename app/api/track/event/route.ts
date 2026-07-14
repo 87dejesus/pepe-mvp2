@@ -24,6 +24,12 @@ const ALLOWED_EVENTS = new Set([
   'quiz_start',
   'quiz_complete',
   'paywall_view',
+  // Post-paywall sign-in instrumentation (free model)
+  'signup_started',
+  'otp_sent',
+  'otp_submitted',
+  'otp_error',
+  'access_granted',
   'checkout_start',
   'paid',
 ]);
