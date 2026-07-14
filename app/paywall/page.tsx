@@ -10,6 +10,42 @@ import { trackFunnel } from '@/lib/funnel';
 const OTP_COOLDOWN_SECONDS = 60;
 const IS_DEV_MOCK = process.env.NEXT_PUBLIC_DEV_MOCK_ENABLED === 'true';
 
+// OTP webview resilience: on mobile (esp. the Reddit in-app browser) the user
+// leaves this tab to fetch the code from their email app. The OS can reload or
+// kill the tab, wiping React state and stranding them back at the email step
+// with a code they can no longer use. We persist the email + "enter code" step
+// so returning to the tab restores it. Only restored while the code is still
+// plausibly valid.
+const OTP_SESSION_KEY = 'steady_otp_session_v1';
+const OTP_RESTORE_WINDOW_MS = 15 * 60 * 1000;
+
+type OtpSession = { email: string; step: 'otp'; sentAt: number };
+
+function loadOtpSession(): OtpSession | null {
+  try {
+    const raw = localStorage.getItem(OTP_SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as OtpSession;
+    return s && s.email ? s : null;
+  } catch {
+    return null;
+  }
+}
+function saveOtpSession(email: string): void {
+  try {
+    localStorage.setItem(OTP_SESSION_KEY, JSON.stringify({ email, step: 'otp', sentAt: Date.now() }));
+  } catch {
+    // ignore blocked/full storage — persistence is best-effort
+  }
+}
+function clearOtpSession(): void {
+  try {
+    localStorage.removeItem(OTP_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 const NAVY = '#0A2540';
 const GREEN = '#00A651';
 const LINE = 'rgba(255,255,255,.14)';
@@ -57,6 +93,20 @@ function PaywallContent() {
     trackFunnel('paywall_view');
   }, []);
 
+  // Restore an in-progress OTP session after a tab reload (see OTP_SESSION_KEY note).
+  useEffect(() => {
+    const s = loadOtpSession();
+    if (!s) return;
+    setEmail(s.email);
+    if (s.sentAt && Date.now() - s.sentAt < OTP_RESTORE_WINDOW_MS) {
+      setStep('otp');
+      const nextAt = s.sentAt + OTP_COOLDOWN_SECONDS * 1000;
+      if (nextAt > Date.now()) setNextResendAt(nextAt);
+    } else {
+      clearOtpSession(); // stale code — start clean but keep the email prefilled
+    }
+  }, []);
+
   useEffect(() => {
     if (!nextResendAt) return;
     const tick = () => {
@@ -77,6 +127,7 @@ function PaywallContent() {
     e.preventDefault();
     setError(null);
     if (!normalizedEmail) return;
+    trackFunnel('signup_started');
     setLoading(true);
     try {
       const supabase = createSupabase();
@@ -85,11 +136,14 @@ function PaywallContent() {
         options: { shouldCreateUser: true },
       });
       if (error) throw error;
+      trackFunnel('otp_sent');
+      saveOtpSession(normalizedEmail);
       setStep('otp');
       setNextResendAt(Date.now() + OTP_COOLDOWN_SECONDS * 1000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       console.error('[OTP] send failed:', err);
+      trackFunnel('otp_error');
       setError(`Send failed: ${msg}`);
     } finally {
       setLoading(false);
@@ -107,6 +161,7 @@ function PaywallContent() {
       setError('Please enter the 6-digit code.');
       return;
     }
+    trackFunnel('otp_submitted');
     setLoading(true);
     try {
       const supabase = createSupabase();
@@ -119,6 +174,7 @@ function PaywallContent() {
       if (!data?.session) {
         throw new Error('Verification failed. Request a new code.');
       }
+      clearOtpSession(); // verified — drop the persisted step
       // Admin bypass: straight to /decision.
       if ((data.user?.email ?? '').toLowerCase().trim() === 'luhciano.sj@gmail.com') {
         cacheServerAccess({ status: 'active', trial_ends_at: null });
@@ -131,6 +187,7 @@ function PaywallContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
       console.error('[OTP] verifyOtp failed:', msg);
+      trackFunnel('otp_error');
       setError('Code expired or invalid. Request a new code.');
     } finally {
       setLoading(false);
@@ -138,6 +195,7 @@ function PaywallContent() {
   }
 
   function resetToEmailStep() {
+    clearOtpSession();
     setStep('email');
     setOtp('');
     setError(null);
@@ -155,6 +213,7 @@ function PaywallContent() {
         options: { shouldCreateUser: true },
       });
       if (error) throw error;
+      saveOtpSession(normalizedEmail);
       setResendSent(true);
       setNextResendAt(Date.now() + OTP_COOLDOWN_SECONDS * 1000);
     } catch (err: unknown) {
@@ -180,7 +239,7 @@ function PaywallContent() {
         <div style={{ padding: '26px 22px 8px', textAlign: 'center' }}>
           <Image src="/brand/heed-mascot.png" alt="Heed" width={74} height={102} style={{ height: 74, width: 'auto', margin: '0 auto 14px', display: 'block' }} unoptimized />
           <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 26, fontWeight: 400, lineHeight: 1.12 }}>Your list is ready when you are.</h1>
-          <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5, maxWidth: '32ch', marginInline: 'auto' }}>You saw one read free. This is the same honest check on all your matches.</p>
+          <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, marginTop: 9, lineHeight: 1.5, maxWidth: '32ch', marginInline: 'auto' }}>You saw one read free. Add your email to see the same honest check on all your matches.</p>
         </div>
 
         {/* what you unlock */}
@@ -196,17 +255,24 @@ function PaywallContent() {
 
         {/* pay card */}
         <div style={{ margin: '16px 22px 0', padding: 16, background: 'rgba(255,255,255,.04)', border: `1px solid ${LINE}`, borderRadius: 16 }}>
-          <p style={{ color: 'rgba(255,255,255,.62)', fontSize: 13, marginBottom: 14 }}>Sign in so your list is here when you come back.</p>
+          <p style={{ color: 'rgba(255,255,255,.62)', fontSize: 13, marginBottom: 14 }}>Enter your email and I&apos;ll send a 6-digit code to open your full list.</p>
 
           {step === 'email' && (
             <form onSubmit={handleContinue}>
               <label style={lblStyle}>Email address</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" required autoFocus style={inputStyle} />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" required autoFocus autoComplete="email" style={inputStyle} />
               <button type="submit" disabled={loading || !normalizedEmail} style={{ ...ctaStyle, opacity: loading || !normalizedEmail ? 0.5 : 1 }}>
                 {loading ? <Spinner /> : 'Send me the code'}
               </button>
+              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 14, marginTop: 13 }}>
+                {['Free', 'No credit card', 'We only email your code'].map((t) => (
+                  <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,.72)', fontWeight: 500 }}>
+                    <span style={{ color: GREEN, fontWeight: 800, fontSize: 12 }}>✓</span>{t}
+                  </span>
+                ))}
+              </div>
               <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: 11.5, marginTop: 11, lineHeight: 1.5 }}>
-                We email a 6-digit code to confirm it&apos;s you. Takes a minute.
+                The code lands in a few seconds. No spam, and we never sell your info.
               </p>
             </form>
           )}
@@ -216,7 +282,7 @@ function PaywallContent() {
               <p style={{ color: 'rgba(255,255,255,.7)', fontSize: 13.5, lineHeight: 1.5, marginBottom: 12, textAlign: 'center' }}>
                 We sent a 6-digit code to <span style={{ color: '#fff', fontWeight: 600 }}>{normalizedEmail}</span>. Enter it to continue.
               </p>
-              <input type="text" value={otp} onChange={(e) => handleOtpChange(e.target.value)} maxLength={6} inputMode="numeric" pattern="[0-9]*" placeholder="123456" autoFocus style={{ ...inputStyle, height: 58, textAlign: 'center', fontSize: 28, letterSpacing: '.3em', fontWeight: 600 }} />
+              <input type="text" value={otp} onChange={(e) => handleOtpChange(e.target.value)} maxLength={6} inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" placeholder="123456" autoFocus style={{ ...inputStyle, height: 58, textAlign: 'center', fontSize: 28, letterSpacing: '.3em', fontWeight: 600 }} />
               <button type="submit" disabled={loading || otp.length !== 6} style={{ ...ctaStyle, opacity: loading || otp.length !== 6 ? 0.5 : 1 }}>
                 {loading ? <Spinner /> : 'Verify code'}
               </button>

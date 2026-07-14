@@ -1,7 +1,7 @@
 ---
 title: "How to Spot a NYC Rental Scam (5 Signs Before You Pay)"
 slug: "how-to-spot-a-nyc-rental-scam"
-description: "Five signs a NYC rental listing is a scam, from bait pricing to pay-before-you-view demands, and the one rule that keeps your money safe."
+description: "How to spot a NYC rental scam: a real scammer's script, word for word, plus the two free tools (eAccessNY and ACRIS) that verify a broker and an owner."
 date: "2026-07-07"
 author: "Heed"
 tags: ["nyc apartments", "rental scams", "red flags", "apartment hunting", "tenant safety"]
@@ -11,7 +11,23 @@ tags: ["nyc apartments", "rental scams", "red flags", "apartment hunting", "tena
 
 **You can spot most NYC rental scams before any money moves. The clearest signals: rent priced far below comparable units, a landlord or broker who cannot show the unit or is always traveling, pressure to pay by app, wire, or gift card before you view, refusal to meet in person or prove who controls the unit, and a deposit or fee requested before a signed lease or above the legal limits.**
 
-A rental scam works only when you act before you verify. The good news is that every common trick leaves a trace you can read in advance. Here are five signs to watch, and the calm step that protects you in each case.
+A rental scam works only when you act before you verify. The good news is that every common trick leaves a trace you can read in advance. Here are five signs to watch, a real scammer's message so you can see the pattern in the wild, and the two free tools that settle "is this person real" in minutes.
+
+## Read a real scam, word for word
+
+This is an actual message a "broker" sent a renter in NYC:
+
+*"The first step is a $500 good faith deposit. This will take the unit off the market and cancel all tours while we gather apps, and then is applied to the first month's rent. Next, I will need all tenants' and guarantors' names and emails to send apps to."*
+
+Three tricks in two sentences:
+
+- **Pay to "hold" before you apply or see a contract.** That is not how renting works in NYC.
+- **"It's applied to the first month's rent."** That line exists to calm you down. It is the trick.
+- **Collecting names and emails of everyone.** Your group's data is part of the harvest.
+
+The victim in this case almost went through with it. A friend toured the unit and "said it looks legit." That proves the apartment exists, not that this person controls it. The scammer also promised, by text, that the $500 comes back "if you're not approved for any reason." A refund promise in a chat is worth nothing.
+
+**What to do:** If any part of this script shows up in your messages, stop. Verify the person first with the tools below.
 
 ## 1. The rent is far below comparable units
 
@@ -43,6 +59,23 @@ NYC law caps the security deposit at one month and the application fee at $20, a
 
 **What to do:** Decline any payment request that exceeds these limits or arrives before a signed lease. Knowing the legal ceiling makes an illegitimate ask easy to recognize.
 
+## The two free tools that verify anyone
+
+You do not have to guess who is real. New York keeps two public records that settle it:
+
+- **[eAccessNY](https://appext20.dos.ny.gov/nydos/selSearchType.do)** verifies a real estate license. Search the broker's name. If it is not there, walk away, no matter how professional the messages look. This is the single test that beats every fake reassurance.
+- **[ACRIS](https://a836-acris.nyc.gov/)** is NYC's public property record. Search the address and see who actually owns the unit. If the person collecting money is not the owner (and can't show a lease and written landlord consent if they claim to be a subletter), no money moves. A signed lease means nothing if the person doesn't control the unit.
+
+Add the low-tech checks: the name on the buzzer or mailbox, and their name on a lease or a piece of mail for that address.
+
+**What to do:** License check on eAccessNY for any broker. Ownership check on ACRIS for any private landlord or subletter. Both take five minutes and cost nothing.
+
+## When a "good faith deposit" is NOT a scam
+
+Fairness note, so you don't over-correct: a good faith deposit by itself is not a scam. It is a normal step when, and only when, it comes in the right order: after you toured the unit and asked to apply, with a receipt, a signed agreement, a broker whose license you verified, and refund terms in writing. The difference between legitimate and scam is the order and the paper, not the deposit.
+
+**What to do:** Deposit before touring or applying, with no paper? Red flag. Deposit after touring, with receipt, agreement, and verified license? Normal.
+
 ## Common questions
 
 ### Do NYC apartments really rent in hours, so I have to pay fast?
@@ -56,5 +89,17 @@ The only legal upfront is the security deposit (capped at one month) plus the fi
 ### What is the single safest rule to follow?
 
 View the unit in person and confirm who controls it before any money changes hands. Verifying first removes almost every scam from the table.
+
+### How do I check if a NYC broker is licensed?
+
+Search their name on eAccessNY, New York's public license database. A real broker is in there. If the name is missing, that is your answer.
+
+### I'm renting from out of state and can't tour. What then?
+
+Sight-unseen is the number one scam window. Have a real human you trust stand inside the unit (a friend, or a paid TaskRabbit), verify the owner on ACRIS, pay only by traceable methods, and never by gift card or crypto. If nobody can get inside, do not send money.
+
+---
+
+*Sources: [NY DOS, eAccessNY license search](https://appext20.dos.ny.gov/nydos/selSearchType.do) · [NYC ACRIS property records](https://a836-acris.nyc.gov/) · [NY AG, renter guidance](https://ag.ny.gov/publications/residential-tenants-rights-guide)*
 
 *Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*

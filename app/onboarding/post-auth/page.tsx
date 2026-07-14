@@ -77,6 +77,10 @@ export default function PostAuthPage() {
           localStorage.removeItem('heed_selected_price_id');
           cacheServerAccess({ ...accessData, status: accessData.status as Exclude<AccessStatus, 'new_user'> });
           console.log('[post-auth] → /decision (status:', accessData.status + ')');
+          // Funnel: OTP round-trip complete, user is being granted access. Under the
+          // free model every authenticated non-admin lands here — this is the real
+          // conversion endpoint that replaces the dead Stripe 'paid' event.
+          trackFunnel('access_granted');
           setMessage('Welcome back — restoring your access…');
           window.location.href = '/decision';
           return;

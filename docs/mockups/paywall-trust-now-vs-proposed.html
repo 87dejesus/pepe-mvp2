@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Steady One — Paywall trust/copy (now / proposed)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Caslon+Display&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#0A2540; --deep:#0c1a26; --green:#00A651; --line:rgba(255,255,255,.14);
+    --serif:'Libre Caslon Display', Georgia, serif; --sans:'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;color:#fff;font-family:var(--sans);padding:34px 18px 70px;}
+  h1.page{font-family:var(--serif);font-weight:400;font-size:29px;text-align:center;margin-bottom:6px;}
+  p.sub{text-align:center;color:rgba(255,255,255,.55);font-size:14px;margin-bottom:30px;max-width:620px;margin-inline:auto;line-height:1.55}
+  .pair{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{width:360px;max-width:100%}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px}
+  .tag.before{background:rgba(212,80,74,.14);color:#ff938c;border:1px solid rgba(212,80,74,.4)}
+  .tag.after{background:rgba(0,166,81,.14);color:#4fd99a;border:1px solid rgba(0,166,81,.4)}
+  .phone{background:var(--navy);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+  .pw{padding:24px 20px 18px}
+  .heed{display:block;height:66px;width:auto;margin:0 auto 13px}
+  .pw h1{font-family:var(--serif);font-weight:400;font-size:24px;text-align:center;line-height:1.12;margin-bottom:9px}
+  .pw .lede{color:rgba(255,255,255,.6);font-size:13.5px;text-align:center;line-height:1.5;margin-bottom:16px;max-width:32ch;margin-inline:auto}
+  .card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .cardlbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+  .feat{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px}
+  .feat:last-child{margin-bottom:0}
+  .feat .ic{width:24px;height:24px;border-radius:7px;background:rgba(0,166,81,.14);border:1px solid rgba(0,166,81,.4);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+  .feat .ft{font-size:13.5px;color:#fff;font-weight:600;line-height:1.35}
+  .feat .ft small{display:block;font-weight:400;color:rgba(255,255,255,.55);font-size:12px;margin-top:1px}
+  .lede2{color:rgba(255,255,255,.62);font-size:13px;margin-bottom:14px}
+  .lbl{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:7px;display:block}
+  .field{width:100%;height:50px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:rgba(255,255,255,.4);font-size:15px;padding:0 14px;display:flex;align-items:center}
+  .cta{width:100%;border:none;border-radius:13px;background:var(--green);color:#fff;font-weight:700;font-size:16px;padding:16px;margin-top:12px;box-shadow:0 6px 24px rgba(0,166,81,.3);text-align:center}
+  .micro{text-align:center;color:rgba(255,255,255,.4);font-size:11.5px;margin-top:11px;line-height:1.5}
+  /* trust row (proposed) */
+  .trust{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:13px}
+  .trust span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.72);font-weight:500}
+  .trust .ck{color:var(--green);font-weight:800;font-size:12px}
+  .home{text-align:center;color:rgba(255,255,255,.4);font-size:13px;text-decoration:underline;text-underline-offset:2px;display:block;margin:16px 0 4px}
+  /* annotations */
+  .notes{max-width:760px;margin:40px auto 0;border-top:1px solid var(--line);padding-top:24px}
+  .notes h3{font-family:var(--serif);font-weight:400;font-size:20px;margin-bottom:14px}
+  .notes ul{list-style:none}
+  .notes li{position:relative;padding-left:22px;margin-bottom:12px;font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.55}
+  .notes li:before{content:"›";position:absolute;left:4px;color:var(--green);font-weight:700}
+  .notes b{color:#fff;font-weight:600}
+  .diff{color:#4fd99a}
+</style>
+</head>
+<body>
+  <h1 class="page">Paywall: the trust gap after the free preview</h1>
+  <p class="sub">Same layout, same "What you get" card. The change is the trust language around the email ask. Right now the page never says it is free, never says no card, never reassures about spam, right after the user saw only one free result. Reframed to remove the "is this a charge / data grab?" fear.</p>
+
+  <div class="pair">
+
+    <!-- NOW -->
+    <div class="col">
+      <span class="tag before">Now (live)</span>
+      <div class="phone">
+        <div class="pw">
+          <img class="heed" src="../../public/brand/heed-mascot.png" alt="Heed" />
+          <h1>Your list is ready when you are.</h1>
+          <p class="lede">You saw one read free. This is the same honest check on all your matches.</p>
+
+          <div class="card">
+            <div class="cardlbl">What you get</div>
+            <div class="feat"><span class="ic">🧮</span><span class="ft">Will you qualify<small>The income bar and your path, on every listing.</small></span></div>
+            <div class="feat"><span class="ic">💸</span><span class="ft">The real cost to move in<small>Deposit, first month, fees. Not just the sticker.</small></span></div>
+            <div class="feat"><span class="ic">🛡️</span><span class="ft">A scam check before you pay<small>Flags places priced too good to be true.</small></span></div>
+            <div class="feat"><span class="ic">📋</span><span class="ft">The fine print to ask<small>What to confirm before you sign, every time.</small></span></div>
+          </div>
+
+          <div class="card">
+            <p class="lede2">Sign in so your list is here when you come back.</p>
+            <span class="lbl">Email address</span>
+            <div class="field">you@email.com</div>
+            <div class="cta">Send me the code</div>
+            <p class="micro">We email a 6-digit code to confirm it&apos;s you. Takes a minute.</p>
+          </div>
+          <a class="home">← Back to home</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPOSED -->
+    <div class="col">
+      <span class="tag after">Proposed</span>
+      <div class="phone">
+        <div class="pw">
+          <img class="heed" src="../../public/brand/heed-mascot.png" alt="Heed" />
+          <h1>Your list is ready when you are.</h1>
+          <p class="lede">You saw one read free. Add your email to see the same honest check on all your matches.</p>
+
+          <div class="card">
+            <div class="cardlbl">What you get</div>
+            <div class="feat"><span class="ic">🧮</span><span class="ft">Will you qualify<small>The income bar and your path, on every listing.</small></span></div>
+            <div class="feat"><span class="ic">💸</span><span class="ft">The real cost to move in<small>Deposit, first month, fees. Not just the sticker.</small></span></div>
+            <div class="feat"><span class="ic">🛡️</span><span class="ft">A scam check before you pay<small>Flags places priced too good to be true.</small></span></div>
+            <div class="feat"><span class="ic">📋</span><span class="ft">The fine print to ask<small>What to confirm before you sign, every time.</small></span></div>
+          </div>
+
+          <div class="card">
+            <p class="lede2">Enter your email and I&apos;ll send a 6-digit code to open your full list.</p>
+            <span class="lbl">Email address</span>
+            <div class="field">you@email.com</div>
+            <div class="cta">Send me the code</div>
+            <div class="trust">
+              <span><i class="ck">✓</i> Free</span>
+              <span><i class="ck">✓</i> No credit card</span>
+              <span><i class="ck">✓</i> We only email your code</span>
+            </div>
+            <p class="micro">The code lands in a few seconds. No spam, and we never sell your info.</p>
+          </div>
+          <a class="home">← Back to home</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h3>What changed and why</h3>
+    <ul>
+      <li><b>The core fix, a trust row under the button:</b> <span class="diff">✓ Free · ✓ No credit card · ✓ We only email your code</span>. The live page never states any of this. A Reddit visitor who just saw one free result reads "email" + "send me the code" as the moment they get charged or spammed. These three UX facts kill that fear. (Sanctioned by the copy rule: reassure with UX facts, never expose the revenue model.)</li>
+      <li><b>Lede reframed from "come back" to "see now":</b> "Sign in so your list is here when you come back" sells account persistence (weak). "Enter your email and I&apos;ll send a code to open your full list" sells the thing they want right now.</li>
+      <li><b>"Takes a minute" removed:</b> it signals delay. Replaced with "lands in a few seconds" plus a plain no-spam / no-selling line.</li>
+      <li><b>No new promises:</b> we do not say "matches by email" (that follow-up isn&apos;t built). No fake urgency, no card, no business-model language. Serif headline, single green CTA, all within the design system.</li>
+      <li><b>Not a visual redesign:</b> same structure, spacing, and Heed. Only words and one small trust row are added.</li>
+    </ul>
+  </div>
+</body>
+</html>

@@ -16,6 +16,13 @@ export type FunnelEvent =
   | 'quiz_start'
   | 'quiz_complete'
   | 'paywall_view'
+  // Post-paywall sign-in instrumentation (free model). These replace the dead
+  // Stripe funnel (checkout_start/paid) as the real signal past paywall_view:
+  | 'signup_started'   // email submitted on /paywall
+  | 'otp_sent'         // signInWithOtp succeeded, code step shown
+  | 'otp_submitted'    // 6-digit code submitted for verification
+  | 'otp_error'        // send or verify failed (round-trip broke)
+  | 'access_granted'   // OTP verified, routed into /decision
   | 'checkout_start'
   | 'paid';
 

@@ -51,6 +51,24 @@ function renderMarkdown(md: string): string {
   return result.join("\n");
 }
 
+// Extract Q/A pairs from the post's "## Common questions" section so every
+// post with an FAQ automatically ships FAQPage JSON-LD for answer engines.
+// Questions are the ### headings; the answer is the text until the next
+// heading (or the closing italic CTA line).
+function extractFaq(md: string): { q: string; a: string }[] {
+  const section = md.split(/^## Common questions$/m)[1];
+  if (!section) return [];
+  const pairs: { q: string; a: string }[] = [];
+  const re = /^### (.+)$\n([\s\S]*?)(?=^### |^## |^\*Know your|\s*$(?![\s\S]))/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(section)) !== null) {
+    const q = m[1].trim();
+    const a = m[2].replace(/\*\*/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\s+/g, " ").trim();
+    if (q && a) pairs.push({ q, a });
+  }
+  return pairs;
+}
+
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
@@ -70,9 +88,25 @@ export default async function PostPage({ params }: Props) {
     keywords: post.tags.join(", "),
   };
 
+  const faq = extractFaq(post.content);
+  const faqJsonLd = faq.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faq.map(({ q, a }) => ({
+          "@type": "Question",
+          name: q,
+          acceptedAnswer: { "@type": "Answer", text: a },
+        })),
+      }
+    : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      )}
       <div style={{ minHeight: "100dvh", background: "#0A2540" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px" }}>
           <Link href="/blog" style={{ display: "inline-block", marginBottom: 40, fontSize: 11, color: "rgba(255,255,255,.45)", textDecoration: "none", letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 600 }}>← All guides</Link>
