@@ -30,6 +30,20 @@ Some landlords flex on it when the rest of your file is strong: savings in the b
 
 **What to do:** Treat 40x as the opening position, not the verdict. Ask the agent or landlord directly whether they consider assets, prepayment, or a guarantor when income is close.
 
+## "Is 40x a lie?" Why qualified renters still get rejected
+
+A renter on r/NYCapartments put it sharply: *"we all have good credit and make over the 40x rule combined. Realtors still want a guarantor... if they want multiple guarantors, why not state that in the listing???"*
+
+Here is the honest answer nobody prints in the listing:
+
+- **40x is a floor, not a guarantee.** Clearing it puts you in the applicant pool. It does not win you the apartment. In a competitive pool, the landlord picks whoever looks safest on paper, and someone at 55x beats you at 41x.
+- **Hidden requirements are discretionary on purpose.** Extra guarantors, higher bars, "we'd prefer..." demands flex with demand. When ten people apply, the bar quietly rises. That is why it is not in the listing: it is not fixed.
+- **Roommate math is not what you think.** Many landlords do not just add your incomes. They look at each person's share, or at the weakest file in the group. Three people at 15x each can lose to one person at 45x. Ask the building how they count combined income before you assume you qualify.
+
+None of this means you did something wrong. It means rejection at 40x+ is about the pool, not about you.
+
+**What to do:** Treat 40x as the entry ticket, not the finish line. Strengthen the rest of the file (complete documents ready on day one, clean credit report printout, reference letter), and ask up front how the building evaluates groups.
+
 ## What if my income does not reach 40x?
 
 This is the most common situation, and there are established paths around it. None of them are exotic, and leasing offices see them every day.
@@ -59,7 +73,11 @@ A few protections work in your favor. NYC law caps the security deposit at one m
 
 ### Does the 40x income have to be from one job?
 
-Not necessarily. Many landlords will count combined income from roommates or co-applicants, and some consider documented secondary income. Ask how the building totals income before you assume you fall short.
+Not necessarily. Many landlords count combined income from roommates or co-applicants, and some consider documented secondary income. But buildings differ: some judge each roommate's share or the weakest file rather than the sum. Ask how the building totals income before you assume you qualify or fall short.
+
+### I clear 40x and still got rejected. Why?
+
+Because 40x is a floor, not a guarantee. In a competitive pool the landlord picks the safest file, and discretionary extras (more guarantors, higher ratios) appear when demand is high. It is the pool, not you.
 
 ### Do I have to decide on the spot?
 

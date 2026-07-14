@@ -1,7 +1,7 @@
 ---
 title: "Who Pays the Broker Fee in NYC After the FARE Act (2026)?"
 slug: "who-pays-broker-fee-nyc-fare-act-2026"
-description: "After the FARE Act, the NYC broker fee falls on whoever hires the broker. Who pays now, when a renter still does, and how to confirm before you sign."
+description: "After the FARE Act, the NYC broker fee falls on whoever hires the broker. Who pays now, the workaround brokers use, and how to push back with DCWP rules."
 date: "2026-07-16"
 author: "Heed"
 tags: ["nyc apartments", "broker fee", "FARE Act", "move-in cost", "tenant rights"]
@@ -52,6 +52,22 @@ A broker fee charged to a tenant who never hired a broker is not on that list.
 
 **What to do:** Add up what you are asked to pay before move-in. If it is more than the deposit plus first month plus a small application fee, ask for each charge in writing.
 
+## The workaround: "just sign this before the tour"
+
+Some brokers found a move around the FARE Act. Before you can tour a unit you found yourself online, they send over an "Exclusive Right to Represent" form or a commission agreement, often with vague terms like "any property" and "one year." Sign it, and on paper YOU hired them. The fee lands back on you.
+
+Here is the part that matters, straight from the city's enforcement guidance: a broker who published the listing with the landlord's permission is **presumed to be the landlord's agent**. Per the [DCWP FARE Act guidance](https://www.nyc.gov/site/dca/about/FARE-Act.page), claiming to be a tenant's broker while listing that same unit violates the law. Signing their form does not legalize the fee. Who the broker really represents is a question of the whole situation, not the paper.
+
+One more thing: agreeing to pay, or even having paid, does not waive your rights. You cannot sign away a consumer protection law by saying ok.
+
+**What to do:** Never sign an exclusive or a commission agreement just to tour an apartment. Seeing a place does not require representation. If someone pushes paperwork at you before you've seen the unit, that's the tell.
+
+## What if they charge me anyway?
+
+The FARE Act has teeth. The Department of Consumer and Worker Protection enforces it: $750 for a first violation, up to $2,000 for repeat ones. The law also requires the landlord side to give you an itemized, written disclosure of every fee before you sign. That is not a courtesy. It is the law.
+
+**What to do:** Ask for the written fee disclosure. If an illegal fee is charged, report it by calling 311 or filing at the [DCWP site](https://www.nyc.gov/site/dca/about/FARE-Act.page). Keep the listing screenshot and every message.
+
 ## How do I confirm who represents whom?
 
 You do not need to guess. A few direct questions settle it.
@@ -75,5 +91,17 @@ That request is questionable. If the broker was hired by the landlord, the landl
 ### How much were tenant broker fees before the FARE Act?
 
 They ranged from about one month of rent up to roughly 12 to 15 percent of the annual rent, which was often a large share of the roughly $13,000 average move-in cost in 2023.
+
+### A broker asked me to sign a representation agreement before a tour. Should I?
+
+No. Touring does not require representation. A broker who listed the unit is presumed the landlord's agent under DCWP guidance, and signing their form does not make their fee legal. Sign a representation agreement only when you actually hired that broker to search for you.
+
+### I already agreed to the fee. Do I still have to pay?
+
+Agreeing does not waive your rights. If the broker represents the landlord (they listed it, they had access to it, the landlord pays them), the fee should not be yours regardless of what you said. Ask in writing who they represent and for the FARE fee disclosure.
+
+---
+
+*Sources: [NYC DCWP, FARE Act guidance](https://www.nyc.gov/site/dca/about/FARE-Act.page) · [NYC Council, the FARE Act](https://council.nyc.gov/chi-osse/the-fare-act/)*
 
 *Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
