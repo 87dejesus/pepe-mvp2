@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 20
-**Last updated:** 2026-07-13 (merge to main: SEO/AEO batch of 7 new + 3 refreshed tenant-rights posts scheduled 2/week to Aug 17, FAQPage JSON-LD, paywall funnel fix; absorbed main's affiliate-decline note)
+**Revision:** 21
+**Last updated:** 2026-07-15 (measurement stack complete: Vercel Analytics live + organic attribution + blog CTA UTMs; GA account recovered + first 90-day readout; tomorrow: Search Console + Bing)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -79,6 +79,10 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
+- [ ] **🎯 TOMORROW'S PRIORITY (founder, 2026-07-15): register the 2 missing search tools.**
+  1. **Google Search Console** — the only source of "which queries do we rank for, at what position". Now EASY: founder recovered the GA account (G-0LQ1VL0PMG), so GSC can auto-verify via the GA tag. Steps: search.google.com/search-console (same Google account as GA) → Add property → **URL prefix** → `https://www.thesteadyone.com` → auto-verifies via GA → Sitemaps → submit `sitemap.xml`. ~5 min, zero DNS.
+  2. **Bing Webmaster Tools** — 1-click import from GSC after #1; covers Bing/DuckDuckGo + AI search engines. Optional same-day bonus.
+  - Context: measurement stack completed 2026-07-15 (PR #34): Vercel Analytics ENABLED + verified live; funnel first-touch now classifies organic referrers (engine/organic + landing path as campaign); all 22 blog CTAs carry `utm_source=blog&utm_campaign=<slug>`; the 5 March-era posts cleaned (em-dashes, "curated", overpromises). **First GA 90-day readout (Apr 16-Jul 14): 160 users, 187 sessions.** Direct 113 (polluted by founder self-visits), Organic Social 51 (Reddit working), **Organic Search 12 with the BEST engagement (75%, 1m31s avg) = the SEO thesis signal**, blog posts <20 views each (pre-indexing, expected). Hero→/flow click-through 44%. Optional hygiene: mark founder's IP as internal traffic in GA.
 - [~] **🔴 BOTTLENECK — paywall/signup leak (2026-07-09; worked 2026-07-13):** funnel_events showed **nobody advances past `paywall_view`**. Investigated + partly fixed:
   - **Root cause #1 = measurement blind spot.** Under the free model the only events after `paywall_view` were `checkout_start` (Stripe-only, dead) and `paid` (never fires). We were BLIND past the gate by construction, so "zero past paywall" was expected even if people signed in. **Fixed:** added 5 events on the real free path — `signup_started`, `otp_sent`, `otp_submitted`, `otp_error`, `access_granted` (`lib/funnel.ts`, `app/api/track/event/route.ts`, `app/paywall/page.tsx`, `app/onboarding/post-auth/page.tsx`). Once deployed, these disambiguate bounce-at-email vs never-enter-code vs error-after-submit. **`access_granted` fires in post-auth on the /decision route (the real conversion endpoint that replaces the dead `paid`).**
   - **The OTP round-trip is NOT broken.** Ran it live as a fresh non-admin (`luhciano.sj+steadytestN@gmail.com` plus-addresses = new Supabase users, same readable inbox; admin check is exact-match so these don't bypass). Email step → code in seconds → verify → post-auth → FREE_ACCESS → /decision. All events fired in order. So the drop is friction/trust at the email field, not a bug.
