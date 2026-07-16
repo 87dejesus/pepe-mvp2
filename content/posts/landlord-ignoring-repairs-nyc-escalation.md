@@ -81,4 +81,4 @@ The filing fee is minimal (tens of dollars) and can be waived if you cannot affo
 
 *Sources: [NY Senate, RPL 235-b](https://www.nysenate.gov/legislation/laws/RPL/235-B) · [NYC HPD](https://www.nyc.gov/site/hpd/index.page) · [Housing Court Answers, HP Actions](https://housingcourtanswers.org/) · [NY Attorney General](https://ag.ny.gov/file-complaint)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=landlord-ignoring-repairs-nyc-escalation), free, and let Heed check every place against your lines.*

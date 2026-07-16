@@ -71,4 +71,4 @@ Look up the building's tax exemption status via HPD's 421-a resources or the Dep
 
 *Sources: [NYC HPD, 421-a](https://www.nyc.gov/site/hpd/services-and-information/tax-incentives-421-a.page) · [NYC Rent Guidelines Board](https://rentguidelinesboard.cityofnewyork.us/) · [NY HCR, rent history](https://hcr.ny.gov/ask-us-question-or-request-rental-history)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=421a-expiring-nyc-rent-stabilization), free, and let Heed check every place against your lines.*

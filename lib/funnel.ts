@@ -32,6 +32,38 @@ type Attribution = {
   utm_campaign?: string;
 };
 
+// Referrer hosts we can classify when no UTM params are present. Search
+// engines are "organic"; anything else external is "referral". Without this
+// fallback, ALL organic search traffic (the whole point of the SEO content)
+// reached the funnel with no source at all.
+const SEARCH_HOSTS: Record<string, string> = {
+  google: 'google',
+  bing: 'bing',
+  duckduckgo: 'duckduckgo',
+  yahoo: 'yahoo',
+  ecosia: 'ecosia',
+  perplexity: 'perplexity',
+};
+
+function attributionFromReferrer(): Attribution | null {
+  const ref = document.referrer;
+  if (!ref) return null;
+  try {
+    const host = new URL(ref).hostname.toLowerCase();
+    if (!host || host === window.location.hostname) return null; // internal nav
+    const engine = Object.keys(SEARCH_HOSTS).find((k) => host === `${k}.com` || host.endsWith(`.${k}.com`));
+    // utm_campaign records the LANDING PATH, so organic attribution also tells
+    // us which article was the entry door (e.g. "/blog/who-pays-broker-fee...").
+    const landing = window.location.pathname.slice(0, 100);
+    if (engine) {
+      return { utm_source: SEARCH_HOSTS[engine], utm_medium: 'organic', utm_campaign: landing };
+    }
+    return { utm_source: host.replace(/^www\./, '').slice(0, 100), utm_medium: 'referral', utm_campaign: landing };
+  } catch {
+    return null;
+  }
+}
+
 /** First-touch UTM capture. Idempotent: an existing attribution is never overwritten. */
 export function captureUtm(): void {
   if (typeof window === 'undefined') return;
@@ -41,7 +73,13 @@ export function captureUtm(): void {
     const source = params.get('utm_source');
     const medium = params.get('utm_medium');
     const campaign = params.get('utm_campaign');
-    if (!source && !medium && !campaign) return;
+    if (!source && !medium && !campaign) {
+      // No explicit UTM: fall back to referrer classification (organic search
+      // and external referrals). Direct visits stay unattributed.
+      const fallback = attributionFromReferrer();
+      if (fallback) localStorage.setItem(UTM_KEY, JSON.stringify(fallback));
+      return;
+    }
     const attribution: Attribution = {};
     if (source) attribution.utm_source = source.slice(0, 100);
     if (medium) attribution.utm_medium = medium.slice(0, 100);

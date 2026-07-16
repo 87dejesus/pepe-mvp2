@@ -1,7 +1,7 @@
 ---
 title: "NYC Rental Red Flags: 8 Signs to Walk Away Before You Sign"
 slug: "nyc-rental-red-flags"
-description: "The most common NYC rental red flags that renters miss — and how to spot them before you're locked into a lease you regret."
+description: "The most common NYC rental red flags that renters miss, and how to spot them before you're locked into a lease you regret."
 date: "2026-03-10"
 author: "Heed"
 tags: ["nyc rentals", "red flags", "apartment hunting", "nyc apartments", "landlord warning signs"]
@@ -11,13 +11,13 @@ tags: ["nyc rentals", "red flags", "apartment hunting", "nyc apartments", "landl
 
 **The most serious NYC rental red flags are: a landlord who won't answer basic questions before signing, open HPD violations that haven't been addressed, a broker fee charged on a landlord-represented listing post-FARE Act, and pressure to sign without a lease review.** Spotting these before you commit can save you 12 months of headaches.
 
-NYC's rental market moves fast, which is exactly why landlords and brokers count on renters not doing their due diligence. Here are the eight red flags that matter most — and what to do when you spot them.
+NYC's rental market moves fast, which is exactly why landlords and brokers count on renters not doing their due diligence. Here are the eight red flags that matter most, and what to do when you spot them.
 
 ## 1. Landlord Won't Provide Answers Before Signing
 
 A legitimate landlord or management company will answer basic questions before you sign: What's included in rent? What's the policy on repairs? How are maintenance requests handled? Who's the superintendent?
 
-If you're getting evasiveness, delays, or redirects back to "just sign the lease and we'll work it out" — that's a red flag. The way a landlord behaves before the lease is signed is the best predictor of how they'll behave after.
+If you're getting evasiveness, delays, or redirects back to "just sign the lease and we'll work it out", that's a red flag. The way a landlord behaves before the lease is signed is the best predictor of how they'll behave after.
 
 **What to do:** Ask specific, written questions over email. If you don't get clear answers within 24-48 hours, reconsider.
 
@@ -25,7 +25,7 @@ If you're getting evasiveness, delays, or redirects back to "just sign the lease
 
 The NYC Department of Housing Preservation and Development (HPD) maintains public records of building violations. You can check any address at [hpdonline.hpd.nyc.gov](https://hpdonline.hpd.nyc.gov).
 
-Some violations are minor and quickly resolved. Others — particularly Class C (immediately hazardous) violations involving heat, hot water, mold, or structural issues — are serious.
+Some violations are minor and quickly resolved. Others, particularly Class C (immediately hazardous) violations involving heat, hot water, mold, or structural issues, are serious.
 
 **What to do:** Check the address before you tour, not after you've fallen in love with the apartment. If there are open Class C violations, ask specifically what's being done to address them before you consider applying.
 
@@ -74,4 +74,4 @@ After weeks of searching, many renters apply to apartments they know aren't righ
 
 ---
 
-*[The Steady One](https://thesteadyone.com) vets NYC apartments and provides real pressure context per listing — so you can make the right call without the guesswork.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=nyc-rental-red-flags), free, and let Heed check every place against your lines.*

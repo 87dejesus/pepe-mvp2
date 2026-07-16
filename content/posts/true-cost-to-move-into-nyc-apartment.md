@@ -77,4 +77,4 @@ No. NYC law caps the security deposit at one month of rent. A request for more t
 
 No. Research has refuted the idea that NYC units vanish in hours and that waiting costs hundreds per month. Calm, verify-first behavior is well supported, so you have room to check the numbers before committing.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=true-cost-to-move-into-nyc-apartment), free, and let Heed check every place against your lines.*

@@ -77,4 +77,4 @@ The state law lets other municipalities opt in, and several have. This guide cov
 
 *Sources: [NY Attorney General, Good Cause Eviction](https://ag.ny.gov/resources/individuals/tenants-rights/good-cause-eviction) · [NY Senate, RPL 231-c](https://www.nysenate.gov/legislation/laws/RPL/231-C) · [NY HCR](https://hcr.ny.gov/)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=good-cause-eviction-nyc-renters), free, and let Heed check every place against your lines.*

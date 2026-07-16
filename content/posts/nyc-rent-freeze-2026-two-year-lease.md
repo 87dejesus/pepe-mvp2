@@ -79,4 +79,4 @@ Not for a stabilized tenant. Stabilization includes the right to a renewal lease
 
 *Sources: [NYC Rent Guidelines Board](https://rentguidelinesboard.cityofnewyork.us/) · [NY HCR, rent history requests](https://hcr.ny.gov/ask-us-question-or-request-rental-history)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=nyc-rent-freeze-2026-two-year-lease), free, and let Heed check every place against your lines.*

@@ -79,4 +79,4 @@ No. Under the FARE Act, a broker fee falls on whoever hired the broker. If you d
 
 The legal baseline is one month security deposit plus your first month of rent, with any application fee capped at $20. Costs rose well above that historically (around $13,000 on average in 2023) largely because of broker fees.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=how-much-can-nyc-landlord-charge-upfront), free, and let Heed check every place against your lines.*

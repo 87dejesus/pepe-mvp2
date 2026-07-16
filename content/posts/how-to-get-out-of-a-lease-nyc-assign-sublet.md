@@ -71,4 +71,4 @@ The landlord can sue for the remaining rent, though New York requires them to ma
 
 *Sources: [NY Senate, RPL 226-b](https://www.nysenate.gov/legislation/laws/RPL/226-B) · [NY Attorney General, tenants' rights guide](https://ag.ny.gov/publications/residential-tenants-rights-guide) · [NY HCR](https://hcr.ny.gov/)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=how-to-get-out-of-a-lease-nyc-assign-sublet), free, and let Heed check every place against your lines.*

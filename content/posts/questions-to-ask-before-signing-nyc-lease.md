@@ -67,4 +67,4 @@ Not always. Since the FARE Act took effect in June 2025, the fee falls on whoeve
 
 Ask the landlord, check the lease for a stabilization rider, and request a rent history from NY HCR. Stabilization is not listed publicly, so confirming it is on you.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=questions-to-ask-before-signing-nyc-lease), free, and let Heed check every place against your lines.*

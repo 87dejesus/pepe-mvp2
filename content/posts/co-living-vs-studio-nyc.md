@@ -80,4 +80,4 @@ Often, yes. Co-living typically carries relaxed income and guarantor rules compa
 
 Ask whether you are renting the entire apartment or one room, and check that the lease says the same. Because listings are frequently mislabeled, the written lease is your most reliable answer.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=co-living-vs-studio-nyc), free, and let Heed check every place against your lines.*
