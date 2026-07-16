@@ -48,6 +48,9 @@ Clareza de decisão, não listagens: "know your lines" — separar inegociável 
 - Construir follow-up email via Resend.
 - Deletar rotas/normalizers dos scrapers aposentados.
 
+## Acessos (referência rápida)
+- Google Analytics: `G-0LQ1VL0PMG` → propriedade "Pepe MVP - Find Pepe" (514608911), conta "Luciano Jesus" (221101884), login **luhciano.sj@gmail.com**. Instalado em `app/layout.tsx:132`.
+
 ## Arquivos importantes
 - `PROJECT_BRIEF.md` — canônico (regras de copy §7, Reddit playbook §6).
 - `marketing/lapidan_adaptation.md` + `docs/reddit-insights/copy-bank.md` (~45 frases mineradas) — marketing via skill Lapidan.
