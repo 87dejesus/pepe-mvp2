@@ -102,4 +102,4 @@ Sight-unseen is the number one scam window. Have a real human you trust stand in
 
 *Sources: [NY DOS, eAccessNY license search](https://appext20.dos.ny.gov/nydos/selSearchType.do) · [NYC ACRIS property records](https://a836-acris.nyc.gov/) · [NY AG, renter guidance](https://ag.ny.gov/publications/residential-tenants-rights-guide)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=how-to-spot-a-nyc-rental-scam), free, and let Heed check every place against your lines.*

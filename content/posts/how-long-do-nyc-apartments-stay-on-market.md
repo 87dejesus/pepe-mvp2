@@ -63,4 +63,4 @@ Research did not support that claim. The idea that a short, careful wait carries
 
 When the urgency is aimed at skipping a step you are entitled to: the in-person tour, the legitimacy check, or a clear look at the upfront costs. Honest demand does not need you to go faster than verification allows.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=how-long-do-nyc-apartments-stay-on-market), free, and let Heed check every place against your lines.*

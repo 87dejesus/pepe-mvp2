@@ -1,7 +1,7 @@
 ---
 title: "Is a Broker Fee Worth It in NYC? The Math Most Renters Never Do"
 slug: "is-broker-fee-worth-it-nyc"
-description: "A clear breakdown of when broker fees in NYC are worth paying — and when they're not. Includes the math brokers don't want you to calculate."
+description: "A clear breakdown of when broker fees in NYC are worth paying, and when they're not. Includes the math brokers don't want you to calculate."
 date: "2026-03-18"
 author: "Heed"
 tags: ["broker fee", "nyc rentals", "no-fee apartments", "nyc apartments", "apartment hunting"]
@@ -9,15 +9,15 @@ tags: ["broker fee", "nyc rentals", "no-fee apartments", "nyc apartments", "apar
 
 # Is a Broker Fee Worth It in NYC? The Math Most Renters Never Do
 
-**A broker fee in NYC is worth paying when the apartment is genuinely rare, the price is below market, or the total cost over 12 months is still lower than comparable no-fee alternatives.** In most cases, it is not worth paying — especially since the FARE Act (effective June 2025) now requires landlords, not tenants, to pay the broker representing them.
+**A broker fee in NYC is worth paying when the apartment is genuinely rare, the price is below market, or the total cost over 12 months is still lower than comparable no-fee alternatives.** In most cases, it is not worth paying, especially since the FARE Act (effective June 2025) now requires landlords, not tenants, to pay the broker representing them.
 
 Here's the math most renters skip.
 
 ## What Is a Broker Fee in NYC?
 
-A broker fee is a commission paid to a real estate agent for helping you find an apartment. Historically, NYC was unusual in that tenants paid broker fees even when the broker was working for the landlord — not for them.
+A broker fee is a commission paid to a real estate agent for helping you find an apartment. Historically, NYC was unusual in that tenants paid broker fees even when the broker was working for the landlord, not for them.
 
-The typical broker fee was 1 month's rent or 15% of the annual rent. On a $3,000/month apartment, that's $3,600 upfront — before first month's rent, last month's rent, or security deposit.
+The typical broker fee was 1 month's rent or 15% of the annual rent. On a $3,000/month apartment, that's $3,600 upfront, before first month's rent, last month's rent, or security deposit.
 
 ### What Changed With the FARE Act (2025)
 
@@ -41,7 +41,7 @@ Here's the calculation renters should always run before paying a broker fee.
 | Broker fee (1 month) | $2,800 | $0 |
 | Total cost, Year 1 | $36,400 | $35,400 |
 
-In this scenario, **Apartment B is cheaper** — even though the monthly rent is $150 higher. The broker fee on Apartment A costs you an extra $1,000 over the first year.
+In this scenario, **Apartment B is cheaper**, even though the monthly rent is $150 higher. The broker fee on Apartment A costs you an extra $1,000 over the first year.
 
 The break-even point: divide the broker fee by the monthly rent difference. If that number is larger than your expected months in the apartment, the no-fee option is better.
 
@@ -66,7 +66,7 @@ There are situations where paying a broker fee makes financial sense:
 
 One of the best-kept secrets of the 2026 NYC rental market is that no-fee inventory has grown substantially. Platforms like StreetEasy, Transparentcity, and [The Steady One](https://thesteadyone.com) all have no-fee filters.
 
-The old assumption — that you had to pay a broker to access good apartments — is no longer accurate. Many of the best buildings in Brooklyn, Queens, and the Bronx are now listing directly without broker involvement.
+The old assumption, that you had to pay a broker to access good apartments, is no longer accurate. Many of the best buildings in Brooklyn, Queens, and the Bronx are now listing directly without broker involvement.
 
 ## The Bottom Line
 
@@ -77,8 +77,8 @@ Before paying any broker fee:
 3. Ask whether the same or similar apartments are available without a fee
 4. Calculate the break-even point based on how long you plan to stay
 
-A broker fee is a significant upfront cost that affects your real effective rent. Don't pay it reflexively — pay it only when the math and the apartment justify it.
+A broker fee is a significant upfront cost that affects your real effective rent. Don't pay it reflexively, pay it only when the math and the apartment justify it.
 
 ---
 
-*Looking for curated no-fee apartments in NYC with clear pressure context? [The Steady One](https://thesteadyone.com) was built for exactly this.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=is-broker-fee-worth-it-nyc), free, and let Heed check every place against your lines.*

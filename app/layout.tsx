@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Libre_Caslon_Display } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import FunnelInit from "@/components/FunnelInit";
 import "./globals.css";
@@ -93,7 +94,7 @@ const organizationJsonLd = {
   url: 'https://thesteadyone.com',
   logo: 'https://thesteadyone.com/brand/steady-one-512.png',
   description:
-    'NYC apartment match platform. Answer 7 questions, get curated listings, decide with clarity.',
+    'NYC apartment match platform. Answer 7 questions, get matched listings, decide with clarity.',
   areaServed: {
     '@type': 'City',
     name: 'New York City',
@@ -129,6 +130,9 @@ export default function RootLayout({
         <FunnelInit />
         <ServiceWorkerRegistration />
         <GoogleAnalytics gaId="G-0LQ1VL0PMG" />
+        {/* Vercel Web Analytics: pageviews + referrers readable in the Vercel
+            dashboard (founder-accessible, unlike the orphaned GA property). */}
+        <Analytics />
       </body>
     </html>
   );

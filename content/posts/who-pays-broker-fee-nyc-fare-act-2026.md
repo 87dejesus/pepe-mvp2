@@ -104,4 +104,4 @@ Agreeing does not waive your rights. If the broker represents the landlord (they
 
 *Sources: [NYC DCWP, FARE Act guidance](https://www.nyc.gov/site/dca/about/FARE-Act.page) · [NYC Council, the FARE Act](https://council.nyc.gov/chi-osse/the-fare-act/)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=who-pays-broker-fee-nyc-fare-act-2026), free, and let Heed check every place against your lines.*

@@ -75,4 +75,4 @@ It shows the recorded rent history for a unit, which confirms whether the apartm
 
 No. Listings do not display stabilization status, so silence tells you nothing either way. The only way to know is to verify through the landlord, the lease, and HCR.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=rent-stabilized-apartment-how-to-verify-nyc), free, and let Heed check every place against your lines.*

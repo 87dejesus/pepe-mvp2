@@ -76,4 +76,4 @@ Yes. These are among the most common cases it serves, because it qualifies you o
 
 Not all do, so confirm with each building before you rely on one. Many accept well-known providers, but acceptance is the landlord's choice.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=is-a-guarantor-service-worth-it-nyc), free, and let Heed check every place against your lines.*

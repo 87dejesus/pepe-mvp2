@@ -73,4 +73,4 @@ Watch this one: the $20 cap applies to the landlord's application fee. A condo o
 
 *Sources: [NY Senate, RPL 238-a](https://www.nysenate.gov/legislation/laws/RPL/238-A) · [NY Attorney General, security deposits](https://ag.ny.gov/publications/residential-tenants-rights-guide) · [NY HCR](https://hcr.ny.gov/)*
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=nyc-late-fees-security-deposit-rules), free, and let Heed check every place against your lines.*

@@ -87,4 +87,4 @@ No. Research has refuted the myth that NYC units rent in hours, so verify-first,
 
 Yes. A guarantor service can bring the effective requirement down to about 27.5x, and co-living units run on their own relaxed rules. The 40x figure is a default, not a ceiling.
 
-*Know your non-negotiables before you tour. [Answer the 7 questions](https://thesteadyone.com/flow), free, and let Heed check every place against your lines.*
+*Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=40x-rent-rule-nyc-explained), free, and let Heed check every place against your lines.*
