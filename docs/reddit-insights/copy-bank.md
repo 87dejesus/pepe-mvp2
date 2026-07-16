@@ -126,6 +126,9 @@ _"panic", "anxiety", "embarrassed", "ashamed I can't afford"_
 
 ---
 
+## Leads de conteúdo PARA PESQUISAR (ainda NÃO verificados — não publicar sem checar)
+- **Illusory tenancy / co-living middleman scheme** (via post de Responsible-Sir2633, r/NYCapartments 2026-07-13): owner aluga andar/prédio a um "prime tenant" intermediário que não mora lá; ocupantes viram "subtenants/licensees". Usado pra (a) esconder cobertura de rent-stabilization, (b) driblar o **Right to Counsel** — intermediário faz surrender do lease, owner entra com **ejectment na Supreme Court** (onde NÃO há advogado gratuito) em vez de Housing Court. *(TEMA DE SEO/AEO forte, conecta com co-living + rent-stab do nosso catálogo. Título possível: "Illusory tenancy: como intermediários de co-living tiram seus direitos". VERIFICAR antes de publicar: doutrina de illusory tenancy em NY, escopo do RTC (Housing Court only), ejectment em Supreme Court. NÃO repackagear o post dele — pesquisar do zero.)*
+
 ## Achados que JÁ temos (de RENTER_RESEARCH.md — usar com cautela em copy)
 Contexto verificado, não frase de renter. Útil para ângulos de copy:
 - Custo médio de move-in ~$13.000 (2023); landlords preferem 40x renda mensal; guarantor pede ~80x + 700 score.
