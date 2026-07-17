@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 22
-**Last updated:** 2026-07-17 (Search Console + Bing Webmaster registered, sitemaps submitted; found 307+canonical host inconsistency = next SEO fix)
+**Revision:** 23
+**Last updated:** 2026-07-17 (INCIDENT: catalog empty since ~Jul 7, scraper blocked since Jul 1; mocks removed, watchdog emails founder, www canonical fix shipped via PR #35)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -79,6 +79,7 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
+- [ ] **🔴 SCRAPER DOWN (2026-07-17) — needs a NEW PROVIDER (run /scraper-provider-evaluator).** apartments.com blocks the saswave actor since Jul 1: every cron run FAILS at the first page fetch (10 retries, "No results to be found", $0 usage; confirmed with a fresh 1-page manual run). Catalog: 0 Active, last write Jun 27; cleanup expired everything ~Jul 7. **For ~10 days /decision served the 10 hardcoded MOCKS with dead links** (founder caught it by hand). Apify credit is fine ($0.002/$75). Mitigations shipped (PR #35): mock fallback DELETED (honest empty state now), watchdog sends founder email via Resend (RESEND_API_KEY added to Vercel env 2026-07-17), www canonical alignment + 308 config. Sentry lesson: same-message alerts group into ONE issue = one notification ever; that's why 17 days of alerts were invisible.
 - [x] **🎯 Search tools registered (DONE 2026-07-17, founder + Claude):**
   1. **Google Search Console** — DOMAIN property `thesteadyone.com` (not URL-prefix: the site has a canonical/redirect inconsistency, see follow-up below), verified via DNS TXT (`google-site-verification=8Tuu0...` added at the registrar; nameservers are ns-cloud-*.googledomains.com = old Google Domains/Squarespace). Sitemap submitted as FULL URL `https://thesteadyone.com/sitemap.xml` (domain properties reject bare `sitemap.xml`). Expect first query/position data in ~3-7 days.
   2. **Bing Webmaster Tools** — imported from GSC (site verified via import), sitemap submitted manually (import snapshot predated the GSC sitemap), status Processing. Covers Bing/DuckDuckGo + AI answer engines. Leftover junk entry `thesteadyone.com/sitemap.xml` (added as a "site" by mistake) can be deleted from the Bing site list; harmless.
