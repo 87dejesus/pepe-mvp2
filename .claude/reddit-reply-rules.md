@@ -7,6 +7,7 @@ Estas regras EXISTEM porque a conta já foi flagada 2x como IA e teve post remov
 3. **Um ponto só.** Responda o mais importante; ignore o resto (gente real faz isso).
 4. **Quebre o arco.** Nada de reconhece→explica→reframe→dica. Fale a coisa e pare. Não termine sempre com pergunta.
 5. **Deixe humano/imperfeito.** Um "idk", um parêntese solto, um typo ocasional. Sem em-dash, sem palavra de marketing.
+5b. **Evite palavra composta com traço** (owner-run, on-the-fence, no-damage, 2-pet, big-management-company). Soa construído. Escreva separado ou reformule ("small private landlords", "landlords who are flexible").
 6. **Sem tics:** nada de "honestly" abrindo, nada de "não é X, é Y".
 7. **A VOZ FINAL é do founder** — eu rascunho, ele reescreve. Sempre lembrar "reescreve com sua voz".
 8. **Plantar a tese sem citar a gente:** em post de decisão/bairro, ajudar a pessoa a ver o PESO da escolha (seus 2 inegociáveis) — isso é o que o produto faz, entregue como conselho. NUNCA mencionar produto/persona na 1ª interação.
