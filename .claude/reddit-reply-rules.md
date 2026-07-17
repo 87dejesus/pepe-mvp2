@@ -1,5 +1,18 @@
 # REGRAS DE RESPOSTA NO REDDIT (ler antes de rascunhar qualquer comentário)
 
+## ⛔ FILTRO ZERO — INTENÇÃO (passar ANTES de escrever QUALQUER comentário)
+**NENHUM comentário é "advice aleatório".** Antes de digitar uma palavra, responda:
+> **"Qual a INTENÇÃO deste comentário pro negócio?"**
+
+Todo comentário TEM que fazer o OP **perceber que precisa descobrir as PRÓPRIAS prioridades/tradeoffs** (= exatamente o que o produto faz) e gerar o "quem é essa pessoa?" que puxa pro perfil.
+- ❌ **NÃO prescrever solução** ("vai de roommates", "mora em Astoria"). Resolver pra ele = ele não precisa pensar = não precisa da gente.
+- ❌ **NÃO dar conselho genérico/prestativo** só pra ajudar ou ser gentil.
+- ✅ **Acender o tradeoff/contradição que ELE não viu e DEVOLVER a decisão pra ele.** (ex.: "sua lista se contradiz nesse orçamento — quais 2 você recusaria abrir mão?")
+
+Teste final: o comentário faz o OP **PENSAR diferente** (bom) ou só **se sentir melhor / receber a resposta pronta** (esquecível/inútil)? Se não passa no filtro, **NÃO ESCREVA — pule.** Melhor não comentar que postar advice aleatório.
+
+---
+
 Estas regras EXISTEM porque a conta já foi flagada 2x como IA e teve post removido. Siga à risca.
 
 1. **CURTO: 2-4 frases, UM ponto.** Nunca um mini-ensaio. Se passou de ~4 frases, corte.
