@@ -13,5 +13,6 @@ Estas regras EXISTEM porque a conta já foi flagada 2x como IA e teve post remov
 8. **Plantar a tese sem citar a gente:** em post de decisão/bairro, ajudar a pessoa a ver o PESO da escolha (seus 2 inegociáveis) — isso é o que o produto faz, entregue como conselho. NUNCA mencionar produto/persona na 1ª interação.
 9. **Verificar fato antes de afirmar.** Se errar e contestarem, corrigir em público.
 10. **Curadoria:** nem todo post merece resposta. Pedido de lista de bairro puro / anúncio de procura = pular ou só 1 linha.
+11. **PRIORIZE posts onde dá pra soltar um FATO específico e não-óbvio** (direito, golpe, lei, imposto NJ/NY). É isso que faz o OP pensar "quem é essa pessoa?" e clicar no perfil → bio → site. Reassurance / "vai ficar bem" / frame de tradeoff é simpático mas ESQUECÍVEL, não gera clique. Se o melhor que tenho é reassurance, é post de baixo valor pro funil: pular ou postar sem esperar retorno. O clique vem de conhecimento demonstrado, não de gentileza.
 
 Conteúdo longo/completo → vira ARTIGO de SEO no site, NÃO comentário no Reddit.
