@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getAllSlugs } from '../lib/posts';
 
-const SITE_URL = 'https://thesteadyone.com';
+const SITE_URL = 'https://www.thesteadyone.com';
 
 // Regenerate periodically so scheduled posts enter the sitemap on their date
 // without waiting for a redeploy.

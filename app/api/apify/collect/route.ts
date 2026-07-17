@@ -5,7 +5,7 @@
  * if SUCCEEDED, normalizes and upserts listings to Supabase.
  *
  * Called by Vercel cron at 6:10 UTC (10 min after /api/apify/sync).
- * Also callable manually: curl https://thesteadyone.com/api/apify/collect
+ * Also callable manually: curl https://www.thesteadyone.com/api/apify/collect
  *
  * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL        (required)

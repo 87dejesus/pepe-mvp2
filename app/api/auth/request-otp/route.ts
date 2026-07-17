@@ -22,9 +22,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
   }
 
-  // NEXT_PUBLIC_APP_URL must be set in Vercel env: https://thesteadyone.com
+  // NEXT_PUBLIC_APP_URL must be set in Vercel env: https://www.thesteadyone.com
   // Locally set it in .env.local: http://localhost:3000
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://thesteadyone.com';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.thesteadyone.com';
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

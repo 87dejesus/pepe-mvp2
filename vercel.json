@@ -24,10 +24,21 @@
       "has": [
         {
           "type": "host",
+          "value": "thesteadyone.com"
+        }
+      ],
+      "destination": "https://www.thesteadyone.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
           "value": "withpepe.com"
         }
       ],
-      "destination": "https://thesteadyone.com/:path*",
+      "destination": "https://www.thesteadyone.com/:path*",
       "permanent": true
     },
     {
@@ -38,7 +49,7 @@
           "value": "www.withpepe.com"
         }
       ],
-      "destination": "https://thesteadyone.com/:path*",
+      "destination": "https://www.thesteadyone.com/:path*",
       "permanent": true
     }
   ]
