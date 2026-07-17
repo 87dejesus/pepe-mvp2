@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 21
-**Last updated:** 2026-07-15 (measurement stack complete: Vercel Analytics live + organic attribution + blog CTA UTMs; GA account recovered + first 90-day readout; tomorrow: Search Console + Bing)
+**Revision:** 22
+**Last updated:** 2026-07-17 (Search Console + Bing Webmaster registered, sitemaps submitted; found 307+canonical host inconsistency = next SEO fix)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -79,9 +79,10 @@ Apply on every UI change without being asked.
 ## 6. Open issues
 
 ### High priority (next session)
-- [ ] **🎯 TOMORROW'S PRIORITY (founder, 2026-07-15): register the 2 missing search tools.**
-  1. **Google Search Console** — the only source of "which queries do we rank for, at what position". Now EASY: founder recovered the GA account (G-0LQ1VL0PMG), so GSC can auto-verify via the GA tag. Steps: search.google.com/search-console (same Google account as GA) → Add property → **URL prefix** → `https://www.thesteadyone.com` → auto-verifies via GA → Sitemaps → submit `sitemap.xml`. ~5 min, zero DNS.
-  2. **Bing Webmaster Tools** — 1-click import from GSC after #1; covers Bing/DuckDuckGo + AI search engines. Optional same-day bonus.
+- [x] **🎯 Search tools registered (DONE 2026-07-17, founder + Claude):**
+  1. **Google Search Console** — DOMAIN property `thesteadyone.com` (not URL-prefix: the site has a canonical/redirect inconsistency, see follow-up below), verified via DNS TXT (`google-site-verification=8Tuu0...` added at the registrar; nameservers are ns-cloud-*.googledomains.com = old Google Domains/Squarespace). Sitemap submitted as FULL URL `https://thesteadyone.com/sitemap.xml` (domain properties reject bare `sitemap.xml`). Expect first query/position data in ~3-7 days.
+  2. **Bing Webmaster Tools** — imported from GSC (site verified via import), sitemap submitted manually (import snapshot predated the GSC sitemap), status Processing. Covers Bing/DuckDuckGo + AI answer engines. Leftover junk entry `thesteadyone.com/sitemap.xml` (added as a "site" by mistake) can be deleted from the Bing site list; harmless.
+- [ ] **🐛 SEO FOLLOW-UP (found 2026-07-17): host inconsistency confusing Google.** The apex→www redirect is **307 (temporary)** while every canonical tag says **non-www** (`https://thesteadyone.com/...`). The site tells Google two contradictory things about the official host, which splits/weakens ranking signals. Fix in code: pick ONE host (non-www matches the canonicals + robots Host), make the redirect www→non-www (or align canonicals to www) and permanent (308/301). Small change in vercel.json/next config + verify all canonicals/sitemap/OG urls agree.
   - Context: measurement stack completed 2026-07-15 (PR #34): Vercel Analytics ENABLED + verified live; funnel first-touch now classifies organic referrers (engine/organic + landing path as campaign); all 22 blog CTAs carry `utm_source=blog&utm_campaign=<slug>`; the 5 March-era posts cleaned (em-dashes, "curated", overpromises). **First GA 90-day readout (Apr 16-Jul 14): 160 users, 187 sessions.** Direct 113 (polluted by founder self-visits), Organic Social 51 (Reddit working), **Organic Search 12 with the BEST engagement (75%, 1m31s avg) = the SEO thesis signal**, blog posts <20 views each (pre-indexing, expected). Hero→/flow click-through 44%. Optional hygiene: mark founder's IP as internal traffic in GA.
 - [~] **🔴 BOTTLENECK — paywall/signup leak (2026-07-09; worked 2026-07-13):** funnel_events showed **nobody advances past `paywall_view`**. Investigated + partly fixed:
   - **Root cause #1 = measurement blind spot.** Under the free model the only events after `paywall_view` were `checkout_start` (Stripe-only, dead) and `paid` (never fires). We were BLIND past the gate by construction, so "zero past paywall" was expected even if people signed in. **Fixed:** added 5 events on the real free path — `signup_started`, `otp_sent`, `otp_submitted`, `otp_error`, `access_granted` (`lib/funnel.ts`, `app/api/track/event/route.ts`, `app/paywall/page.tsx`, `app/onboarding/post-auth/page.tsx`). Once deployed, these disambiguate bounce-at-email vs never-enter-code vs error-after-submit. **`access_granted` fires in post-auth on the /decision route (the real conversion endpoint that replaces the dead `paid`).**
