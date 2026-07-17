@@ -90,9 +90,11 @@ export function normalizeStreetEasyItem(item: StreetEasyItem): ApifyListing | nu
   if (!urlPath.startsWith('/')) return null;
   const original_url = `https://streeteasy.com${urlPath}`;
 
-  // Rentals only, currently active. The search URL is /for-rent/nyc, but keep
-  // the guard so a sales or off-market row can never slip into the catalog.
-  if (item.buildingType && item.buildingType !== 'RENTAL') return null;
+  // Currently active only. NOTE: buildingType describes the BUILDING (CONDO,
+  // HOUSE, MULTIFAMILY, RENTAL...), not whether the listing is a rental; the
+  // /for-rent/nyc search already guarantees rentals. A first version filtered
+  // buildingType !== 'RENTAL' and silently discarded 79% of a live run (157 of
+  // 200 items, audited 2026-07-17). Do not reintroduce that guard.
   if (item.status && item.status !== 'ACTIVE') return null;
 
   const borough = boroughFromZip(item.zipCode);
