@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Sign in',
   description: 'Sign in to The Steady One.',
-  alternates: { canonical: 'https://thesteadyone.com/signin' },
+  alternates: { canonical: 'https://www.thesteadyone.com/signin' },
   robots: { index: false, follow: true },
 };
 

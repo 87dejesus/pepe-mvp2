@@ -20,9 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: post.description,
     keywords: post.tags.join(", "),
     authors: [{ name: "Heed at The Steady One" }],
-    openGraph: { title: post.title, description: post.description, type: "article", publishedTime: post.date, url: `https://thesteadyone.com/blog/${post.slug}`, siteName: "The Steady One" },
+    openGraph: { title: post.title, description: post.description, type: "article", publishedTime: post.date, url: `https://www.thesteadyone.com/blog/${post.slug}`, siteName: "The Steady One" },
     twitter: { card: "summary_large_image", title: post.title, description: post.description },
-    alternates: { canonical: `https://thesteadyone.com/blog/${post.slug}` },
+    alternates: { canonical: `https://www.thesteadyone.com/blog/${post.slug}` },
   };
 }
 
@@ -83,8 +83,8 @@ export default async function PostPage({ params }: Props) {
     description: post.description,
     datePublished: post.date,
     author: { "@type": "Person", name: "Heed at The Steady One" },
-    publisher: { "@type": "Organization", name: "The Steady One", url: "https://thesteadyone.com" },
-    mainEntityOfPage: { "@type": "WebPage", "@id": `https://thesteadyone.com/blog/${post.slug}` },
+    publisher: { "@type": "Organization", name: "The Steady One", url: "https://www.thesteadyone.com" },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `https://www.thesteadyone.com/blog/${post.slug}` },
     keywords: post.tags.join(", "),
   };
 

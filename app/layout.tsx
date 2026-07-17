@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://thesteadyone.com"),
+  metadataBase: new URL("https://www.thesteadyone.com"),
   title: {
     default: "The Steady One | NYC Apartment Match",
     template: "%s | The Steady One",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://thesteadyone.com",
+    url: "https://www.thesteadyone.com",
     siteName: "The Steady One",
     title: "The Steady One | NYC Apartment Match",
     description:
@@ -91,8 +91,8 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'The Steady One',
   alternateName: 'Steady One',
-  url: 'https://thesteadyone.com',
-  logo: 'https://thesteadyone.com/brand/steady-one-512.png',
+  url: 'https://www.thesteadyone.com',
+  logo: 'https://www.thesteadyone.com/brand/steady-one-512.png',
   description:
     'NYC apartment match platform. Answer 7 questions, get matched listings, decide with clarity.',
   areaServed: {
@@ -105,7 +105,7 @@ const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'The Steady One',
-  url: 'https://thesteadyone.com',
+  url: 'https://www.thesteadyone.com',
 };
 
 export default function RootLayout({
