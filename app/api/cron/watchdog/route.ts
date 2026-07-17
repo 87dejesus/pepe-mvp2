@@ -19,6 +19,47 @@ const DEFAULT_MIN_ACTIVE = 20;
 // window, a sync cycle was almost certainly missed. Override with WATCHDOG_FRESH_DAYS.
 const DEFAULT_FRESH_DAYS = 4;
 
+// Direct founder alert. The 2026-07 catalog outage showed Sentry-only alerting
+// fails silently when nobody watches Sentry: the scraper died on Jul 1, this
+// watchdog flagged it daily, and the empty catalog was only noticed by hand on
+// Jul 17. Email is the channel the founder actually reads.
+async function sendAlertEmail(
+  message: string,
+  stats: { active: number; fresh: number; minActive: number; freshDays: number }
+): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('Cron watchdog: RESEND_API_KEY not set, skipping email alert');
+    return;
+  }
+  const to = process.env.ALERT_EMAIL || 'luhciano.sj@gmail.com';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Steady Watchdog <noreply@contact.thesteadyone.com>',
+        to: [to],
+        subject: `[The Steady One] Listings alert: ${stats.active} active`,
+        text: [
+          message,
+          '',
+          `Active listings: ${stats.active} (floor: ${stats.minActive})`,
+          `Fresh in last ${stats.freshDays} days: ${stats.fresh}`,
+          '',
+          'Check the Apify runs: https://console.apify.com/actors/runs',
+          'When the catalog is empty, /decision shows the honest empty state (no more fake mocks).',
+        ].join('\n'),
+      }),
+    });
+    if (!res.ok) {
+      console.error('Cron watchdog: alert email failed', res.status, await res.text());
+    }
+  } catch (err) {
+    console.error('Cron watchdog: alert email error', err);
+  }
+}
+
 // Timing-safe bearer compare. Mirrors app/api/cron/cleanup/route.ts.
 function safeBearerEquals(received: string | null, expected: string): boolean {
   if (!received) return false;
@@ -83,6 +124,11 @@ export async function GET(request: NextRequest) {
       });
       // Serverless: make sure the event ships before the function freezes.
       await Sentry.flush(2000);
+      // Sentry alone proved insufficient: the 2026-07 outage fired here daily
+      // for two weeks and nobody saw it. Email the founder directly via Resend.
+      // Requires RESEND_API_KEY (and optionally ALERT_EMAIL) in the environment;
+      // silently skipped when absent so the watchdog itself never fails.
+      await sendAlertEmail(message, { active, fresh, minActive, freshDays });
     } else {
       console.log(`Cron watchdog: healthy (${active} active, ${fresh} fresh in ${freshDays}d)`);
     }

@@ -223,163 +223,6 @@ function generateWarnings(listing: Listing, answers: Answers): string[] {
   return warnings;
 }
 
-// ============================================
-// MOCK LISTINGS — fallback when Supabase is empty
-// ============================================
-
-const MOCK_LISTINGS: Listing[] = [
-  {
-    id: 'mock-1',
-    neighborhood: 'Mott Haven',
-    borough: 'Bronx',
-    price: 2500,
-    bedrooms: 0,
-    bathrooms: 1,
-    description: '1 month free! Sunny studio in Mott Haven. Modern kitchen, hardwood floors, laundry in building. Pets welcome. Gym on-site. No broker fee.',
-    image_url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com/mock-1',
-    status: 'Active',
-  },
-  {
-    id: 'mock-2',
-    neighborhood: 'Fordham',
-    borough: 'Bronx',
-    price: 2800,
-    bedrooms: 1,
-    bathrooms: 1,
-    description: 'First month free on this bright 1-bed in Fordham. Updated bathroom, open kitchen, pet-friendly building with gym. Close to B/D trains.',
-    image_url: 'https://images.unsplash.com/photo-1560448204-e02f11b71c78?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'elevator'],
-    original_url: 'https://streeteasy.com/mock-2',
-    status: 'Active',
-  },
-  {
-    id: 'mock-3',
-    neighborhood: 'Harlem',
-    borough: 'Manhattan',
-    price: 2750,
-    bedrooms: 0,
-    bathrooms: 1,
-    description: 'Spacious studio in central Harlem. 1 free month, no broker fee. Exposed brick, high ceilings, gym access, pets OK. Near 2/3 subway.',
-    image_url: 'https://images.unsplash.com/photo-1502672023-a1a1-4ac7-800b-c8b8e7b96bc7?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com/mock-3',
-    status: 'Active',
-  },
-  {
-    id: 'mock-4',
-    neighborhood: 'Washington Heights',
-    borough: 'Manhattan',
-    price: 3200,
-    bedrooms: 1,
-    bathrooms: 1,
-    description: 'Renovated 1-bedroom in Washington Heights. Net effective rent includes 1 free month. Pets welcome, gym in building, dishwasher, bike storage.',
-    image_url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'dishwasher'],
-    original_url: 'https://streeteasy.com/mock-4',
-    status: 'Active',
-  },
-  {
-    id: 'mock-5',
-    neighborhood: 'Astoria',
-    borough: 'Queens',
-    price: 2600,
-    bedrooms: 0,
-    bathrooms: 1,
-    description: 'Cozy studio in Astoria. Free month on 12-month lease. Newly renovated, pet-friendly, gym included. N/W train, 20 min to Midtown.',
-    image_url: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym'],
-    original_url: 'https://streeteasy.com/mock-5',
-    status: 'Active',
-  },
-  {
-    id: 'mock-6',
-    neighborhood: 'Long Island City',
-    borough: 'Queens',
-    price: 3500,
-    bedrooms: 1,
-    bathrooms: 1,
-    description: '1-bed with Manhattan skyline views in LIC. 1 month free, no fee, pet-friendly. Full-service building: gym, rooftop, doorman. E/M/7 trains.',
-    image_url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'doorman', 'outdoor space'],
-    original_url: 'https://streeteasy.com/mock-6',
-    status: 'Active',
-  },
-  {
-    id: 'mock-7',
-    neighborhood: 'Jackson Heights',
-    borough: 'Queens',
-    price: 2500,
-    bedrooms: 0,
-    bathrooms: 1,
-    description: 'Affordable studio in Jackson Heights. First month free, owner pays broker fee. Pets allowed, gym in building, laundry on-site. 7 train.',
-    image_url: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'laundry'],
-    original_url: 'https://streeteasy.com/mock-7',
-    status: 'Active',
-  },
-  {
-    id: 'mock-8',
-    neighborhood: 'Riverdale',
-    borough: 'Bronx',
-    price: 3000,
-    bedrooms: 1,
-    bathrooms: 1,
-    description: 'Large 1-bed in Riverdale with park views. Free month concession on approved credit. Pet-friendly, gym, elevator building. 1 train nearby.',
-    image_url: 'https://images.unsplash.com/photo-1549517045-bc93de630f8b?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'elevator'],
-    original_url: 'https://streeteasy.com/mock-8',
-    status: 'Active',
-  },
-  {
-    id: 'mock-9',
-    neighborhood: 'East Harlem',
-    borough: 'Manhattan',
-    price: 2900,
-    bedrooms: 0,
-    bathrooms: 1,
-    description: 'Sunny studio in East Harlem. Reduced first month, no broker fee. Pet-friendly, gym, central air. Close to 6 train and Central Park.',
-    image_url: 'https://images.unsplash.com/photo-1571508601891-ca5e7a713859?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'air conditioning'],
-    original_url: 'https://streeteasy.com/mock-9',
-    status: 'Active',
-  },
-  {
-    id: 'mock-10',
-    neighborhood: 'Sunnyside',
-    borough: 'Queens',
-    price: 2800,
-    bedrooms: 1,
-    bathrooms: 1,
-    description: '1-bed in Sunnyside Gardens. 1 month free on 12+ month lease. Hardwood floors, updated kitchen, pet-friendly, gym access. 7 train, 25 min to Midtown.',
-    image_url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
-    images: [],
-    pets: 'yes',
-    amenities: ['gym', 'hardwood floors'],
-    original_url: 'https://streeteasy.com/mock-10',
-    status: 'Active',
-  },
-];
-
 // ─── Apify data source ────────────────────────────────────────────────────────
 
 // Client-side rental guard — secondary filter after the server already strips
@@ -654,12 +497,10 @@ function DecisionClientInner() {
         source = 'apify';
       }
 
-      // === SOURCE 3: Mock fallback ===
-      if (rawData.length === 0) {
-        rawData = MOCK_LISTINGS;
-        source = 'mock';
-        console.log('[Steady Debug] All sources empty — using 10 mock listings as fallback');
-      }
+      // No SOURCE 3. The old hardcoded mock fallback served 10 fake listings
+      // with dead streeteasy.com/mock-N links whenever the catalog drained
+      // (which happened twice: 2026-05-19 and 2026-07-17). An honest empty
+      // state beats fake data with broken links.
       console.log(`[Steady Debug] Raw listings: ${rawData.length} (source: ${source})`);
 
       const stats: FilterStats = {
@@ -1020,7 +861,7 @@ function DecisionClientInner() {
                   <h1 className="text-lg font-semibold text-white">No matches right now</h1>
                   <p className="text-sm text-white/55 mt-1 leading-relaxed">
                     {filterStats?.total === 0
-                      ? "The database is empty. Listings will appear as they're scraped."
+                      ? "Our listing catalog is being refreshed right now. Your lines are saved, so check back soon and I'll have places to weigh against them."
                       : "I couldn't find listings that fit your criteria. Let's figure out why."}
                   </p>
                 </div>
