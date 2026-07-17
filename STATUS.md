@@ -7,6 +7,9 @@ Guia calmo e editorial para decidir apartamento em NYC (thesteadyone.com). Quiz 
 ## Estágio
 🟡 VALIDAÇÃO — o produto está no ar; o gargalo é distribuição, não produto.
 
+## Natureza do projeto (reorientação 16/07)
+Produto está RESOLVIDO e não volta a ser trabalho. Daqui pra frente o TSO é um **projeto 100% de marketing/distribuição** — a única categoria de trabalho que existe é trazer gente pro site (vídeos, Reddit, SEO, afiliados). Trabalho de produto, se aparecer, é exceção. (Ritmo semanal = decisão de portfólio separada; hoje em gotejamento pela D-005 do Boat Lux.)
+
 ## Objetivo principal (trimestre)
 Bater a kill metric: até 2026-09-14, ≥300 visitas UTM acumuladas E ≥30 emails capturados. Hit → dobrar na fonte vencedora. Miss → repensar o topo do funil (manter só Reddit + SEO).
 
