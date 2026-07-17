@@ -47,21 +47,30 @@ export const maxDuration = 30;
 // To change actors, edit this line.
 const APIFY_ACTOR_ID = 'memo23~streeteasy-ppr';
 
-// streeteasy.com/for-rent/nyc covers all five boroughs; the collect-side
-// normalizer derives borough from ZIP and rejects anything non-NYC.
-const SEARCH_URL = 'https://streeteasy.com/for-rent/nyc';
+// Borough-specific search URLs. Do NOT use /for-rent/nyc: StreetEasy's "nyc"
+// feed includes New Jersey and a live 200-item run came back 73% NJ (audited
+// 2026-07-17; the ZIP filter caught it, but we were paying for garbage).
+// Per-borough URLs returned 0% NJ with an even five-borough spread.
+const SEARCH_URLS = [
+  'https://streeteasy.com/for-rent/manhattan',
+  'https://streeteasy.com/for-rent/brooklyn',
+  'https://streeteasy.com/for-rent/queens',
+  'https://streeteasy.com/for-rent/bronx',
+  'https://streeteasy.com/for-rent/staten-island',
+];
 
-// Cost control: $0.003/item + $0.006/run start. 200 items every 3 days
+// Cost control: $0.003/item + $0.006/run start. maxItems applies PER START URL
+// (observed live: 30 × 5 URLs → 147 items), so 40 × 5 ≈ 200 items every 3 days
 // ≈ $0.61/run ≈ $6/month. Tune via env.
-const MAX_ITEMS = Number(process.env.STEADY_SE_MAX_ITEMS ?? 200);
+const MAX_ITEMS_PER_BOROUGH = Number(process.env.STEADY_SE_MAX_ITEMS ?? 40);
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    startUrls: [{ url: SEARCH_URL }],
-    maxItems: MAX_ITEMS,
+    startUrls: SEARCH_URLS.map((url) => ({ url })),
+    maxItems: MAX_ITEMS_PER_BOROUGH,
     enrichEmails: false,
     moreResults: false,
   });
