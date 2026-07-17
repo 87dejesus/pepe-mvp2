@@ -11,8 +11,8 @@ const SERIF = 'var(--font-caslon), Georgia, serif';
 // Empire State, Chrysler, water towers. Recognizable landmarks in line-art.
 function Skyline() {
   return (
-    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 120, zIndex: 0, pointerEvents: 'none', opacity: 0.22 }} aria-hidden>
-      <svg viewBox="0 0 420 170" fill="none" stroke="#fff" strokeWidth={1.1} strokeLinejoin="round" strokeLinecap="round" style={{ width: '100%', height: 'auto', display: 'block' }}>
+    <div className="hero-sky" style={{ position: 'absolute', left: 0, right: 0, bottom: 120, zIndex: 0, pointerEvents: 'none', opacity: 0.22 }} aria-hidden>
+      <svg className="hero-sky-svg" viewBox="0 0 420 170" fill="none" stroke="#fff" strokeWidth={1.1} strokeLinejoin="round" strokeLinecap="round" style={{ width: '100%', height: 'auto', display: 'block' }}>
         <g>
           <path d="M12 158 L12 150 L40 150" />
           <path d="M16 158 L16 126 L36 126 L36 158" />
@@ -68,56 +68,109 @@ const PILLARS: [string, string, string][] = [
   ['3', 'NYC down to the train', 'The actual subway line and walk, not a guess.'],
 ];
 
+// Desktop (>=1024px) rearranges the same mobile-first markup into an editorial
+// two-column spread. Mobile keeps the inline styles below untouched — every
+// desktop rule lives inside the media query and never fires on small screens.
+const DESKTOP_CSS = `
+@media (min-width: 1024px) {
+  .hero-mast-in { max-width: 1160px; margin: 0 auto; }
+  .brand-mobile { display: none !important; }
+  .brand-desktop { display: block !important; }
+  .hero-body {
+    padding: 48px 32px 96px !important;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-cols {
+    display: grid; grid-template-columns: 1.08fr 0.92fr;
+    gap: 72px; align-items: center;
+    max-width: 1160px; width: 100%;
+  }
+  .hero-h1 { font-size: 64px !important; }
+  .hero-sub { font-size: 18px !important; max-width: 38ch !important; line-height: 1.6 !important; }
+  .hero-cta-desktop { display: block !important; }
+  .hero-dock { display: none !important; }
+  .hero-sky {
+    bottom: 0 !important; opacity: 0.15 !important;
+    display: flex; justify-content: center;
+  }
+  .hero-sky-svg { width: auto !important; height: 340px !important; }
+}
+`;
+
 export default function Hero() {
   return (
     <section style={{ width: '100%', minHeight: '100dvh', background: NAVY, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
+      <style dangerouslySetInnerHTML={{ __html: DESKTOP_CSS }} />
       <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(255,255,255,.05) 0.7px, transparent 0.7px)', backgroundSize: '4px 4px', opacity: 0.5 }} />
       <Skyline />
 
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* masthead */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px 13px', borderBottom: `1px solid ${LINE}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <Image src="/brand/heed-mascot.png" alt="Heed" width={22} height={30} style={{ height: 30, width: 'auto', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,.4))' }} priority />
-            <span style={{ fontFamily: SERIF, color: '#fff', fontSize: 16, letterSpacing: '.01em' }}>The Steady One</span>
+        <div style={{ padding: '16px 22px 13px', borderBottom: `1px solid ${LINE}` }}>
+          <div className="hero-mast-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="brand-mobile" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <Image src="/brand/heed-mascot.png" alt="Heed" width={22} height={30} style={{ height: 30, width: 'auto', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,.4))' }} priority />
+              <span style={{ fontFamily: SERIF, color: '#fff', fontSize: 16, letterSpacing: '.01em' }}>The Steady One</span>
+            </div>
+            <Image className="brand-desktop" src="/brand/steady-one-white.png" alt="The Steady One" width={91} height={44} style={{ display: 'none', height: 44, width: 'auto', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,.35))' }} />
+            <span style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)' }}>NYC · Rentals</span>
           </div>
-          <span style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)' }}>NYC · Rentals</span>
         </div>
 
         {/* hero */}
-        <div style={{ padding: '32px 22px 8px', flex: 1 }}>
-          <div style={{ color: GREEN, fontSize: 11, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 16 }}>For New York renters</div>
-          <h1 style={{ fontFamily: SERIF, color: '#fff', fontSize: 42, lineHeight: 1.02, fontWeight: 400, letterSpacing: '.2px', marginBottom: 18, textShadow: '0 2px 20px rgba(7,27,48,.6)' }}>
-            Stop scrolling.<br />Start <em style={{ fontStyle: 'italic', color: GREEN }}>deciding.</em>
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,.72)', fontSize: 16, lineHeight: 1.55, maxWidth: '32ch' }}>
-            You don&apos;t need more listings. You need to see the <b style={{ color: '#fff', fontWeight: 600 }}>tradeoffs</b>, hold your <b style={{ color: '#fff', fontWeight: 600 }}>non-negotiables</b>, and commit before it&apos;s gone.
-          </p>
+        <div className="hero-body" style={{ padding: '32px 22px 8px', flex: 1 }}>
+          <div className="hero-cols">
+            <div>
+              <div style={{ color: GREEN, fontSize: 11, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 16 }}>For New York renters</div>
+              <h1 className="hero-h1" style={{ fontFamily: SERIF, color: '#fff', fontSize: 42, lineHeight: 1.02, fontWeight: 400, letterSpacing: '.2px', marginBottom: 18, textShadow: '0 2px 20px rgba(7,27,48,.6)' }}>
+                Stop scrolling.<br />Start <em style={{ fontStyle: 'italic', color: GREEN }}>deciding.</em>
+              </h1>
+              <p className="hero-sub" style={{ color: 'rgba(255,255,255,.72)', fontSize: 16, lineHeight: 1.55, maxWidth: '32ch' }}>
+                You don&apos;t need more listings. You need to see the <b style={{ color: '#fff', fontWeight: 600 }}>tradeoffs</b>, hold your <b style={{ color: '#fff', fontWeight: 600 }}>non-negotiables</b>, and commit before it&apos;s gone.
+              </p>
 
-          <div style={{ margin: '24px 0 0', borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
-            {PILLARS.map(([n, t, d], i) => (
-              <div key={n} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', borderBottom: i < PILLARS.length - 1 ? `1px solid ${LINE}` : 'none' }}>
-                <span style={{ fontFamily: SERIF, color: 'rgba(255,255,255,.32)', fontSize: 18, lineHeight: 1, width: 22, flex: 'none' }}>{n}</span>
+              {/* desktop-only CTA (mobile keeps the bottom dock) */}
+              <div className="hero-cta-desktop" style={{ display: 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 36, flexWrap: 'wrap' }}>
+                  <Link href="/flow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 56, padding: '0 34px', borderRadius: 14, background: GREEN, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 6px 24px rgba(0,166,81,.32)' }}>
+                    Find your steady home →
+                  </Link>
+                  <span style={{ color: 'rgba(255,255,255,.45)', fontSize: 12.5, letterSpacing: '.02em' }}>7 questions · about 2 minutes</span>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 13.5, marginTop: 18 }}>
+                  Already have an account?{' '}
+                  <Link href="/signin" style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 500 }}>Sign in</Link>
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ margin: '24px 0 0', borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
+                {PILLARS.map(([n, t, d], i) => (
+                  <div key={n} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', borderBottom: i < PILLARS.length - 1 ? `1px solid ${LINE}` : 'none' }}>
+                    <span style={{ fontFamily: SERIF, color: 'rgba(255,255,255,.32)', fontSize: 18, lineHeight: 1, width: 22, flex: 'none' }}>{n}</span>
+                    <div>
+                      <div style={{ color: '#fff', fontSize: 14.5, fontWeight: 600 }}>{t}</div>
+                      <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 13, lineHeight: 1.45, marginTop: 2 }}>{d}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Heed strip — frosted so the etching shows through */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0 0', padding: '13px 16px', background: 'rgba(10,37,64,.3)', backdropFilter: 'blur(1px)', WebkitBackdropFilter: 'blur(1px)', border: `1px solid ${LINE}`, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 14px 14px 0' }}>
+                <Image src="/brand/heed-mascot.png" alt="Heed the crocodile" width={44} height={62} style={{ height: 62, width: 'auto', flex: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,.45))' }} />
                 <div>
-                  <div style={{ color: '#fff', fontSize: 14.5, fontWeight: 600 }}>{t}</div>
-                  <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 13, lineHeight: 1.45, marginTop: 2 }}>{d}</div>
+                  <div style={{ fontFamily: SERIF, color: '#fff', fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.4, textShadow: '0 1px 8px rgba(7,27,48,.95), 0 0 2px rgba(7,27,48,.8)' }}>&ldquo;Tell me your lines. I&apos;ll tell you the truth about each place.&rdquo;</div>
+                  <div style={{ color: GREEN, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 700, marginTop: 7 }}>Heed · your guide</div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Heed strip — frosted so the etching shows through */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0 0', padding: '13px 16px', background: 'rgba(10,37,64,.3)', backdropFilter: 'blur(1px)', WebkitBackdropFilter: 'blur(1px)', border: `1px solid ${LINE}`, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 14px 14px 0' }}>
-            <Image src="/brand/heed-mascot.png" alt="Heed the crocodile" width={44} height={62} style={{ height: 62, width: 'auto', flex: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,.45))' }} />
-            <div>
-              <div style={{ fontFamily: SERIF, color: '#fff', fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.4, textShadow: '0 1px 8px rgba(7,27,48,.95), 0 0 2px rgba(7,27,48,.8)' }}>&ldquo;Tell me your lines. I&apos;ll tell you the truth about each place.&rdquo;</div>
-              <div style={{ color: GREEN, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 700, marginTop: 7 }}>Heed · your guide</div>
             </div>
           </div>
         </div>
 
-        {/* CTA dock */}
-        <div style={{ position: 'relative', zIndex: 1, padding: '18px 22px max(26px, env(safe-area-inset-bottom))', background: DEEP, borderTop: `1px solid ${LINE}` }}>
+        {/* CTA dock (mobile only — hidden on desktop) */}
+        <div className="hero-dock" style={{ position: 'relative', zIndex: 1, padding: '18px 22px max(26px, env(safe-area-inset-bottom))', background: DEEP, borderTop: `1px solid ${LINE}` }}>
           <Link href="/flow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 56, borderRadius: 14, background: GREEN, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 6px 24px rgba(0,166,81,.32)' }}>
             Find your steady home →
           </Link>
