@@ -1,28 +1,29 @@
 /**
  * POST /api/apify/sync
  *
- * Fire-and-forget: starts the saswave advanced-apartments-com-scraper run and
- * saves the runId to the sync_runs table, then returns immediately.
- * Results are collected by GET /api/apify/collect (run ~25 min later by cron).
+ * Fire-and-forget: starts the memo23/streeteasy-ppr run and saves the runId to
+ * the sync_runs table, then returns immediately. Results are collected by
+ * GET /api/apify/collect (run ~25 min later by cron).
  *
- * Actor: saswave/advanced-apartments-com-scraper (adopted 2026-06-08). Replaces
- * ParseForge, which returned good data but relied on OUR Apify proxy that
- * apartments.com blocks at any volume (worked at 3 items, blocked at 50).
- * saswave bundles its own proxy infra (no proxyConfiguration input), so the
- * anti-bot problem is the actor's, not ours — a single run pulled 40 listings
- * with no block. Returns numeric rent + public CDN images. See
- * lib/saswave-normalize.ts.
+ * Actor: memo23/streeteasy-ppr (adopted 2026-07-17). Replaces saswave, which
+ * apartments.com hard-blocked starting Jul 1 (every run failed at the first
+ * page fetch; the outage drained the catalog to zero for ~10 days). StreetEasy
+ * is the NYC-native source: real neighborhood names, numeric price, public
+ * photos.zillowstatic.com images, listing URLs NYC renters already trust.
+ * Bundled proxy (its `proxy` input is an optional override), maxItems
+ * supported, actively maintained. Evaluated + live-spiked via
+ * /scraper-provider-evaluator on 2026-07-17. See lib/streeteasy-normalize.ts.
  *
  * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL        (required)
  *   SUPABASE_SERVICE_ROLE_KEY       (preferred — allows write without RLS)
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY   (fallback)
  *   APIFY_TOKEN                     (required)
- *   SASWAVE_MAX_PAGES              (optional — overrides default 5; ~40 listings/page)
+ *   STEADY_SE_MAX_ITEMS             (optional — overrides default 200)
  *
  * NOTE: the actor is hardcoded below (not env-driven). A leftover Vercel env
- * var APIFY_ACTOR_ID was silently forcing the dead epctex actor. Safe to delete
- * that env var in Vercel; it is no longer read.
+ * var APIFY_ACTOR_ID was silently forcing the dead epctex actor once. Safe to
+ * delete that env var in Vercel; it is no longer read.
  *
  * SQL — run once in Supabase before deploying:
  *   CREATE TABLE sync_runs (
@@ -44,24 +45,25 @@ export const maxDuration = 30;
 // silently overrode the actor on 2026-06-07 and kept routing runs to the dead
 // epctex actor. The actor choice belongs in code, not in a forgotten env toggle.
 // To change actors, edit this line.
-const APIFY_ACTOR_ID = 'saswave~advanced-apartments-com-scraper';
+const APIFY_ACTOR_ID = 'memo23~streeteasy-ppr';
 
-// apartments.com/new-york-ny/ surfaces listings across all five boroughs. The
-// collect-side normalizer derives borough from ZIP and rejects non-NYC bleed
-// (Yonkers, Mount Vernon, NJ).
-const SEARCH_URL = 'https://www.apartments.com/new-york-ny/';
+// streeteasy.com/for-rent/nyc covers all five boroughs; the collect-side
+// normalizer derives borough from ZIP and rejects anything non-NYC.
+const SEARCH_URL = 'https://streeteasy.com/for-rent/nyc';
 
-// Cost control: ~$0.001/result, ~40 listings/page. 5 pages ≈ 200 listings every
-// 3 days ≈ $2/month. Tune via env.
-const MAX_PAGES = Number(process.env.SASWAVE_MAX_PAGES ?? 5);
+// Cost control: $0.003/item + $0.006/run start. 200 items every 3 days
+// ≈ $0.61/run ≈ $6/month. Tune via env.
+const MAX_ITEMS = Number(process.env.STEADY_SE_MAX_ITEMS ?? 200);
 
 async function startApifyRun(): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    search_url: SEARCH_URL,
-    max_pages: MAX_PAGES,
+    startUrls: [{ url: SEARCH_URL }],
+    maxItems: MAX_ITEMS,
+    enrichEmails: false,
+    moreResults: false,
   });
 
   const res = await fetch(
