@@ -56,7 +56,7 @@ A broker fee charged to a tenant who never hired a broker is not on that list.
 
 Some brokers found a move around the FARE Act. Before you can tour a unit you found yourself online, they send over an "Exclusive Right to Represent" form or a commission agreement, often with vague terms like "any property" and "one year." Sign it, and on paper YOU hired them. The fee lands back on you.
 
-Here is the part that matters, straight from the city's enforcement guidance: a broker who published the listing with the landlord's permission is **presumed to be the landlord's agent**. Per the [DCWP FARE Act guidance](https://www.nyc.gov/site/dca/about/FARE-Act.page), claiming to be a tenant's broker while listing that same unit violates the law. Signing their form does not legalize the fee. Who the broker really represents is a question of the whole situation, not the paper.
+Here is the part that matters, straight from the city's enforcement guidance: a broker who published the listing with the landlord's permission is **presumed to be the landlord's agent**. Per the [DCWP FARE Act guidance](https://www.nyc.gov/site/dca/about/FAQ-Broker-Fees.page), claiming to be a tenant's broker while listing that same unit violates the law. Signing their form does not legalize the fee. Who the broker really represents is a question of the whole situation, not the paper.
 
 One more thing: agreeing to pay, or even having paid, does not waive your rights. You cannot sign away a consumer protection law by saying ok.
 
@@ -66,7 +66,7 @@ One more thing: agreeing to pay, or even having paid, does not waive your rights
 
 The FARE Act has teeth. The Department of Consumer and Worker Protection enforces it: $750 for a first violation, up to $2,000 for repeat ones. The law also requires the landlord side to give you an itemized, written disclosure of every fee before you sign. That is not a courtesy. It is the law.
 
-**What to do:** Ask for the written fee disclosure. If an illegal fee is charged, report it by calling 311 or filing at the [DCWP site](https://www.nyc.gov/site/dca/about/FARE-Act.page). Keep the listing screenshot and every message.
+**What to do:** Ask for the written fee disclosure. If an illegal fee is charged, report it by calling 311 or filing at the [DCWP site](https://www.nyc.gov/site/dca/about/FAQ-Broker-Fees.page). Keep the listing screenshot and every message.
 
 ## How do I confirm who represents whom?
 
@@ -102,6 +102,6 @@ Agreeing does not waive your rights. If the broker represents the landlord (they
 
 ---
 
-*Sources: [NYC DCWP, FARE Act guidance](https://www.nyc.gov/site/dca/about/FARE-Act.page) · [NYC Council, the FARE Act](https://council.nyc.gov/chi-osse/the-fare-act/)*
+*Sources: [NYC DCWP, FARE Act guidance](https://www.nyc.gov/site/dca/about/FAQ-Broker-Fees.page) · [NYC Council, the FARE Act](https://council.nyc.gov/chi-osse/the-fare-act/)*
 
 *Know your non-negotiables before you tour. [Answer the 7 questions](/flow?utm_source=blog&utm_medium=post&utm_campaign=who-pays-broker-fee-nyc-fare-act-2026), free, and let Heed check every place against your lines.*
