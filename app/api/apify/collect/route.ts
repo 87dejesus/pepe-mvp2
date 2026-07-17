@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { denyIfNotCron } from '@/lib/cron-auth';
 import type { ApifyListing } from '@/lib/apify-normalize';
-import { normalizeSaswaveItem, type SaswaveItem } from '@/lib/saswave-normalize';
+import { normalizeStreetEasyItem, type StreetEasyItem } from '@/lib/streeteasy-normalize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -84,11 +84,10 @@ async function collect() {
     return NextResponse.json({ status: 'pending', runId, runStatus });
   }
 
-  // 3. Fetch dataset items. The saswave actor occasionally crashes mid-run on a
-  // bad page fetch (exit 91), but the items it collected BEFORE the crash are
-  // complete and valid. So we tolerate non-SUCCEEDED runs as long as the dataset
-  // has items, and only bail when there is genuinely nothing to upsert. This
-  // keeps the cron resilient to the actor's intermittent flakiness.
+  // 3. Fetch dataset items. Tolerate non-SUCCEEDED runs as long as the dataset
+  // has items (partial batches are complete, valid rows), and only bail when
+  // there is genuinely nothing to upsert. This kept the cron resilient to the
+  // old actor's flakiness and costs nothing to keep for the new one.
   const itemsRes = await fetch(
     `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true`,
     { cache: 'no-store' }
@@ -99,22 +98,22 @@ async function collect() {
       { status: 500 }
     );
   }
-  const raw: SaswaveItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] saswave: fetched ${raw.length} raw items (run status: ${runStatus})`);
+  const raw: StreetEasyItem[] = await itemsRes.json();
+  console.log(`[Steady Debug] streeteasy: fetched ${raw.length} raw items (run status: ${runStatus})`);
 
   if (raw.length === 0) {
     await db.from('sync_runs').update({ status: 'failed' }).eq('id', syncRunId);
     return NextResponse.json({ status: 'failed', runId, runStatus, reason: 'no items' });
   }
   if (runStatus !== 'SUCCEEDED') {
-    console.warn(`[Steady Debug] saswave run ${runStatus} but has ${raw.length} usable items — processing partial batch`);
+    console.warn(`[Steady Debug] streeteasy run ${runStatus} but has ${raw.length} usable items — processing partial batch`);
   }
 
   // 4. Normalize
   const normalized: ApifyListing[] = raw
-    .map(normalizeSaswaveItem)
+    .map(normalizeStreetEasyItem)
     .filter((x): x is ApifyListing => x !== null);
-  console.log(`[Steady Debug] saswave: normalized ${normalized.length}/${raw.length} items`);
+  console.log(`[Steady Debug] streeteasy: normalized ${normalized.length}/${raw.length} items`);
   console.log(
     '[Normalize Debug]',
     JSON.stringify(
@@ -122,14 +121,18 @@ async function collect() {
     )
   );
 
-  // 5. Upsert to Supabase (neighborhood, pets, description excluded to protect curated data)
+  // 5. Upsert to Supabase. Unlike saswave (whose neighborhood was just the
+  // borough), StreetEasy's areaName is a real neighborhood (Yorkville, NoMad),
+  // so neighborhood and description are now included. pets stays excluded
+  // (this actor doesn't expose it at search level; 'Unknown' would clobber
+  // legacy data for nothing).
   let synced = 0;
   let dbError: string | null = null;
 
   if (normalized.length > 0) {
     const dbRows = normalized.map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ id: _id, amenities: _am, images: _im, neighborhood: _n, pets: _p, description: _d, ...rest }) => rest
+      ({ id: _id, amenities: _am, images: _im, pets: _p, ...rest }) => rest
     );
 
     const seenUrls = new Set<string>();
