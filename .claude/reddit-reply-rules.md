@@ -1,15 +1,21 @@
 # REGRAS DE RESPOSTA NO REDDIT (ler antes de rascunhar qualquer comentário)
 
-## ⛔ FILTRO ZERO — INTENÇÃO (passar ANTES de escrever QUALQUER comentário)
-**NENHUM comentário é "advice aleatório".** Antes de digitar uma palavra, responda:
-> **"Qual a INTENÇÃO deste comentário pro negócio?"**
+## ⛔ FILTRO ZERO — O PSICOLÓGICO (passar ANTES de escrever QUALQUER comentário)
+**O que vendemos é PSICOLÓGICO, não organização de critérios.** Antes de digitar uma palavra:
+> **"Onde está o MEDO/ANSIEDADE deste post, e como faço a pessoa ver que ela JÁ SABE a resposta?"**
 
-Todo comentário TEM que fazer o OP **perceber que precisa descobrir as PRÓPRIAS prioridades/tradeoffs** (= exatamente o que o produto faz) e gerar o "quem é essa pessoa?" que puxa pro perfil.
-- ❌ **NÃO prescrever solução** ("vai de roommates", "mora em Astoria"). Resolver pra ele = ele não precisa pensar = não precisa da gente.
-- ❌ **NÃO dar conselho genérico/prestativo** só pra ajudar ou ser gentil.
-- ✅ **Acender o tradeoff/contradição que ELE não viu e DEVOLVER a decisão pra ele.** (ex.: "sua lista se contradiz nesse orçamento — quais 2 você recusaria abrir mão?")
+**ERRO QUE EU REPITO (parar com isso):** enquadrar como falta de informação — "você não definiu suas prioridades", "sua lista se contradiz", "defina seus critérios". **ERRADO.** A pessoa quase sempre MANDA budget, prazo, lista, tudo. A informação está lá. O que falta é **coragem de confiar no próprio julgamento**. Por isso ela terceiriza a decisão pra estranhos na internet.
 
-Teste final: o comentário faz o OP **PENSAR diferente** (bom) ou só **se sentir melhor / receber a resposta pronta** (esquecível/inútil)? Se não passa no filtro, **NÃO ESCREVA — pule.** Melhor não comentar que postar advice aleatório.
+- ❌ "Você não sabe o que quer" / "defina suas prioridades" → é o ângulo errado, soa genérico e fraco.
+- ✅ **"Você já sabe. Você só não confia."** → esse é o nosso terreno.
+- ✅ Nomear o medo real: decidir sozinho, errar de forma irreversível, ser culpado pelo erro, querer que alguém valide antes de ter permissão pra agir.
+- ❌ NÃO prescrever solução ("vai de roommates", "mora em Astoria") nem dar conselho prestativo genérico.
+
+Exemplos do enquadramento certo:
+- Posts "qual bairro?": *ela já sente o que vai ter que ceder e quer um estranho confirmar, pra não ser culpa dela se der errado.*
+- Posts de planejamento com 2-3 anos: *não é planejamento, é ansiedade querendo alguém dizer que vai dar certo.*
+
+Teste final: o comentário toca no **medo/na confiança** (bom) ou é conselho/critério/reassurance (esquecível)? Se não passa, **NÃO ESCREVA — pule.**
 
 ---
 
