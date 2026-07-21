@@ -22,6 +22,7 @@ Teste final: o comentário toca no **medo/na confiança** (bom) ou é conselho/c
 Estas regras EXISTEM porque a conta já foi flagada 2x como IA e teve post removido. Siga à risca.
 
 1. **CURTO: 2-4 frases, UM ponto.** Nunca um mini-ensaio. Se passou de ~4 frases, corte.
+1b. **A RAIZ DA RECAÍDA: quando eu tenho 4 fatos bons, eu quero entregar os 4.** É aí que volta o formato de guia (blocos organizados, "two other things", "fair warning", "here's what to do"). **Escolha UM — o que realmente destrava — e GUARDE o resto pra réplica.** Se a pessoa responder, solto o segundo. Segurar informação boa não é desperdício, é o que faz parecer gente: ninguém despeja tudo que sabe de uma vez. Ter muito material é justamente o momento de mais perigo, não de mais valor.
 2. **Capitalização normal.** Nada de tudo-minúsculo (é um tell nomeado).
 3. **Um ponto só.** Responda o mais importante; ignore o resto (gente real faz isso).
 4. **Quebre o arco.** Nada de reconhece→explica→reframe→dica. Fale a coisa e pare. Não termine sempre com pergunta.
