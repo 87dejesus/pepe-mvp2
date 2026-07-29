@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Decision chrome — NOW vs PROPOSED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--green-dk:#00913f;--clay:#C8814B;--miss:#d4504a;--subway:#fccc0a;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start;padding:26px 16px;color:#fff}
+  .col{display:flex;flex-direction:column;align-items:center;max-width:430px}
+  .label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+  .label.now{color:#8aa0b2}
+  .label.new{color:var(--green)}
+  .sub{color:rgba(255,255,255,.45);font-size:12px;margin-bottom:14px;text-align:center;max-width:40ch}
+  .phone{width:420px;max-width:100%;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:720px;position:relative}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.10)}
+  .logo{width:28px;height:28px;object-fit:contain}
+  .hgroup{display:flex;align-items:center;gap:14px}
+  .editlink{font-size:12px;color:rgba(255,255,255,.45);text-decoration:underline;text-underline-offset:2px}
+  .editpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:rgba(255,255,255,.8);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
+  .count{font-size:13px;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+  .myplan{font-size:11px;color:rgba(255,255,255,.4)}
+  .myplan.link{color:rgba(255,255,255,.6);text-decoration:underline;text-underline-offset:2px}
+
+  /* your lines strip (proposed, optional) */
+  .lines{display:flex;gap:7px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
+  .chip{flex:none;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:rgba(255,255,255,.82);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+  .chip b{color:#fff;font-weight:600}
+  .chip .ed{color:var(--green);font-weight:700}
+
+  /* condensed card body */
+  .card{margin:14px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.28);flex:1}
+  .ph{height:150px;background:linear-gradient(135deg,#9fb2c2,#6f8597);position:relative}
+  .stamp{position:absolute;top:12px;left:12px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:var(--green);padding:5px 10px;border-radius:999px}
+  .boro{position:absolute;top:12px;right:12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0A2540;background:rgba(255,255,255,.92);padding:5px 10px;border-radius:999px}
+  .cbody{padding:14px 16px;color:#1A1A1A}
+  .verdict{font-family:var(--serif);font-size:21px;line-height:1.15;color:#0A2540}
+  .price{font-family:var(--serif);font-size:24px;color:#0A2540;margin-top:8px}
+  .price small{font-family:var(--ui);font-size:12px;color:#16924f;font-weight:600;margin-left:6px}
+  .mini{margin-top:10px;font-size:12px;color:#666;border-top:1px solid #eee;padding-top:10px}
+  .mini b{color:#0A2540}
+
+  /* bottom nav */
+  .nav{padding:12px;border-top:1px solid rgba(255,255,255,.10);background:var(--deep)}
+  .row{display:flex;gap:8px}
+  .row+.row{margin-top:8px}
+  .btn{height:48px;border-radius:12px;font-weight:700;font-size:14px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .btn.green{background:var(--green);color:#fff;flex:1}
+  .btn.ghost{background:rgba(255,255,255,.07);border:1px solid var(--line);color:rgba(255,255,255,.7);flex:1}
+  .btn.glass{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;flex:1}
+  .btn.arrow{width:50px;flex:none;background:rgba(255,255,255,.06);border:1px solid var(--line);color:rgba(255,255,255,.6);font-size:17px}
+  .navhint{text-align:center;font-size:11px;color:rgba(255,255,255,.38);margin-top:9px}
+
+  .note{margin-top:12px;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.7);max-width:420px}
+  .note .n{display:flex;gap:8px;margin-bottom:7px}
+  .note .n b{color:#fff}
+  .tag{flex:none;width:18px;height:18px;border-radius:5px;background:rgba(0,166,81,.16);border:1px solid rgba(0,166,81,.5);color:var(--green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .tag.warn{background:rgba(200,129,75,.16);border-color:rgba(200,129,75,.5);color:var(--clay)}
+</style>
+</head>
+<body>
+
+  <!-- ============ NOW ============ -->
+  <div class="col">
+    <div class="label now">Now · what's live</div>
+    <div class="sub">The card itself is already on-identity. These are the chrome bits around it.</div>
+    <div class="phone">
+      <header>
+        <img class="logo" src="../../public/brand/heed-mascot.png" alt="">
+        <div class="hgroup">
+          <span class="editlink">← Edit criteria</span>
+          <span class="count">3 / 14 <span style="color:rgba(255,255,255,.35);font-size:11px">(relaxed)</span></span>
+          <span class="myplan">My Plan</span>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="ph"><span class="stamp">Strong match</span><span class="boro">Brooklyn</span></div>
+        <div class="cbody">
+          <div class="verdict">Hits your lines, with one catch.</div>
+          <div class="price">$2,450<small>$350 under your ceiling</small></div>
+          <div class="mini"><b>Scorecard, tradeoff ledger, Heed's take</b> ... (full card below the fold)</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="row">
+          <button class="btn glass">See Listing Details</button>
+          <button class="btn ghost">Maybe Later</button>
+        </div>
+        <div class="row">
+          <button class="btn arrow">←</button>
+          <button class="btn green">Next Listing →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROPOSED ============ -->
+  <div class="col">
+    <div class="label new">Proposed · the chrome polish</div>
+    <div class="sub">Decision voice on the actions, "your lines" strip on top, no native alert.</div>
+    <div class="phone">
+      <header>
+        <img class="logo" src="../../public/brand/heed-mascot.png" alt="">
+        <div class="hgroup">
+          <span class="count">3 / 14</span>
+          <span class="myplan link">Account</span>
+        </div>
+      </header>
+
+      <!-- proposed: your lines strip, always visible, tap a chip to edit -->
+      <div class="lines">
+        <span class="chip">Up to <b>$2,800</b></span>
+        <span class="chip"><b>Brooklyn</b></span>
+        <span class="chip"><b>1 bed</b></span>
+        <span class="chip"><b>Cats ok</b></span>
+        <span class="chip"><span class="ed">Edit ›</span></span>
+      </div>
+
+      <div class="card">
+        <div class="ph"><span class="stamp">Strong match</span><span class="boro">Brooklyn</span></div>
+        <div class="cbody">
+          <div class="verdict">Hits your lines, with one catch.</div>
+          <div class="price">$2,450<small>$350 under your ceiling</small></div>
+          <div class="mini"><b>Scorecard, tradeoff ledger, Heed's take</b> ... (full card below the fold)</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="row">
+          <button class="btn green">Apply to this one</button>
+          <button class="btn ghost">Not for me</button>
+        </div>
+        <div class="row">
+          <button class="btn arrow">←</button>
+          <button class="btn glass">Next place →</button>
+        </div>
+        <div class="navhint">Place 3 of 14 · "Not for me" saves it and moves on</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="n"><span class="tag">1</span><span><b>Decision voice on the buttons.</b> "Apply to this one" / "Not for me" instead of "See Listing Details" / "Maybe Later". Apply still opens the real listing; Not for me still saves a wait and moves on.</span></div>
+      <div class="n"><span class="tag">2</span><span><b>"Your lines" strip.</b> The user's criteria as chips, always visible. Tapping <b>Edit</b> goes to the prefilled /flow. Replaces the tiny "Edit criteria" link.</span></div>
+      <div class="n"><span class="tag warn">3</span><span><b>Kill the native alert.</b> "My Plan" pops a raw browser alert() today. Make it a styled "Account" link (expiry + support) in the navy world.</span></div>
+    </div>
+  </div>
+
+</body>
+</html>
