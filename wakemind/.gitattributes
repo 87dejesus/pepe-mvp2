@@ -1,5 +1,0 @@
-* text=auto eol=lf
-*.pbxproj merge=union linguist-generated=true
-*.png binary
-*.jpg binary
-*.pdf binary
