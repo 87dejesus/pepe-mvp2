@@ -61,11 +61,12 @@ def bg():
     return img, ImageDraw.Draw(img)
 
 def masthead(d):
+    # y pushed down to clear the TikTok top UI safe zone (status bar + tab bar)
     f = F(SANS, 30)
     txt = "T H E   S T E A D Y   O N E"
     w = d.textlength(txt, font=f)
-    d.text(((W-w)/2, 150), txt, font=f, fill=WHITE)
-    d.line([(W/2-90, 210), (W/2+90, 210)], fill=GREEN, width=3)
+    d.text(((W-w)/2, 280), txt, font=f, fill=WHITE)
+    d.line([(W/2-90, 340), (W/2+90, 340)], fill=GREEN, width=3)
 
 def wrap(d, text, font, maxw):
     out, cur = [], ""
@@ -114,14 +115,14 @@ def swipe_hint(d):
 
 def card_hook(text, path_out, hint=True):
     img, d = bg(); masthead(d)
-    center_block(d, text, SERIF, 96, 60, WHITE, top=360, bottom=1380)
+    center_block(d, text, SERIF, 96, 60, WHITE, top=430, bottom=1380)
     if hint: swipe_hint(d)
     img.save(path_out)
 
 def card_statement(text, path_out, green_tail=None):
     img, d = bg(); masthead(d)
     if green_tail:
-        top, bottom = 360, 1430
+        top, bottom = 430, 1430
         wf, wl, wlh = fit(d, text, SERIF, 80, 50, 900, 520)
         gf, gl, glh = fit(d, green_tail, SERIF, 124, 60, 900, 360)
         gap = 56
@@ -130,7 +131,7 @@ def card_statement(text, path_out, green_tail=None):
         y = draw_lines(d, wl, wf, wlh, y, WHITE)
         draw_lines(d, gl, gf, glh, y + gap, GREEN)
     else:
-        center_block(d, text, SERIF, 84, 54, WHITE, top=360, bottom=1430)
+        center_block(d, text, SERIF, 84, 54, WHITE, top=430, bottom=1430)
     img.save(path_out)
 
 def card_numbers(kicker, rows, note, total, sub, path_out):
@@ -175,6 +176,39 @@ def card_cta(benefit, path_out, pill="Link in bio", free=True):
     img.save(path_out)
 
 # ---------- carousels ----------
+
+def _shadow_lines(d, lines, font, lh, y, fill=WHITE):
+    for i, ln in enumerate(lines):
+        w = d.textlength(ln, font=font); x = (W-w)/2
+        d.text((x+3, y+i*lh+3), ln, font=font, fill=(7, 27, 48))  # drop shadow for legibility on photo
+        d.text((x, y+i*lh), ln, font=font, fill=fill)
+    return y + len(lines)*lh
+
+def card_photo_hook(photo_path, text, path_out):
+    """Cover card: real photo, cover-fit to 9:16, dark scrims, hook text + masthead."""
+    img = Image.open(photo_path).convert("RGB")
+    scale = max(W/img.width, H/img.height)
+    img = img.resize((int(img.width*scale), int(img.height*scale)))
+    left = (img.width-W)//2; top = (img.height-H)//2
+    img = img.crop((left, top, left+W, top+H)).convert("RGBA")
+    ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
+    for y in range(H):
+        a_top = 190*max(0.0, 1 - y/980)
+        a_bot = 150*max(0.0, (y-1520)/(H-1520))
+        a = int(max(a_top, a_bot))
+        if a:
+            od.line([(0, y), (W, y)], fill=(7, 27, 48, a))
+    img.alpha_composite(Image.new("RGBA", (W, H), (7, 27, 48, 45)))
+    img.alpha_composite(ov)
+    img = img.convert("RGB"); d = ImageDraw.Draw(img)
+    mf = F(SANS, 30); mt = "T H E   S T E A D Y   O N E"; mw = d.textlength(mt, font=mf)
+    d.text(((W-mw)/2, 280), mt, font=mf, fill=WHITE)
+    d.line([(W/2-90, 340), (W/2+90, 340)], fill=GREEN, width=3)
+    f, lines, lh = fit(d, text, SERIF, 100, 58, 900, 540)
+    _shadow_lines(d, lines, f, lh, 430, WHITE)
+    sf = F(SANS, 30); st = "S W I P E   >"; sw = d.textlength(st, font=sf)
+    d.text(((W-sw)/2, 1745), st, font=sf, fill=GREEN)
+    img.save(path_out)
 
 def build(slug, cards):
     out = f"docs/carousels/{slug}"
@@ -229,6 +263,50 @@ build("04_boroughs", [
     lambda p: card_statement("The Bronx, the most space per dollar.", p, green_tail="The city's lowest rents."),
     lambda p: card_statement("Your budget is fixed. The tradeoff is yours: space, location, or commute.", p, green_tail="Which line won't you cross?"),
     lambda p: card_cta("Heed takes your budget and your lines, then shows the places that actually fit.", p),
+])
+
+# 5) Co-living vs your own place (decision / tradeoff -> core)
+build("05_coliving", [
+    lambda p: card_hook("That 'studio' might actually be a room with three strangers.", p),
+    lambda p: card_statement("A lot of NYC listings that look like a studio or 1BR are really a private room in a shared or co-living apartment.", p),
+    lambda p: card_statement("Co-living: your own room, shared kitchen and living room.", p, green_tail="You lease the room, not the place."),
+    lambda p: card_statement("The upside: cheaper, often furnished, looser income rules, and usually no guarantor.", p),
+    lambda p: card_statement("The catch: roommates you didn't pick, less privacy, and house rules that aren't yours.", p),
+    lambda p: card_statement("Neither is wrong. It's a tradeoff: price and ease, or space and privacy.", p, green_tail="Which one is your line?"),
+    lambda p: card_cta("Heed asks this up front, then shows only the kind of place you actually want.", p),
+])
+
+# 6) Hidden costs (photo cover test, force #1, regret angle -> core)
+build("06_hiddencosts", [
+    lambda p: card_photo_hook("docs/assets/cover_hiddencosts.png", "In NYC, the rent is the cheap part.", p),
+    lambda p: card_statement("The rent is the number you compare. The costs around it are what wreck the budget.", p),
+    lambda p: card_statement("Utilities, heat, and internet, often not included.", p),
+    lambda p: card_statement("Laundry, amenity, and parking fees that never show in the listing.", p),
+    lambda p: card_statement("Plus the move-in cash: first month and a one month deposit, due at once.", p),
+    lambda p: card_statement("Cheap rent with hidden costs isn't cheap.", p, green_tail="Compare the real monthly, not the sticker."),
+    lambda p: card_cta("Heed shows the real monthly cost on every place you weigh.", p),
+])
+
+# 7) Don't pay before you verify (photo cover; FTC 2025 data + the real risk)
+build("07_timing", [
+    lambda p: card_photo_hook("docs/assets/cover_street.png", "An apartment can get taken. That's not the part that should scare you.", p),
+    lambda p: card_statement("Yes, a good place can go fast. Competition is real. But losing one only costs you time.", p),
+    lambda p: card_statement("The real risk is paying or signing before you've seen it in person and confirmed it's real.", p, green_tail="That's the costly mistake."),
+    lambda p: card_statement("The FTC counts $65 million lost to rental scams. The typical hit: $1,000, paid before ever seeing the place.", p),
+    lambda p: card_statement("And renters 18 to 29 get hit 3x more often.", p, green_tail="First apartment, highest risk."),
+    lambda p: card_statement("Move fast if a place fits your lines. Just never pay or sign before an in-person check.", p, green_tail="That's the one line you don't cross."),
+    lambda p: card_cta("Heed sets your lines and the checks to run before you commit.", p),
+])
+
+# 8) Dealbreakers are personal (from reddit-insights copy-bank, real renter quotes)
+build("08_dealbreakers", [
+    lambda p: card_hook("Stop borrowing other people's dealbreakers.", p),
+    lambda p: card_statement('"Lack of natural light is a HARD NO. I need houseplants to survive the concrete jungle."', p),
+    lambda p: card_statement('"I don\'t care as much about looks or natural light."', p),
+    lambda p: card_statement("Same feature. Opposite answers. Both right.", p, green_tail="Your list isn't theirs."),
+    lambda p: card_statement("A pros-and-cons list won't decide it. It weighs 'second bathroom' the same as 'my sanity.'", p),
+    lambda p: card_statement("The fix is knowing your 2 or 3 hard lines before you tour.", p, green_tail="Decide them calm, on paper."),
+    lambda p: card_cta("Heed turns your hard lines into a filter, then scores every place against them.", p),
 ])
 
 print("DONE")

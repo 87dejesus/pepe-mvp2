@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 25
-**Last updated:** 2026-07-17 (INCIDENT CLOSED: migrated to memo23/streeteasy-ppr, catalog restored to 218 active across all 5 boroughs; PRs #37+#38)
+**Revision:** 26
+**Last updated:** 2026-08-10 (repo audit after the desktop failure: main was fully in sync; recovered 15 orphaned marketing commits from `claude/steady-one-marketing-plan-qbujnx`)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -197,6 +197,21 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 - Old discovery reports archived in `docs/archive/`.
 
 ## 13. Incident log
+
+### 2026-08-10 — Repo audit after the desktop failure (no data lost)
+
+**Context:** the founder's desktop broke around 2026-07-28 and work resumed on a laptop. Full fine-tooth audit of every branch, tag and PR on `github.com/87dejesus/pepe-mvp2` to confirm nothing was stranded.
+
+**Findings:**
+- `main` tip is `3c6599c` (2026-07-28, "salvage untracked capture script..."). Nothing was left uncommitted or unpushed. All 44 PRs are closed/merged; none open.
+- **Newest activity (2026-08-04/05) is not this product.** Branch `claude/wakemind-product-discovery-1i2qlo` holds 6 WakeMind discovery commits whose last 3 commits delete everything after migration to the separate repo `87dejesus/wakemind` (confirmed to exist, last push 2026-08-05 02:34, after the cleanup). Net diff vs `main`: zero files. Nothing to bring over.
+- **The one real gap:** `claude/steady-one-marketing-plan-qbujnx` merged into `main` only up to PR #31 (2026-06-16). Its next **15 commits (2026-06-16 → 07-01) never merged**, orphaning `docs/GROWTH_ROADMAP.md`, `docs/assets/Steady_One_Plano_Marketing.pdf`, 8 NYC cover photos, carousels `05_coliving` through `09_whystay` (35 PNGs), `scripts/gen_magic.py`, the photo-cover + TikTok-safe-zone rewrite of `scripts/gen_cards.py`, and the emotional-copy rule in `MARKETING_CONTEXT.md`. **Recovered 2026-08-10.**
+- **Verified no Reddit work was lost:** `docs/reddit-insights/copy-bank.md` on `main` is a strict superset of the `reconcile/*` and `content/seo-aeo-batch-jun2026` copies (zero exclusive lines). The Filtro Zero in `.claude/reddit-reply-rules.md` on `main` is the newer "PSICOLÓGICO" reframe that deliberately replaced the older "INTENÇÃO" version still sitting on those branches. Tag `reddit-reconcile-jul17`: 0 commits outside `main`.
+- **23 stale branches** (`claude/*`, `hotfix/*`, Jan–Jun) share no merge base with `main` (history was rewritten at some point) and contain no exclusive files. Safe to delete.
+
+**Also corrected during recovery:** `MARKETING_CONTEXT.md` still listed the co-living and hidden-costs carousels as pending when both had been generated, and pointed at `content/seo-aeo-batch-jun2026` for `docs/reddit-insights/` which has lived on `main` since PR #39.
+
+**Lesson:** a feature branch can be merged once and then keep receiving commits that nobody merges again. Check `git log origin/main..<branch>` before abandoning a branch, not just whether its PR shows merged.
 
 ### 2026-05-19 — Scraper double failure (resolved same day)
 
