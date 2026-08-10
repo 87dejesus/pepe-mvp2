@@ -53,3 +53,7 @@ nul
 steady-one-videos/
 videos/
 app-screens/
+
+# Python
+__pycache__/
+*.pyc

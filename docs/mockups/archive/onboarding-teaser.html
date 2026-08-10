@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Onboarding teaser — locked Truth Panel (the conversion lever)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0A2540;--deep:#071b30;--green:#00A651;--green-dk:#00913f;--clay:#C8814B;--line:rgba(255,255,255,.14);
+        --serif:"Libre Caslon Display",Georgia,serif;--ui:"Inter",system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0c1a26;font-family:var(--ui);display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px 16px}
+  .label{color:#8aa0b2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;text-align:center;max-width:420px}
+  .phone{width:100%;max-width:420px;background:var(--navy);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .head{padding:16px 20px 8px;text-align:center;border-bottom:1px solid var(--line)}
+  .head .k{color:var(--green);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}
+  .head h1{font-family:var(--serif);color:#fff;font-size:22px;font-weight:400;line-height:1.15}
+  .head p{color:rgba(255,255,255,.55);font-size:13px;margin-top:7px}
+
+  /* free part — the match */
+  .photo{position:relative;height:150px;background:#16384f}
+  .photo img{width:100%;height:100%;object-fit:cover;opacity:.92}
+  .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,27,48,.1),rgba(7,27,48,0) 40%,rgba(7,27,48,.85))}
+  .boro{position:absolute;top:12px;left:12px;background:rgba(7,27,48,.72);color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+  .stamp{position:absolute;top:12px;right:12px;background:var(--green);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 11px;border-radius:999px}
+  .meta{padding:14px 20px}
+  .meta .v{font-family:var(--serif);color:#fff;font-size:21px}
+  .meta .price{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+  .meta .price .n{font-family:var(--serif);color:#fff;font-size:20px}.meta .price .p{color:rgba(255,255,255,.5);font-size:12px}
+  .meta .price .d{margin-left:auto;color:var(--green);font-size:12px;font-weight:600}
+  .nn{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 20px 14px}
+  .nn .row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .nn .tk{width:16px;height:16px;border-radius:999px;background:var(--green);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+  .nn .t{font-size:12px;color:#fff;font-weight:600}
+
+  /* locked truth panel */
+  .lockwrap{position:relative}
+  .locked{padding:14px 20px 26px;filter:blur(3px);opacity:.5;pointer-events:none;user-select:none}
+  .seclabel{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:12px}
+  .trow{display:flex;gap:10px;padding:9px 0;align-items:center}
+  .trow .ic{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+  .trow .tt{font-size:13px;color:#fff;font-weight:600}
+
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;background:linear-gradient(180deg,rgba(10,37,64,0) 0%,rgba(10,37,64,.78) 30%,rgba(7,27,48,.96) 100%)}
+  .lockchip{display:flex;align-items:center;gap:7px;color:#fff;font-size:13px;font-weight:600}
+  .lockchip .pad{width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  .overlay h2{font-family:var(--serif);color:#fff;font-size:21px;font-weight:400;text-align:center;line-height:1.2;max-width:30ch}
+  .overlay .sub{color:rgba(255,255,255,.6);font-size:13px;text-align:center;max-width:30ch;line-height:1.5}
+
+  .dock{padding:0 20px 22px}
+  .cta{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px;border-radius:14px;background:var(--green);color:#fff;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,166,81,.34)}
+  .cta small{font-weight:500;font-size:12px;opacity:.85;margin-top:1px}
+  .fine{text-align:center;color:rgba(255,255,255,.4);font-size:11.5px;margin-top:11px}
+  .heed{display:flex;align-items:center;gap:9px;justify-content:center;margin-top:13px;color:rgba(255,255,255,.55);font-size:12px}
+  .heed img{height:30px;width:auto}
+</style>
+</head>
+<body>
+  <div class="label">Onboarding teaser · the match is free, the truths are the paywall</div>
+  <div class="phone">
+    <div class="head">
+      <div class="k">1 of 38 matches</div>
+      <h1>You match this one. Now the part that matters.</h1>
+      <p>Heed checked 5 things this listing hides. See them before you commit.</p>
+    </div>
+
+    <!-- FREE: the match (builds desire) -->
+    <div class="photo">
+      <span class="boro">Brooklyn</span><span class="stamp">★ Strong match</span>
+      <img src="https://images1.apartments.com/i2/MO4fr7jIBOgJUZaeWRa9_vxIBENYwYX50i2Bs6fslbY/111/371-95th-st-brooklyn-ny-primary-photo.jpg" alt="371 95th St">
+    </div>
+    <div class="meta">
+      <div class="v">A steady pick in Bay Ridge.</div>
+      <div class="price"><span class="n">$1,650</span><span class="p">/ mo</span><span class="d">$350 under your ceiling</span></div>
+    </div>
+    <div class="nn">
+      <div class="row"><span class="tk">✓</span><span class="t">Budget</span></div>
+      <div class="row"><span class="tk">✓</span><span class="t">1 bed · exact</span></div>
+      <div class="row"><span class="tk">✓</span><span class="t">Brooklyn</span></div>
+      <div class="row"><span class="tk">✓</span><span class="t">Pets ok</span></div>
+    </div>
+
+    <!-- LOCKED: the truths (the paid value) -->
+    <div class="lockwrap">
+      <div class="locked">
+        <div class="seclabel">Before you commit · what Heed checked</div>
+        <div class="trow"><span class="ic">🧮</span><span class="tt">Will you qualify · ≈ $66,000 / yr</span></div>
+        <div class="trow"><span class="ic">💸</span><span class="tt">Real cost to move in · ≈ $3,300</span></div>
+        <div class="trow"><span class="ic">🛡️</span><span class="tt">Scam check · priced in range</span></div>
+        <div class="trow"><span class="ic">🏛️</span><span class="tt">Rent-stabilized? · worth checking</span></div>
+      </div>
+      <div class="overlay">
+        <div class="lockchip"><span class="pad">🔒</span> The truths are behind the paywall</div>
+        <h2>Unlock the honest read on all 38 of your matches.</h2>
+        <div class="sub">Qualify? Real move-in cost? Scam check? The fine print to ask. On every place.</div>
+      </div>
+    </div>
+
+    <div class="dock">
+      <div class="cta">Unlock my matches <small>$9.49 · one-time, 30 days</small></div>
+      <div class="fine">No subscription. One honest read on every place you're considering.</div>
+      <div class="heed"><img src="../../public/brand/heed-mascot.png" alt="Heed"> Heed already did the digging.</div>
+    </div>
+  </div>
+</body>
+</html>
