@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 26
-**Last updated:** 2026-08-10 (repo audit after the desktop failure: main was fully in sync; recovered 15 orphaned marketing commits from `claude/steady-one-marketing-plan-qbujnx`)
+**Revision:** 27
+**Last updated:** 2026-08-10 (leaked Supabase `service_role` key found in a public legacy repo — remediation pending; repo cleanup: all 43 stale branches deleted, dead subscription scaffolding removed)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -198,6 +198,47 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 ## 13. Incident log
 
+### 2026-08-10 — Supabase `service_role` key leaked in a public repo (REMEDIATION PENDING)
+
+**Severity: high. Not yet resolved — see "Required actions" below.**
+
+**What leaked:** `github.com/87dejesus/jacare-pepe-automacao` (PUBLIC, created 2025-11-22, last push 2025-11-26) contains `pepe_scraper.py` with the Supabase `service_role` JWT hardcoded in plaintext, alongside the project URL.
+
+**Confirmed to be the live project:** the token's `ref` claim is `sjlcecjluuyrqwznwkcg`, the same project ref used by `.env.local` and every Supabase call in this repo. Token claims: `role: service_role`, issued 2025-11-17, **expires 2035-11-17**. `service_role` bypasses RLS entirely — full read/write/delete on `listings` and on auth users.
+
+**Exposure window:** ~9 months public. Assume compromised; GitHub is continuously scraped for credentials.
+
+**Why deleting the repo does not fix it:** the key is in git history and has been publicly indexed. Only revocation on the Supabase side ends the exposure.
+
+**Required actions (founder — dashboard work, not automatable here):**
+1. Supabase → Settings → API Keys → "Publishable and secret API keys" tab → create both new keys. Non-breaking: they coexist with the legacy keys.
+2. Vercel → replace `NEXT_PUBLIC_SUPABASE_ANON_KEY` (→ publishable) and `SUPABASE_SERVICE_ROLE_KEY` (→ secret) → redeploy.
+3. Verify Apify sync, OTP sign-in and `/decision` still work.
+4. Supabase → **deactivate the legacy keys.** This is the step that actually kills the leaked key. Reversible if something was missed.
+5. Only then delete `jacare-pepe-automacao`.
+
+**Important constraint:** legacy `anon`/`service_role` keys can **no longer be rotated** — Supabase removed that. Migration to publishable/secret keys is the only path. Legacy keys are deprecated platform-wide at end of 2026, so this is required work regardless. Note that deactivating legacy keys kills the `anon` key too, so both must be swapped together or the site breaks.
+
+**The leaked repo itself has zero value:** a broken Colab-era Scrapy test scraping `quotes.toscrape.com` into a table `ofertas` that no longer exists (current table is `listings`). Not worth preserving.
+
+**Also found while auditing Vercel env vars (both still open):**
+- Vercel flags 6 secrets with "Needs Attention" — they are not marked **Sensitive**, so their values are still readable in the dashboard: `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `APIFY_TOKEN` (×2 scopes), `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`. Marking a var Sensitive requires deleting and re-adding it, only works in Production/Preview (not Development), and makes the value permanently unreadable — **save values first**. Do this only after the key migration above, or the work is repeated.
+- `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` exists in Vercel but is referenced nowhere in the codebase. Dead.
+
+**Lesson:** the pre-rewrite Pepe lineage predates any secret hygiene. Any other repo from that era must be assumed to carry live credentials until read line by line.
+
+### 2026-08-10 — Repo cleanup: dead branches and abandoned subscription scaffolding
+
+**Branches:** all 43 stale remote branches deleted (26 orphan `claude/*`/`hotfix/*` from the pre-rewrite lineage, plus 17 post-rewrite branches whose content was verified already merged). Every one was tagged `archive/<branch>` and the tags pushed first, so deletion is fully reversible: `git push origin archive/<branch>:refs/heads/<branch>`. `origin/main` is now the only branch.
+
+**Verification method (worth reusing):** `git diff --diff-filter=A main <branch>` returned **zero files unique to any branch**. Lines that appeared "extra" on a branch were older versions of files `main` had since evolved — e.g. `.claude/reddit-reply-rules.md` on the branches still held the superseded "FILTRO ZERO — INTENÇÃO" version. Comparing merge-base (`main...branch`) alone is misleading; the direct two-dot diff is what settles it.
+
+**Deleted dead code:** `skills/subscription-engine/` (5 files) and `skills/access-control-middleware/` (4 files). Both implemented the abandoned weekly-subscription model — `stripe-plan.json` was a ready-to-use recipe for `mode: "subscription"`, $2.49/week, 3-day trial, table `subscriptions`, contradicting critical rules 1 and 2. Nothing in `app/`, `components/` or `lib/` imported them, `skills/` is excluded from `tsconfig.json`, and there is no root `middleware.ts`, so none of it ever ran. `tsc --noEmit` passes clean after removal.
+
+**Why it mattered:** `SKILL.md` files are loaded as agent instructions. Stale ones can silently override the canonical record in a future session — exactly what the "no doc may contradict PROJECT_BRIEF.md" rule exists to prevent.
+
+**The live payment path was verified correct and untouched:** `app/api/stripe/create-checkout/route.ts` uses `mode: 'payment'`, and `app/api/webhooks/stripe/route.ts` handles the one-time case (`session.subscription === null` → grant 30 days, persisted to `users`).
+
 ### 2026-08-10 — Repo audit after the desktop failure (no data lost)
 
 **Context:** the founder's desktop broke around 2026-07-28 and work resumed on a laptop. Full fine-tooth audit of every branch, tag and PR on `github.com/87dejesus/pepe-mvp2` to confirm nothing was stranded.
@@ -207,7 +248,7 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 - **Newest activity (2026-08-04/05) is not this product.** Branch `claude/wakemind-product-discovery-1i2qlo` holds 6 WakeMind discovery commits whose last 3 commits delete everything after migration to the separate repo `87dejesus/wakemind` (confirmed to exist, last push 2026-08-05 02:34, after the cleanup). Net diff vs `main`: zero files. Nothing to bring over.
 - **The one real gap:** `claude/steady-one-marketing-plan-qbujnx` merged into `main` only up to PR #31 (2026-06-16). Its next **15 commits (2026-06-16 → 07-01) never merged**, orphaning `docs/GROWTH_ROADMAP.md`, `docs/assets/Steady_One_Plano_Marketing.pdf`, 8 NYC cover photos, carousels `05_coliving` through `09_whystay` (35 PNGs), `scripts/gen_magic.py`, the photo-cover + TikTok-safe-zone rewrite of `scripts/gen_cards.py`, and the emotional-copy rule in `MARKETING_CONTEXT.md`. **Recovered 2026-08-10.**
 - **Verified no Reddit work was lost:** `docs/reddit-insights/copy-bank.md` on `main` is a strict superset of the `reconcile/*` and `content/seo-aeo-batch-jun2026` copies (zero exclusive lines). The Filtro Zero in `.claude/reddit-reply-rules.md` on `main` is the newer "PSICOLÓGICO" reframe that deliberately replaced the older "INTENÇÃO" version still sitting on those branches. Tag `reddit-reconcile-jul17`: 0 commits outside `main`.
-- **23 stale branches** (`claude/*`, `hotfix/*`, Jan–Jun) share no merge base with `main` (history was rewritten at some point) and contain no exclusive files. Safe to delete.
+- **23 stale branches** (`claude/*`, `hotfix/*`, Jan–Jun) share no merge base with `main` (history was rewritten at some point) and contain no exclusive files. Safe to delete. **Done 2026-08-10** — deleted (26 branches by `scripts/cleanup-orphan-branches.sh`, tagged `archive/*` first); see the repo-cleanup entry above.
 
 **Also corrected during recovery:** `MARKETING_CONTEXT.md` still listed the co-living and hidden-costs carousels as pending when both had been generated, and pointed at `content/seo-aeo-batch-jun2026` for `docs/reddit-insights/` which has lived on `main` since PR #39.
 
