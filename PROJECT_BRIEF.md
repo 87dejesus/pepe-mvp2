@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 27
-**Last updated:** 2026-08-10 (leaked Supabase `service_role` key found in a public legacy repo — remediation pending; repo cleanup: all 43 stale branches deleted, dead subscription scaffolding removed)
+**Revision:** 28
+**Last updated:** 2026-08-10 (leaked Supabase `service_role` key **revoked and verified dead** — migrated to publishable/secret keys; repo cleanup: all 43 stale branches deleted, dead subscription scaffolding removed)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -152,8 +152,8 @@ Apply on every UI change without being asked.
 
 ```
 NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SUPABASE_ANON_KEY   (value is now sb_publishable_* — name kept for compatibility)
+SUPABASE_SERVICE_ROLE_KEY       (value is now sb_secret_*     — name kept for compatibility)
 STRIPE_SECRET_KEY              (sk_live_*)
 STRIPE_WEBHOOK_SECRET
 APIFY_TOKEN
@@ -198,9 +198,9 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 ## 13. Incident log
 
-### 2026-08-10 — Supabase `service_role` key leaked in a public repo (REMEDIATION PENDING)
+### 2026-08-10 — Supabase `service_role` key leaked in a public repo (RESOLVED same day)
 
-**Severity: high. Not yet resolved — see "Required actions" below.**
+**Severity: high. Remediated and verified 2026-08-10 — the leaked key is revoked.**
 
 **What leaked:** `github.com/87dejesus/jacare-pepe-automacao` (PUBLIC, created 2025-11-22, last push 2025-11-26) contains `pepe_scraper.py` with the Supabase `service_role` JWT hardcoded in plaintext, alongside the project URL.
 
@@ -210,19 +210,31 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 **Why deleting the repo does not fix it:** the key is in git history and has been publicly indexed. Only revocation on the Supabase side ends the exposure.
 
-**Required actions (founder — dashboard work, not automatable here):**
-1. Supabase → Settings → API Keys → "Publishable and secret API keys" tab → create both new keys. Non-breaking: they coexist with the legacy keys.
-2. Vercel → replace `NEXT_PUBLIC_SUPABASE_ANON_KEY` (→ publishable) and `SUPABASE_SERVICE_ROLE_KEY` (→ secret) → redeploy.
-3. Verify Apify sync, OTP sign-in and `/decision` still work.
-4. Supabase → **deactivate the legacy keys.** This is the step that actually kills the leaked key. Reversible if something was missed.
-5. Only then delete `jacare-pepe-automacao`.
+**Remediation performed (2026-08-10, in this order):**
+1. Supabase → Settings → API Keys → "Publishable and secret API keys" → created `sb_publishable_*` and `sb_secret_*`. Non-breaking: they coexist with the legacy keys.
+2. Vercel → `NEXT_PUBLIC_SUPABASE_ANON_KEY` → publishable, `SUPABASE_SERVICE_ROLE_KEY` → secret. Variable **names unchanged**, values only. Redeployed.
+3. Verified both halves before removing the safety net (see below).
+4. Supabase → **"Disable JWT-based API keys"** — the step that actually killed the leaked key.
+5. Deleted `jacare-pepe-automacao` — **verified gone via `gh repo view` returning not-found**, not assumed. Also deleted `pepe-mvp-cliques`, the other legacy public repo (audited first: 179 commits scanned across full history, no credential in any of them, no GitHub Pages, 0 forks — a static Florida/Chicago listings site from a different product).
 
-**Important constraint:** legacy `anon`/`service_role` keys can **no longer be rotated** — Supabase removed that. Migration to publishable/secret keys is the only path. Legacy keys are deprecated platform-wide at end of 2026, so this is required work regardless. Note that deactivating legacy keys kills the `anon` key too, so both must be swapped together or the site breaks.
+**End state:** the account holds 9 repos, all cloned on the working laptop, and `pepe-mvp2` is the only public one. The entire pre-rewrite Pepe lineage is gone.
+
+**Verification evidence:**
+- **Publishable key live:** `sb_publishable_fiFQi5cP…` found in the deployed JS chunks for `/signin`, `/decision` and `/paywall`. Since the anon key is public by design it is embedded in the client bundle, which makes "did the env swap actually deploy?" directly checkable from outside — no dashboard access needed.
+- **Secret key live:** `/api/cron/watchdog` returned 200. That route builds its own client from `SUPABASE_SERVICE_ROLE_KEY` and only does `select('id', { count: 'exact', head: true })` on `listings` — a pure read with no side effects, which makes it the correct probe for the server key. Confirmed 200 both before and after step 4.
+- **Leaked key dead:** `GET /rest/v1/listings?select=id&limit=1` on the project REST endpoint, using the leaked token as both `apikey` and bearer, returned **HTTP 401**. This is the proof that matters; everything else is secondary.
+- Site up throughout: `/`, `/signin`, `/decision` all 200.
+
+**Trap worth remembering — signing in does NOT test the service key.** `app/api/auth/access-status/route.ts` returns early at the `FREE_ACCESS` branch, *before* `createSupabaseServiceClient()` is reached. A successful OTP login therefore proves the publishable key and the mail path only. Use the watchdog cron to exercise the server key.
+
+**Important constraint:** legacy `anon`/`service_role` keys can **no longer be rotated** — Supabase removed that. Migration to publishable/secret keys is the only path. Legacy keys are deprecated platform-wide at end of 2026, so this was required work regardless. Deactivating legacy keys kills the `anon` key too, so both had to be swapped together or the site would break.
+
+**Process error to avoid repeating:** the first version of this entry was committed and merged to `main` *while the key was still live*. This repo is **public**, so the write-up itself published the leaked key's location, project ref and validity window before remediation. Security incidents affecting a public repo must be remediated first and written up second, or the write-up becomes part of the exposure.
 
 **The leaked repo itself has zero value:** a broken Colab-era Scrapy test scraping `quotes.toscrape.com` into a table `ofertas` that no longer exists (current table is `listings`). Not worth preserving.
 
-**Also found while auditing Vercel env vars (both still open):**
-- Vercel flags 6 secrets with "Needs Attention" — they are not marked **Sensitive**, so their values are still readable in the dashboard: `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `APIFY_TOKEN` (×2 scopes), `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`. Marking a var Sensitive requires deleting and re-adding it, only works in Production/Preview (not Development), and makes the value permanently unreadable — **save values first**. Do this only after the key migration above, or the work is repeated.
+**Still open — follow-ups from the same audit:**
+- **Mark the 6 secrets as Sensitive in Vercel.** They carry a "Needs Attention" badge because their values are still readable in the dashboard: `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `APIFY_TOKEN` (×2 scopes), `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`. Marking a var Sensitive requires deleting and re-adding it, only works in Production/Preview (not Development — the vars are currently "All Environments", so the scope must be narrowed), and makes the value permanently unreadable afterwards — **save the values elsewhere first**. Now is the right time: the key values have stopped changing.
 - `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` exists in Vercel but is referenced nowhere in the codebase. Dead.
 
 **Lesson:** the pre-rewrite Pepe lineage predates any secret hygiene. Any other repo from that era must be assumed to carry live credentials until read line by line.
