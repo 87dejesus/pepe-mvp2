@@ -215,7 +215,7 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 2. Vercel → `NEXT_PUBLIC_SUPABASE_ANON_KEY` → publishable, `SUPABASE_SERVICE_ROLE_KEY` → secret. Variable **names unchanged**, values only. Redeployed.
 3. Verified both halves before removing the safety net (see below).
 4. Supabase → **"Disable JWT-based API keys"** — the step that actually killed the leaked key.
-5. Deleted `jacare-pepe-automacao`.
+5. **Not done yet:** deleting `jacare-pepe-automacao`. Harmless now — the key it contains returns 401 — but the repo should still go. Same for `pepe-mvp-cliques` (audited 2026-08-10: 179 commits, no credential in any of them, no GitHub Pages, 0 forks; it is a static Florida/Chicago listings site from a different product).
 
 **Verification evidence:**
 - **Publishable key live:** `sb_publishable_fiFQi5cP…` found in the deployed JS chunks for `/signin`, `/decision` and `/paywall`. Since the anon key is public by design it is embedded in the client bundle, which makes "did the env swap actually deploy?" directly checkable from outside — no dashboard access needed.
@@ -232,6 +232,7 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 **The leaked repo itself has zero value:** a broken Colab-era Scrapy test scraping `quotes.toscrape.com` into a table `ofertas` that no longer exists (current table is `listings`). Not worth preserving.
 
 **Still open — follow-ups from the same audit:**
+- **Delete the two legacy public repos:** `jacare-pepe-automacao` (held the leaked key; now inert) and `pepe-mvp-cliques` (audited clean). Neither has dependents.
 - **Mark the 6 secrets as Sensitive in Vercel.** They carry a "Needs Attention" badge because their values are still readable in the dashboard: `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `APIFY_TOKEN` (×2 scopes), `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`. Marking a var Sensitive requires deleting and re-adding it, only works in Production/Preview (not Development — the vars are currently "All Environments", so the scope must be narrowed), and makes the value permanently unreadable afterwards — **save the values elsewhere first**. Now is the right time: the key values have stopped changing.
 - `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` exists in Vercel but is referenced nowhere in the codebase. Dead.
 
