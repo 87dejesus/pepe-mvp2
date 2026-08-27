@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 29
-**Last updated:** 2026-08-10 (session close: leaked Supabase `service_role` key **revoked and verified dead**, both legacy public repos deleted, 43 stale branches removed, dead subscription scaffolding removed. Next session opens with the Vercel Sensitive-secrets task in §6.)
+**Revision:** 30
+**Last updated:** 2026-08-26 (created and thumbnail-verified the TikTok cover for the rent-increase talking-head video; reusable PIL script and final PNG live in `C:\Users\Luhci\Videos\TSO-video1\`.)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -121,6 +121,7 @@ Apply on every UI change without being asked.
   - **Ep 1 (FARE Act / broker fee) POSTED to TikTok 2026-07-07.** Edited via video-use skill (13 takes → 70s best-take cut, captions, brand end-card with Link in bio).
   - **Ep 2 (the $500 scam) FINAL ready 2026-07-08** (`videos/steady-rules-ep1/steady-rules-ep2-FINAL.mp4`) — first ep with narration-synced animated list ("3 RED FLAGS" card, app-onboarding style) + smaller column captions. Post ~2026-07-09/10.
   - **Ep 3 (decide-your-lines thesis + quiz CTA):** founder records ~2026-07-10.
+  - **Rent-increase talking-head cover created 2026-08-26:** final `C:\Users\Luhci\Videos\TSO-video1\cover-video1.png`; rerunnable PIL generator `C:\Users\Luhci\Videos\TSO-video1\edit\cover.py`. Uses the 20.6s camera-facing frame and remains legible at 150px wide.
   - Evaluate ~2026-07-20: `utm_campaign=steady_rules` visits vs Reddit in `funnel_events`; video earns a routine slot only if it outperforms.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 

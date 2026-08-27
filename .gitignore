@@ -57,3 +57,9 @@ app-screens/
 # Python
 __pycache__/
 *.pyc
+
+# Raw video sources / uploads (never commit)
+*.zip
+*.mp4
+!public/brand/hero.mp4
+*.mov
