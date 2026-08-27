@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 30
-**Last updated:** 2026-08-26 (created and thumbnail-verified the TikTok cover for the rent-increase talking-head video; reusable PIL script and final PNG live in `C:\Users\Luhci\Videos\TSO-video1\`.)
+**Revision:** 31
+**Last updated:** 2026-08-26 (new "Steady Take" news-reaction video format created and Ep 1 POSTED to TikTok; scripts in `marketing/video-scripts-news-format-2026-08-20.md`; raw video sources now gitignored.)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -123,6 +123,10 @@ Apply on every UI change without being asked.
   - **Ep 3 (decide-your-lines thesis + quiz CTA):** founder records ~2026-07-10.
   - **Rent-increase talking-head cover created 2026-08-26:** final `C:\Users\Luhci\Videos\TSO-video1\cover-video1.png`; rerunnable PIL generator `C:\Users\Luhci\Videos\TSO-video1\edit\cover.py`. Uses the 20.6s camera-facing frame and remains legible at 150px wide.
   - Evaluate ~2026-07-20: `utm_campaign=steady_rules` visits vs Reddit in `funnel_events`; video earns a routine slot only if it outperforms.
+- [~] **"Steady Take" news-reaction video format (NEW 2026-08-20):** founder on camera over a screenshot of a real news article. Scripts + production/framing rules + headline-selection criteria in `marketing/video-scripts-news-format-2026-08-20.md`; speech-only teleprompter text in `marketing/teleprompter.txt`. Bio link UTM-tagged `utm_campaign=steady_take`. Progress:
+  - **Video 1 (record Manhattan rent, Time Out NY 2026-08-13) POSTED to TikTok 2026-08-26.** Cut via video-use skill: 4 takes into a 43.9s single-take assembly (that take is the only one saying the correct "seventeen percent"; the other three say "seventy"), 1080x1920 @30, audio denoised and normalized to -14 LUFS. Sources and `edit/` live in `C:\Users\Luhci\Videos\TSO-video1\` (outside the repo).
+  - Videos 2 (FARE year one), 3 (rent freeze, must air before Oct 1) and 4 (inventory / anti-FOMO, the only one carrying the CTA) are scripted, not recorded.
+  - **Framing lesson for the next shoots:** founder filled the whole frame, leaving no room for the headline in the top third. Sit further back and lower.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
 ### Done since revision 4
