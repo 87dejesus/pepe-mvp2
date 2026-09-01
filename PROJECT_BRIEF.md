@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 28
-**Last updated:** 2026-08-10 (leaked Supabase `service_role` key **revoked and verified dead** — migrated to publishable/secret keys; repo cleanup: all 43 stale branches deleted, dead subscription scaffolding removed)
+**Revision:** 29
+**Last updated:** 2026-09-01 (watchdog stall alert investigated: `updated_at` was never refreshed on re-scraped listings — root cause of the slow catalog decay; fixed in both upsert paths)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -40,17 +40,18 @@
 
 ## 4. Data sources
 
-- **Primary scraper (CURRENT):** Apify `saswave~advanced-apartments-com-scraper` (Apartments.com). Adopted 2026-06-08. **Bundles its own proxy infra** (no `proxyConfiguration` input) — the critical property. apartments.com aggressively blocks datacenter proxies; our Apify STARTER plan has zero residential proxy, so any actor that uses OUR proxy (ParseForge, powerai) gets blocked at volume. saswave handles anti-bot itself: a single run pulled 40 listings, 95% with numeric rent, 100% with public `images1.apartments.com` images, full address+ZIP. Replaces ParseForge, epctex, and RentHop.
-  - Route: `/api/apify/sync` (start run, `search_url=apartments.com/new-york-ny/`, `max_pages=5` ≈ 200 listings) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/saswave-normalize.ts`.
-  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC). Pricing ~$0.001/result ≈ **$2/month** at 200 every 3 days. Tune volume via `SASWAVE_MAX_PAGES` env (default 5) or cron frequency in `vercel.json`.
-  - Schema is nested: `pricingAndFloorPlans[].rent_label` ("$1,950 - $2,300", take min numeric), `about.location` (address + ZIP), `about.image` (CDN url). Borough from ZIP prefix (rejects non-NYC bleed).
-- **Retired:** `parseforge~apartments-com-scraper` (great data but used OUR proxy → apartments.com blocked it at volume, 2026-06-08); `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026); RentHop + ScraperAPI proxy (too expensive). Their routes/normalizers remain in the repo unused — safe to delete later. **Do NOT pick an apartments.com actor that exposes a `proxyConfiguration` input unless we buy residential proxies — it will get blocked.**
+- **Primary scraper (CURRENT):** Apify `memo23~streeteasy-ppr` (StreetEasy). Adopted 2026-07-17 — see the incident log. NYC-native source: real neighborhood names (`areaName`), numeric price, public `photos.zillowstatic.com` images, streeteasy.com URLs renters already trust. Bundled proxy (its `proxy` input is an optional override).
+  - Route: `/api/apify/sync` (starts the run, actor **hardcoded** in the route — the old `APIFY_ACTOR_ID` env var is no longer read) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/streeteasy-normalize.ts`.
+  - **Five borough start URLs, never `/for-rent/nyc`** — the nyc feed came back 73% New Jersey in a live audit. **One run PER borough** (changed 2026-09-01): the actor used to apply `maxItems` per start URL and silently stopped, capping the whole run at 40 items. `STEADY_SE_MAX_ITEMS` default 40 × 5 runs ≈ 200 items. Each run carries an explicit 15-min timeout (`STEADY_SE_RUN_TIMEOUT`).
+  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC) + **daily 12:00 UTC collect retry** (added 2026-09-01; `collect` polls the run only once, so a slow run used to lose its whole batch for 3 days).
+  - **Cost model:** $0.003/item + $0.006/run start ≈ **$0.61/run ≈ $6/month**. A monthly spend far below that means the runs are returning few or no items — check it before assuming the pipeline is healthy.
+- **Retired:** `saswave~advanced-apartments-com-scraper` (apartments.com hard-blocked it from 2026-07-01; every run failed at the first page fetch and drained the catalog to zero for ~10 days); `parseforge~apartments-com-scraper` (used OUR proxy → blocked at volume, 2026-06-08); `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026); RentHop + ScraperAPI proxy (too expensive; route still exists for manual Brooklyn-only runs). **Do NOT pick an apartments.com actor that exposes a `proxyConfiguration` input unless we buy residential proxies — it will get blocked.**
 - **Table:** `listings` (NOT `pepe_listings`)
   - `listings_price_check` constraint allows `price >= 0` (price == 0 still means "Contact for pricing" for buildings without a published rent).
 - **Sort order on /decision:** bedroom match → RentHop priority (legacy, now inert) → match score
 - **Match score:** Borough 40 + Budget 30 + Bedrooms 20 + Pets 5 + Bath 3 + Incentive 2
   - Listings with `price == 0` get 15/30 budget points (neutral) and bypass both strict and relaxed budget caps
-- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`. **Important:** if the scraper fails for >10 days the DB drains and the site falls back to 10 hardcoded mock listings in `app/decision/DecisionClient.tsx` (`streeteasy.com/mock-N` URLs that 404). Add monitoring on `synced: 0`.
+- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks Active listings whose `updated_at` is older than 10 days as `Expired`. **Important:** if the scraper stops writing for >10 days the catalog drains to zero and `/decision` shows the honest empty state (the 10 hardcoded mocks were DELETED in PR #35). Monitoring exists: `/api/cron/watchdog` (daily 07:00 UTC) emails the founder when Active drops below 20 or nothing is fresh. Both crons key off `updated_at`, which is why every upsert path must stamp it — see the 2026-09-01 incident.
 
 ## 5. Design system (Steady Modern)
 
@@ -143,6 +144,9 @@ Apply on every UI change without being asked.
 
 ## 8. Operational watch
 
+- **Service accounts (who owns what login):**
+  - **Apify:** `team@thesteadyone.com` (confirmed by the founder 2026-09-01). Console: https://console.apify.com/actors/runs
+  - **Watchdog alerts land in:** `luhciano.sj@gmail.com` — the `ALERT_EMAIL` default hardcoded in `app/api/cron/watchdog/route.ts`. Change that env var (not the code) to redirect alerts.
 - **Logs:** Vercel + Sentry. Webhook events logged with `[Webhook:<event>]` prefix
 - **Cleanup cron:** monitor stale listings drop count in cron output
 - **Stripe events handled:** `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`
@@ -197,6 +201,26 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 - Old discovery reports archived in `docs/archive/`.
 
 ## 13. Incident log
+
+### 2026-09-01 — Catalog decaying: `updated_at` never refreshed on re-scraped listings (FIX SHIPPED, pending live confirmation)
+
+**Trigger:** watchdog email 2026-09-01 — "Listings unhealthy: nothing updated in the last 4 days (scraper likely stalled). Active listings: 96 (floor: 20). Fresh in last 4 days: 0." Catalog was 218 Active after the 2026-07-17 StreetEasy migration.
+
+**Root cause found in code:** `listings.updated_at` is `TIMESTAMPTZ DEFAULT NOW()` with **no trigger**, and neither upsert path (`/api/apify/collect`, `/api/renthop/sync`) sent the column. A Postgres column DEFAULT fires on INSERT only, so any upsert that resolved to an UPDATE — i.e. every listing already in the table, which is most of a re-scrape — left `updated_at` frozen at the day the row was first seen. Two consequences:
+1. **Silent decay.** `/api/cron/cleanup` (daily 00:00 UTC) marks Active rows with `updated_at` older than 10 days as `Expired`. Every listing therefore died 10 days after first sight even while still live on StreetEasy and still being re-scraped, and a re-scrape that revived it to `Active` was re-expired the next night. Only brand-new URLs ever counted as fresh. That is the 218 → 96 slide.
+2. **Watchdog false positive.** Its "fresh in last N days" count only ever saw new URLs, so it can report `fresh: 0` while the scraper is running normally. The alert is real (the catalog IS decaying) but the stated cause ("scraper likely stalled") may not be.
+
+**Fix (this branch):** both upserts now stamp `updated_at: new Date().toISOString()` on every row. Correct whether or not a DB trigger is ever added; no schema change required. `last_checked` deliberately NOT stamped — the column exists in `scripts/migration-fresh-start.sql` but was not verified against the live table, and an unknown column would fail the whole upsert.
+
+**Apify run history checked by the founder (screenshot, 2026-09-01) — it exposed a SECOND, independent failure.** The 11 most recent `memo23/streeteasy-ppr` runs, newest first: 2 × `TIMED OUT`, then 6 × succeeded with **40-41 results**, then 3 × succeeded with **193 / 191 / 188 results**. Two distinct regressions:
+1. **`maxItems` stopped applying per start URL.** 40 × 5 boroughs used to yield ~190 items; the actor now treats `maxItems` as a cap on the WHOLE run, so each sync bought **40 items instead of 200** — and those 40 are almost certainly all Manhattan, the first start URL, starving the other four boroughs. Monthly spend of ~$0.17 against an expected ~$6 is the same fact seen from billing.
+2. **The two most recent runs TIMED OUT**, i.e. zero usable output. That is the actual stall the watchdog caught, on top of the `updated_at` decay.
+
+**Fix for both (same branch):** `/api/apify/sync` now starts **one run per borough** (5 runs, one `startUrl` each, `maxItems` 40 each) so the five-borough spread no longer depends on how the actor chooses to read `maxItems`; 5 run starts cost $0.03 total. Each run is started with an explicit **15-minute timeout** (`STEADY_SE_RUN_TIMEOUT`), so a hung run dies before the 25-min collect window instead of after it — and `collect` already harvests the partial dataset of a non-SUCCEEDED run. `/api/apify/collect` now polls **every** pending `sync_runs` row, accumulates across runs, and is non-fatal per run: a failed poll or an empty borough no longer discards the boroughs that worked; runs still going keep `started` for the daily retry.
+
+**Watch on the next cycle:** borough spread in `listings` (a Manhattan-only catalog means the per-borough fan-out did not take) and item count per run in the Apify console (~40 each, ~200 total).
+
+**Second fragility, also fixed (founder approved the cron change 2026-09-01):** `/api/apify/collect` polls the Apify run **once**, 25 min after `/api/apify/sync` starts it — a run still `RUNNING` at that moment lost its whole batch until the next sync three days later. Added a **daily retry cron at 12:00 UTC** on `/api/apify/collect` (5 crons total now). Free when idle: it exits at `no_pending_run` before calling Apify or touching `listings`, and a genuinely dead run is marked `failed` rather than retried forever. Cron facts re-synced across `vercel.json`, the route docstring (it claimed 6:10, actual is 6:25) and `CLAUDE.md`.
 
 ### 2026-08-10 — Supabase `service_role` key leaked in a public repo (RESOLVED same day)
 

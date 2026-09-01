@@ -1,9 +1,19 @@
 /**
  * POST /api/apify/sync
  *
- * Fire-and-forget: starts the memo23/streeteasy-ppr run and saves the runId to
- * the sync_runs table, then returns immediately. Results are collected by
- * GET /api/apify/collect (run ~25 min later by cron).
+ * Fire-and-forget: starts ONE memo23/streeteasy-ppr run PER BOROUGH (5 runs)
+ * and saves every runId to the sync_runs table, then returns immediately.
+ * Results are collected by GET /api/apify/collect (~25 min later by cron, plus
+ * a daily retry).
+ *
+ * Why one run per borough (changed 2026-09-01): the actor used to apply
+ * `maxItems` PER start URL — 40 x 5 URLs returned ~190 items. The Apify run
+ * history shows that behaviour changed: runs dropped from 193/191/188 results
+ * to a flat 40-41, i.e. `maxItems` became a cap on the WHOLE run, so we were
+ * paying for one borough's worth of listings (almost certainly all Manhattan,
+ * the first start URL) and starving the other four. Giving each borough its own
+ * run makes the five-borough spread independent of how the actor chooses to
+ * read `maxItems`. Five run starts cost $0.006 each — $0.03 total, noise.
  *
  * Actor: memo23/streeteasy-ppr (adopted 2026-07-17). Replaces saswave, which
  * apartments.com hard-blocked starting Jul 1 (every run failed at the first
@@ -59,24 +69,31 @@ const SEARCH_URLS = [
   'https://streeteasy.com/for-rent/staten-island',
 ];
 
-// Cost control: $0.003/item + $0.006/run start. maxItems applies PER START URL
-// (observed live: 30 × 5 URLs → 147 items), so 40 × 5 ≈ 200 items every 3 days
-// ≈ $0.61/run ≈ $6/month. Tune via env.
+// Cost control: $0.003/item + $0.006/run start. One run per borough, so this
+// is a true per-run cap: 40 × 5 boroughs ≈ 200 items every 3 days ≈ $0.63
+// ≈ $6/month. Tune via env.
 const MAX_ITEMS_PER_BOROUGH = Number(process.env.STEADY_SE_MAX_ITEMS ?? 40);
 
-async function startApifyRun(): Promise<string> {
+// Hard wall-clock limit per run, in seconds. Two runs TIMED OUT in the Apify
+// history (2026-09-01) after hanging well past the 25-min collect window, which
+// silently costs a whole 3-day cycle. An explicit 15-min timeout guarantees
+// every run is finished — SUCCEEDED or TIMED-OUT — before collect looks at it,
+// and collect already harvests the partial dataset of a non-SUCCEEDED run.
+const RUN_TIMEOUT_SECS = Number(process.env.STEADY_SE_RUN_TIMEOUT ?? 900);
+
+async function startApifyRun(startUrl: string): Promise<string> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN env var is not set');
 
   const body = JSON.stringify({
-    startUrls: SEARCH_URLS.map((url) => ({ url })),
+    startUrls: [{ url: startUrl }],
     maxItems: MAX_ITEMS_PER_BOROUGH,
     enrichEmails: false,
     moreResults: false,
   });
 
   const res = await fetch(
-    `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs?token=${token}`,
+    `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs?token=${token}&timeout=${RUN_TIMEOUT_SECS}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, cache: 'no-store' }
   );
   if (!res.ok) throw new Error(`Apify start HTTP ${res.status}: ${res.statusText}`);
@@ -109,24 +126,45 @@ async function runSync() {
 
   const db = createClient(supabaseUrl, supabaseKey);
 
-  let runId: string;
-  try {
-    runId = await startApifyRun();
-    console.log(`[Steady Debug] Apify run started: ${runId}`);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Steady Debug] Failed to start Apify run:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+  // One run per borough, started in parallel. A borough that fails to start
+  // must not cost us the other four, so this is allSettled, not all.
+  const settled = await Promise.allSettled(SEARCH_URLS.map((url) => startApifyRun(url)));
+
+  const runIds: string[] = [];
+  const failures: string[] = [];
+
+  settled.forEach((result, i) => {
+    const url = SEARCH_URLS[i];
+    if (result.status === 'fulfilled') {
+      runIds.push(result.value);
+      console.log(`[Steady Debug] Apify run started for ${url}: ${result.value}`);
+    } else {
+      const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      failures.push(`${url}: ${msg}`);
+      console.error(`[Steady Debug] Failed to start Apify run for ${url}:`, msg);
+    }
+  });
+
+  if (runIds.length === 0) {
+    return NextResponse.json(
+      { error: 'No Apify run could be started', failures },
+      { status: 500 }
+    );
   }
 
   const { error } = await db
     .from('sync_runs')
-    .insert({ run_id: runId, status: 'started' });
+    .insert(runIds.map((run_id) => ({ run_id, status: 'started' })));
 
   if (error) {
-    // Non-fatal — runId is logged above; collect can be triggered manually
-    console.error('[Steady Debug] Failed to save sync_run:', error.message);
+    // Non-fatal — the runIds are logged above; collect can be triggered manually
+    console.error('[Steady Debug] Failed to save sync_runs:', error.message);
   }
 
-  return NextResponse.json({ status: 'started', runId });
+  return NextResponse.json({
+    status: 'started',
+    started: runIds.length,
+    runIds,
+    failures,
+  });
 }
