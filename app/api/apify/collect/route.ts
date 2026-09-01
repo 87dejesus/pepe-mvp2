@@ -128,6 +128,7 @@ async function collect() {
   // legacy data for nothing).
   let synced = 0;
   let dbError: string | null = null;
+  const nowIso = new Date().toISOString();
 
   if (normalized.length > 0) {
     const dbRows = normalized.map(
@@ -136,11 +137,22 @@ async function collect() {
     );
 
     const seenUrls = new Set<string>();
-    const uniqueDbRows = dbRows.filter(row => {
-      if (seenUrls.has(row.original_url)) return false;
-      seenUrls.add(row.original_url);
-      return true;
-    });
+    const uniqueDbRows = dbRows
+      .filter(row => {
+        if (seenUrls.has(row.original_url)) return false;
+        seenUrls.add(row.original_url);
+        return true;
+      })
+      // Stamp freshness explicitly. `updated_at` has a DEFAULT now(), but a
+      // DEFAULT only fires on INSERT: an upsert that resolves to UPDATE (every
+      // listing we re-scrape, which is most of them) left updated_at frozen at
+      // the day the row was first seen. Consequences observed 2026-09-01:
+      // the cleanup cron expires Active rows with updated_at older than 10 days,
+      // so still-live listings were being killed 10 days after first sight and
+      // instantly re-expired after each re-scrape, and the watchdog's freshness
+      // check ("fresh in last 4 days") counted only brand-new URLs, firing
+      // stall alerts while the scraper was in fact running.
+      .map(row => ({ ...row, updated_at: nowIso }));
 
     const { error } = await db
       .from('listings')

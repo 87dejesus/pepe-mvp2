@@ -392,9 +392,15 @@ async function handler() {
   let dbError: string | null = null;
 
   if (allDbRows.length > 0) {
+    // Same freshness stamp as /api/apify/collect: the updated_at DEFAULT only
+    // fires on INSERT, so re-scraped rows must carry the timestamp explicitly
+    // or the cleanup cron expires listings that are still live.
+    const nowIso = new Date().toISOString();
+    const freshRows = allDbRows.map(row => ({ ...row, updated_at: nowIso }));
+
     const { error } = await db
       .from('listings')
-      .upsert(allDbRows, { onConflict: 'original_url', ignoreDuplicates: false });
+      .upsert(freshRows, { onConflict: 'original_url', ignoreDuplicates: false });
 
     if (error) {
       console.error('[RentHop] Supabase upsert error:', error.message);

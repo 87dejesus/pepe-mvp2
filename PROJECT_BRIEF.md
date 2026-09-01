@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 28
-**Last updated:** 2026-08-10 (leaked Supabase `service_role` key **revoked and verified dead** — migrated to publishable/secret keys; repo cleanup: all 43 stale branches deleted, dead subscription scaffolding removed)
+**Revision:** 29
+**Last updated:** 2026-09-01 (watchdog stall alert investigated: `updated_at` was never refreshed on re-scraped listings — root cause of the slow catalog decay; fixed in both upsert paths)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -197,6 +197,20 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 - Old discovery reports archived in `docs/archive/`.
 
 ## 13. Incident log
+
+### 2026-09-01 — Catalog decaying: `updated_at` never refreshed on re-scraped listings (FIX SHIPPED, pending live confirmation)
+
+**Trigger:** watchdog email 2026-09-01 — "Listings unhealthy: nothing updated in the last 4 days (scraper likely stalled). Active listings: 96 (floor: 20). Fresh in last 4 days: 0." Catalog was 218 Active after the 2026-07-17 StreetEasy migration.
+
+**Root cause found in code:** `listings.updated_at` is `TIMESTAMPTZ DEFAULT NOW()` with **no trigger**, and neither upsert path (`/api/apify/collect`, `/api/renthop/sync`) sent the column. A Postgres column DEFAULT fires on INSERT only, so any upsert that resolved to an UPDATE — i.e. every listing already in the table, which is most of a re-scrape — left `updated_at` frozen at the day the row was first seen. Two consequences:
+1. **Silent decay.** `/api/cron/cleanup` (daily 00:00 UTC) marks Active rows with `updated_at` older than 10 days as `Expired`. Every listing therefore died 10 days after first sight even while still live on StreetEasy and still being re-scraped, and a re-scrape that revived it to `Active` was re-expired the next night. Only brand-new URLs ever counted as fresh. That is the 218 → 96 slide.
+2. **Watchdog false positive.** Its "fresh in last N days" count only ever saw new URLs, so it can report `fresh: 0` while the scraper is running normally. The alert is real (the catalog IS decaying) but the stated cause ("scraper likely stalled") may not be.
+
+**Fix (this branch):** both upserts now stamp `updated_at: new Date().toISOString()` on every row. Correct whether or not a DB trigger is ever added; no schema change required. `last_checked` deliberately NOT stamped — the column exists in `scripts/migration-fresh-start.sql` but was not verified against the live table, and an unknown column would fail the whole upsert.
+
+**Still to verify by the founder (no credentials in the coding session):** Apify console — did the runs on the `*/3`-day cron actually succeed, and is credit healthy; Vercel logs for `/api/apify/sync` + `/api/apify/collect`. If runs are green, this fix alone restores the catalog on the next collect.
+
+**Known second fragility (not fixed, needs approval — cron changes are gated):** `/api/apify/collect` polls the run **once**, 25 min after `/api/apify/sync` starts it. If the run is still `RUNNING` at that moment the batch is skipped and nothing retries for 3 days. A cheap retry (an extra daily `collect` cron; it early-exits with `no_pending_run` and costs nothing) would close it.
 
 ### 2026-08-10 — Supabase `service_role` key leaked in a public repo (RESOLVED same day)
 
