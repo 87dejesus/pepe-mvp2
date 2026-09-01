@@ -25,7 +25,7 @@
 ## Database
 - Provider: Supabase (project "Projeto Pepe")
 - Main table: `listings`
-- Sync: Apify cron 6:00 UTC (sync) + 6:10 UTC (collect)
+- Sync: Apify cron 6:00 UTC (sync) + 6:25 UTC (collect), every 3 days; daily 12:00 UTC collect retry
 
 ## Scraper Rules
 - Production provider: `epctex~apartments-scraper-api`

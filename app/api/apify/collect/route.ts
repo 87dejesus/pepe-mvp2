@@ -4,8 +4,15 @@
  * Checks the most recent pending Apify run (from sync_runs), fetches results
  * if SUCCEEDED, normalizes and upserts listings to Supabase.
  *
- * Called by Vercel cron at 6:10 UTC (10 min after /api/apify/sync).
- * Also callable manually: curl https://www.thesteadyone.com/api/apify/collect
+ * Called by Vercel cron at 6:25 UTC (25 min after /api/apify/sync), plus a
+ * daily retry at 12:00 UTC. The retry exists because this route polls the Apify
+ * run exactly ONCE: a run still RUNNING at 6:25 used to lose its whole batch
+ * until the next sync three days later. The retry is free when there is nothing
+ * to do (it exits at `no_pending_run` before touching Apify or the listings
+ * table) and it also picks up a run that finished hours late.
+ *
+ * Also callable manually:
+ *   curl -H "Authorization: Bearer $CRON_SECRET" https://www.thesteadyone.com/api/apify/collect
  *
  * Env vars used:
  *   NEXT_PUBLIC_SUPABASE_URL        (required)

@@ -210,7 +210,7 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 **Still to verify by the founder (no credentials in the coding session):** Apify console — did the runs on the `*/3`-day cron actually succeed, and is credit healthy; Vercel logs for `/api/apify/sync` + `/api/apify/collect`. If runs are green, this fix alone restores the catalog on the next collect.
 
-**Known second fragility (not fixed, needs approval — cron changes are gated):** `/api/apify/collect` polls the run **once**, 25 min after `/api/apify/sync` starts it. If the run is still `RUNNING` at that moment the batch is skipped and nothing retries for 3 days. A cheap retry (an extra daily `collect` cron; it early-exits with `no_pending_run` and costs nothing) would close it.
+**Second fragility, also fixed (founder approved the cron change 2026-09-01):** `/api/apify/collect` polls the Apify run **once**, 25 min after `/api/apify/sync` starts it — a run still `RUNNING` at that moment lost its whole batch until the next sync three days later. Added a **daily retry cron at 12:00 UTC** on `/api/apify/collect` (5 crons total now). Free when idle: it exits at `no_pending_run` before calling Apify or touching `listings`, and a genuinely dead run is marked `failed` rather than retried forever. Cron facts re-synced across `vercel.json`, the route docstring (it claimed 6:10, actual is 6:25) and `CLAUDE.md`.
 
 ### 2026-08-10 — Supabase `service_role` key leaked in a public repo (RESOLVED same day)
 
