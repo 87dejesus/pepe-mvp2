@@ -1,15 +1,17 @@
 /**
  * GET /api/apify/collect
  *
- * Checks the most recent pending Apify run (from sync_runs), fetches results
- * if SUCCEEDED, normalizes and upserts listings to Supabase.
+ * Checks EVERY pending Apify run (from sync_runs) — /api/apify/sync starts one
+ * per borough — fetches their results, normalizes and upserts listings to
+ * Supabase. A run still going is left pending for the next pass; one bad run
+ * never costs us the other four.
  *
  * Called by Vercel cron at 6:25 UTC (25 min after /api/apify/sync), plus a
- * daily retry at 12:00 UTC. The retry exists because this route polls the Apify
- * run exactly ONCE: a run still RUNNING at 6:25 used to lose its whole batch
- * until the next sync three days later. The retry is free when there is nothing
- * to do (it exits at `no_pending_run` before touching Apify or the listings
- * table) and it also picks up a run that finished hours late.
+ * daily retry at 12:00 UTC. The retry exists because this route polls each
+ * Apify run exactly ONCE: a run still RUNNING at 6:25 used to lose its whole
+ * batch until the next sync three days later. The retry is free when there is
+ * nothing to do (it exits at `no_pending_run` before touching Apify or the
+ * listings table) and it also picks up a run that finished hours late.
  *
  * Also callable manually:
  *   curl -H "Authorization: Bearer $CRON_SECRET" https://www.thesteadyone.com/api/apify/collect
@@ -57,63 +59,87 @@ async function collect() {
 
   const db = createClient(supabaseUrl, supabaseKey);
 
-  // 1. Get the most recent pending run
-  const { data: runRow, error: runErr } = await db
+  // 1. Every pending run — sync starts one per borough. The limit is a safety
+  // net against a backlog of stranded rows, not an expected case.
+  const { data: runRows, error: runErr } = await db
     .from('sync_runs')
     .select('id, run_id')
     .eq('status', 'started')
     .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+    .limit(10);
 
-  if (runErr || !runRow) {
+  if (runErr) {
+    return NextResponse.json({ error: `sync_runs query failed: ${runErr.message}` }, { status: 500 });
+  }
+  if (!runRows || runRows.length === 0) {
     return NextResponse.json({ status: 'no_pending_run' });
   }
 
-  const { id: syncRunId, run_id: runId } = runRow;
+  // 2-3. Poll each run and harvest its dataset. Everything in this loop is
+  // per-run and non-fatal: a poll that errors, or a borough that came back
+  // empty, must not discard the boroughs that worked.
+  const raw: StreetEasyItem[] = [];
+  const collectedRowIds: string[] = [];
+  const perRun: { runId: string; runStatus: string; items: number; note?: string }[] = [];
+  let stillPending = 0;
 
-  // 2. Check Apify run status — single check, no polling loop
-  const pollRes = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`,
-    { cache: 'no-store' }
-  );
-  if (!pollRes.ok) {
-    return NextResponse.json(
-      { error: `Apify poll HTTP ${pollRes.status}: ${pollRes.statusText}` },
-      { status: 500 }
+  for (const { id: syncRunId, run_id: runId } of runRows) {
+    const pollRes = await fetch(
+      `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`,
+      { cache: 'no-store' }
     );
-  }
-  const pollData = await pollRes.json();
-  const runStatus: string = pollData?.data?.status ?? '';
-  console.log(`[Steady Debug] Apify run ${runId} status: ${runStatus}`);
+    if (!pollRes.ok) {
+      console.error(`[Steady Debug] Apify poll HTTP ${pollRes.status} for run ${runId}`);
+      perRun.push({ runId, runStatus: 'poll_failed', items: 0, note: `HTTP ${pollRes.status}` });
+      continue;
+    }
+    const pollData = await pollRes.json();
+    const runStatus: string = pollData?.data?.status ?? '';
+    console.log(`[Steady Debug] Apify run ${runId} status: ${runStatus}`);
 
-  if (runStatus === 'RUNNING' || runStatus === 'READY') {
-    return NextResponse.json({ status: 'pending', runId, runStatus });
-  }
+    if (runStatus === 'RUNNING' || runStatus === 'READY') {
+      stillPending++;
+      perRun.push({ runId, runStatus, items: 0 });
+      continue;
+    }
 
-  // 3. Fetch dataset items. Tolerate non-SUCCEEDED runs as long as the dataset
-  // has items (partial batches are complete, valid rows), and only bail when
-  // there is genuinely nothing to upsert. This kept the cron resilient to the
-  // old actor's flakiness and costs nothing to keep for the new one.
-  const itemsRes = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true`,
-    { cache: 'no-store' }
-  );
-  if (!itemsRes.ok) {
-    return NextResponse.json(
-      { error: `Apify items HTTP ${itemsRes.status}: ${itemsRes.statusText}` },
-      { status: 500 }
+    // Tolerate non-SUCCEEDED runs as long as the dataset has items (a partial
+    // batch is still complete, valid rows — this is what rescues a TIMED-OUT
+    // run), and only give up when there is genuinely nothing to upsert.
+    const itemsRes = await fetch(
+      `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true`,
+      { cache: 'no-store' }
     );
+    if (!itemsRes.ok) {
+      console.error(`[Steady Debug] Apify items HTTP ${itemsRes.status} for run ${runId}`);
+      perRun.push({ runId, runStatus, items: 0, note: `items HTTP ${itemsRes.status}` });
+      continue;
+    }
+    const items: StreetEasyItem[] = await itemsRes.json();
+    console.log(`[Steady Debug] streeteasy: run ${runId} returned ${items.length} raw items (status: ${runStatus})`);
+
+    if (items.length === 0) {
+      await db.from('sync_runs').update({ status: 'failed' }).eq('id', syncRunId);
+      perRun.push({ runId, runStatus, items: 0, note: 'no items' });
+      continue;
+    }
+    if (runStatus !== 'SUCCEEDED') {
+      console.warn(`[Steady Debug] streeteasy run ${runId} ${runStatus} but has ${items.length} usable items — processing partial batch`);
+    }
+
+    raw.push(...items);
+    collectedRowIds.push(syncRunId);
+    perRun.push({ runId, runStatus, items: items.length });
   }
-  const raw: StreetEasyItem[] = await itemsRes.json();
-  console.log(`[Steady Debug] streeteasy: fetched ${raw.length} raw items (run status: ${runStatus})`);
+
+  console.log(`[Steady Debug] streeteasy: ${raw.length} raw items across ${collectedRowIds.length} run(s), ${stillPending} still running`);
 
   if (raw.length === 0) {
-    await db.from('sync_runs').update({ status: 'failed' }).eq('id', syncRunId);
-    return NextResponse.json({ status: 'failed', runId, runStatus, reason: 'no items' });
-  }
-  if (runStatus !== 'SUCCEEDED') {
-    console.warn(`[Steady Debug] streeteasy run ${runStatus} but has ${raw.length} usable items — processing partial batch`);
+    return NextResponse.json({
+      status: stillPending > 0 ? 'pending' : 'failed',
+      reason: stillPending > 0 ? 'runs still going' : 'no items in any run',
+      runs: perRun,
+    });
   }
 
   // 4. Normalize
@@ -193,8 +219,17 @@ async function collect() {
     }
   }
 
-  // 6. Mark sync_run as collected
-  await db.from('sync_runs').update({ status: 'collected' }).eq('id', syncRunId);
+  // 6. Mark the harvested runs as collected. Runs still going keep 'started'
+  // so the next pass — or the daily retry cron — picks them up.
+  if (collectedRowIds.length > 0) {
+    await db.from('sync_runs').update({ status: 'collected' }).in('id', collectedRowIds);
+  }
 
-  return NextResponse.json({ status: 'collected', synced, dbError });
+  return NextResponse.json({
+    status: 'collected',
+    synced,
+    dbError,
+    stillPending,
+    runs: perRun,
+  });
 }
