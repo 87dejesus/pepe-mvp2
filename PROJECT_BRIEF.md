@@ -40,17 +40,18 @@
 
 ## 4. Data sources
 
-- **Primary scraper (CURRENT):** Apify `saswave~advanced-apartments-com-scraper` (Apartments.com). Adopted 2026-06-08. **Bundles its own proxy infra** (no `proxyConfiguration` input) — the critical property. apartments.com aggressively blocks datacenter proxies; our Apify STARTER plan has zero residential proxy, so any actor that uses OUR proxy (ParseForge, powerai) gets blocked at volume. saswave handles anti-bot itself: a single run pulled 40 listings, 95% with numeric rent, 100% with public `images1.apartments.com` images, full address+ZIP. Replaces ParseForge, epctex, and RentHop.
-  - Route: `/api/apify/sync` (start run, `search_url=apartments.com/new-york-ny/`, `max_pages=5` ≈ 200 listings) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/saswave-normalize.ts`.
-  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC). Pricing ~$0.001/result ≈ **$2/month** at 200 every 3 days. Tune volume via `SASWAVE_MAX_PAGES` env (default 5) or cron frequency in `vercel.json`.
-  - Schema is nested: `pricingAndFloorPlans[].rent_label` ("$1,950 - $2,300", take min numeric), `about.location` (address + ZIP), `about.image` (CDN url). Borough from ZIP prefix (rejects non-NYC bleed).
-- **Retired:** `parseforge~apartments-com-scraper` (great data but used OUR proxy → apartments.com blocked it at volume, 2026-06-08); `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026); RentHop + ScraperAPI proxy (too expensive). Their routes/normalizers remain in the repo unused — safe to delete later. **Do NOT pick an apartments.com actor that exposes a `proxyConfiguration` input unless we buy residential proxies — it will get blocked.**
+- **Primary scraper (CURRENT):** Apify `memo23~streeteasy-ppr` (StreetEasy). Adopted 2026-07-17 — see the incident log. NYC-native source: real neighborhood names (`areaName`), numeric price, public `photos.zillowstatic.com` images, streeteasy.com URLs renters already trust. Bundled proxy (its `proxy` input is an optional override).
+  - Route: `/api/apify/sync` (starts the run, actor **hardcoded** in the route — the old `APIFY_ACTOR_ID` env var is no longer read) → `/api/apify/collect` (poll + upsert). Normalizer: `lib/streeteasy-normalize.ts`.
+  - **Five borough start URLs, never `/for-rent/nyc`** — the nyc feed came back 73% New Jersey in a live audit. `maxItems` applies **per start URL**: `STEADY_SE_MAX_ITEMS` default 40 × 5 boroughs ≈ 200 items.
+  - **Cron: every 3 days** (06:00 sync, 06:25 collect UTC) + **daily 12:00 UTC collect retry** (added 2026-09-01; `collect` polls the run only once, so a slow run used to lose its whole batch for 3 days).
+  - **Cost model:** $0.003/item + $0.006/run start ≈ **$0.61/run ≈ $6/month**. A monthly spend far below that means the runs are returning few or no items — check it before assuming the pipeline is healthy.
+- **Retired:** `saswave~advanced-apartments-com-scraper` (apartments.com hard-blocked it from 2026-07-01; every run failed at the first page fetch and drained the catalog to zero for ~10 days); `parseforge~apartments-com-scraper` (used OUR proxy → blocked at volume, 2026-06-08); `epctex~apartments-scraper-api` (stopped returning `rent` mid-May 2026); RentHop + ScraperAPI proxy (too expensive; route still exists for manual Brooklyn-only runs). **Do NOT pick an apartments.com actor that exposes a `proxyConfiguration` input unless we buy residential proxies — it will get blocked.**
 - **Table:** `listings` (NOT `pepe_listings`)
   - `listings_price_check` constraint allows `price >= 0` (price == 0 still means "Contact for pricing" for buildings without a published rent).
 - **Sort order on /decision:** bedroom match → RentHop priority (legacy, now inert) → match score
 - **Match score:** Borough 40 + Budget 30 + Bedrooms 20 + Pets 5 + Bath 3 + Incentive 2
   - Listings with `price == 0` get 15/30 budget points (neutral) and bypass both strict and relaxed budget caps
-- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks listings older than 10 days as `Expired`. **Important:** if the scraper fails for >10 days the DB drains and the site falls back to 10 hardcoded mock listings in `app/decision/DecisionClient.tsx` (`streeteasy.com/mock-N` URLs that 404). Add monitoring on `synced: 0`.
+- **Stale cleanup:** `app/api/cron/cleanup/route.ts` marks Active listings whose `updated_at` is older than 10 days as `Expired`. **Important:** if the scraper stops writing for >10 days the catalog drains to zero and `/decision` shows the honest empty state (the 10 hardcoded mocks were DELETED in PR #35). Monitoring exists: `/api/cron/watchdog` (daily 07:00 UTC) emails the founder when Active drops below 20 or nothing is fresh. Both crons key off `updated_at`, which is why every upsert path must stamp it — see the 2026-09-01 incident.
 
 ## 5. Design system (Steady Modern)
 
@@ -143,6 +144,9 @@ Apply on every UI change without being asked.
 
 ## 8. Operational watch
 
+- **Service accounts (who owns what login):**
+  - **Apify:** `team@thesteadyone.com` (confirmed by the founder 2026-09-01). Console: https://console.apify.com/actors/runs
+  - **Watchdog alerts land in:** `luhciano.sj@gmail.com` — the `ALERT_EMAIL` default hardcoded in `app/api/cron/watchdog/route.ts`. Change that env var (not the code) to redirect alerts.
 - **Logs:** Vercel + Sentry. Webhook events logged with `[Webhook:<event>]` prefix
 - **Cleanup cron:** monitor stale listings drop count in cron output
 - **Stripe events handled:** `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`
