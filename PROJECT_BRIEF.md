@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 29
-**Last updated:** 2026-09-01 (watchdog stall alert investigated: `updated_at` was never refreshed on re-scraped listings — root cause of the slow catalog decay; fixed in both upsert paths)
+**Revision:** 30
+**Last updated:** 2026-09-02 (watchdog stall alert traced to THREE stacked failures — `updated_at` never refreshed on re-scrape, `maxItems` silently capping the run at 40 items, and hour-long runs whose results `collect` never came back for. All fixed in PR #49, merged and exercised live the same night.)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -203,7 +203,7 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 ## 13. Incident log
 
-### 2026-09-01 — Catalog decaying: `updated_at` never refreshed on re-scraped listings (FIX SHIPPED, pending live confirmation)
+### 2026-09-01 → 09-02 — Catalog decaying: three stacked failures behind one watchdog alert (FIXED + MERGED, awaiting the 09-02 watchdog to confirm recovery)
 
 **Trigger:** watchdog email 2026-09-01 — "Listings unhealthy: nothing updated in the last 4 days (scraper likely stalled). Active listings: 96 (floor: 20). Fresh in last 4 days: 0." Catalog was 218 Active after the 2026-07-17 StreetEasy migration.
 
@@ -215,9 +215,18 @@ CRON_SECRET                    (timing-safe-verified on cleanup route)
 
 **Apify run history checked by the founder (screenshot, 2026-09-01) — it exposed a SECOND, independent failure.** The 11 most recent `memo23/streeteasy-ppr` runs, newest first: 2 × `TIMED OUT`, then 6 × succeeded with **40-41 results**, then 3 × succeeded with **193 / 191 / 188 results**. Two distinct regressions:
 1. **`maxItems` stopped applying per start URL.** 40 × 5 boroughs used to yield ~190 items; the actor now treats `maxItems` as a cap on the WHOLE run, so each sync bought **40 items instead of 200** — and those 40 are almost certainly all Manhattan, the first start URL, starving the other four boroughs. Monthly spend of ~$0.17 against an expected ~$6 is the same fact seen from billing.
-2. **The two most recent runs TIMED OUT**, i.e. zero usable output. That is the actual stall the watchdog caught, on top of the `updated_at` decay.
+2. **The two most recent runs TIMED OUT.** A second screenshot with the timing columns showed what that actually meant, and it is worse than "the scraper failed": both ran **02:03 → 03:03, a full hour** (the actor's own default timeout), and both **DID produce results — 40 and 43**. But `collect` fires 25 min after `sync`: at 02:28 those runs were still `RUNNING`, `collect` returned `pending`, and under the old code it never came back. **We paid to scrape those listings, Apify held them in the dataset, and nothing ever read them.** That is the precise mechanism behind `fresh: 0` — not a dead scraper, a broken bridge between the scraper and the database.
 
 **Fix for both (same branch):** `/api/apify/sync` now starts **one run per borough** (5 runs, one `startUrl` each, `maxItems` 40 each) so the five-borough spread no longer depends on how the actor chooses to read `maxItems`; 5 run starts cost $0.03 total. Each run is started with an explicit **15-minute timeout** (`STEADY_SE_RUN_TIMEOUT`), so a hung run dies before the 25-min collect window instead of after it — and `collect` already harvests the partial dataset of a non-SUCCEEDED run. `/api/apify/collect` now polls **every** pending `sync_runs` row, accumulates across runs, and is non-fatal per run: a failed poll or an empty borough no longer discards the boroughs that worked; runs still going keep `started` for the daily retry.
+
+**Shipped and merged as PR #49 (`3de7408`), then exercised manually the same night (2026-09-02, 01:44 UTC).** The founder triggered `/api/apify/sync` and then `/api/apify/collect` from the Vercel Cron Jobs panel (that panel does have a manual Run button — useful to know for the next incident). Evidence from the run:
+
+- **The per-borough fan-out works in production.** Five runs appeared in the Apify console started at the same second, one per borough — not the single run of the old code.
+- **`collect` returned 200 in 5.0s** with ~18 GET + **1 POST** + 1 PATCH to external APIs. The POST is the Supabase upsert, and the code returns before it when nothing was collected — so **rows were written**. The GET count (roughly 1 for the `sync_runs` query plus 2 per run) implies **8-9 runs polled, not 5**: the sweep also picked up the **stranded runs from 08-31 and 09-01**, whose 40 and 43 results had been sitting uncollected in Apify for days. Recovered.
+- **The actor is degrading.** 40 results in 3m44s on 08-25; ~14 results in 8 min on 09-02, roughly 4x slower. The 15-min cap keeps that from costing a whole cycle, but if it worsens the answer is a provider change — run `/scraper-provider-evaluator` first, never a paid run on an unevaluated actor.
+- **Cost, corrected.** The actor bills pay-per-event at ~$0.17/run, so five runs ≈ **$0.85/cycle ≈ $8.5/month** — against the ~$1.7/month it was costing while broken (one crippled run per cycle). That is 5x the spend for 5x the listings. Account credit is fine: $0.41 of $75 used.
+
+**Still unconfirmed at session end:** the exact `synced` count and the borough split — those are in the `[Steady Debug]` runtime logs, not the request-detail panel. The cheap read is the watchdog: it runs 07:00 UTC and only emails when something is wrong, so **no email on 09-02 means the catalog recovered**. Check-ins scheduled for 09-02 and 09-04 08:30 UTC.
 
 **Watch on the next cycle:** borough spread in `listings` (a Manhattan-only catalog means the per-borough fan-out did not take) and item count per run in the Apify console (~40 each, ~200 total).
 
