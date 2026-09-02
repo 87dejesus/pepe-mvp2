@@ -7,6 +7,13 @@ type Props = { params: Promise<{ slug: string }> };
 
 const SERIF = "var(--font-caslon), Georgia, serif";
 
+// Scheduled posts (a future `date` in the frontmatter) are not in the build's
+// static params, so they are rendered on demand the first time someone asks for
+// them. Without a revalidate window that first render is cached forever, which
+// would freeze a not-yet-published post at its 404 even after its date arrives.
+// One hour matches app/sitemap.ts and is well inside a daily publishing cadence.
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
 }
