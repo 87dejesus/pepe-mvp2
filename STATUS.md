@@ -1,5 +1,5 @@
 # The Steady One — STATUS (cockpit)
-Atualizado: 2026-07-05 | Verdade profunda: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) (canônico, rev 10) | Decisões: [DECISIONS.md](DECISIONS.md)
+Atualizado: 2026-09-01 | Verdade profunda: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) (canônico, rev 32) | Decisões: [DECISIONS.md](DECISIONS.md)
 
 ## O que é
 Guia calmo e editorial para decidir apartamento em NYC (thesteadyone.com). Quiz de 7 perguntas → matches com clareza de decisão. Mascote: Heed, o crocodilo. Tom: "yoga teacher, not salesperson".
@@ -14,29 +14,29 @@ Produto está RESOLVIDO e não volta a ser trabalho. Daqui pra frente o TSO é u
 Bater a kill metric: até 2026-09-14, ≥300 visitas UTM acumuladas E ≥30 emails capturados. Hit → dobrar na fonte vencedora. Miss → repensar o topo do funil (manter só Reddit + SEO).
 
 ## Público e modelo
-Quem aluga em NYC e está travado na decisão. Modelo: grátis (paywall aposentado no teste de 90 dias) + monetização por afiliados (Lemonade/Self em aprovação). Nunca expor o modelo de receita na copy.
+Quem aluga em NYC e está travado na decisão. Modelo: grátis (paywall aposentado no teste de 90 dias) + monetização futura por afiliados. Lemonade e Self recusaram a aplicação pré-tráfego; hoje não há afiliado ativo. Nunca expor o modelo de receita na copy.
 
 ## Posicionamento (travado — fonte: marketing/lapidan_adaptation.md)
 Clareza de decisão, não listagens: "know your lines" — separar inegociável de desejável antes de visitar.
 
 ## FOCO ATUAL
-- **Trabalhando em:** distribuição — Reddit (conta `takeitslow` aquecida, veio tenant-rights) + teste de vídeo com rosto.
+- **Trabalhando em:** distribuição. Reddit como motor de conteúdo terminou após duas ações de moderação; SEO continua como canal próprio. No TikTok, o teste atual é encontrar um formato criativo que gere UTM visits, não apenas views.
 - **Próximas 3 ações:**
-  1. Série "Steady Rules" — **cadência oficial: 3 gravações/semana** (1 por bloco; gravação toma o bloco inteiro). #1 gravado 06/07, #2 gravado 07/07; #3 em ~09-10/07. Roteiros em `marketing/video-scripts-2026-07-04.md`.
-  2. Postar os vídeos espalhados na semana, bio links com UTM `face_test` (tiktok/instagram/youtube).
-  3. Continuar replies no Reddit (tenant-rights + minerar copy bank; priorizar comentaristas top-1%).
-- **Bloqueado/esperando:** aprovação dos afiliados Lemonade (Impact) + Self (FlexOffers).
+  1. Founder revisar o piloto de carrossel `marketing/creative/2026-09-01-opposite-right-answers/` e aprovar, ajustar ou rejeitar a direção.
+  2. Se aprovado, postar com TikTok native text e UTM constante; produzir mais dois pilotos com a mesma arquitetura de história.
+  3. Depois de duas semanas, comparar os três pilotos por UTM visits e emails capturados; views, saves, shares e profile visits são diagnóstico criativo, não a decisão final.
+- **Bloqueado/esperando:** números atuais de `funnel_events` e analytics do TikTok ainda não foram lidos nesta sessão; não declarar vencedor de canal com base apenas na captura do perfil.
 
 ## Métricas que importam
 | Métrica | Último valor | Data |
 |---|---|---|
-| Visitas UTM acumuladas (kill: 300) | ~14 eventos, maioria teste | 2026-06 |
+| Visitas UTM acumuladas (kill: 300) | ⚠️ valor atual não lido nesta sessão | 2026-09-01 |
 | Emails capturados (kill: 30) | ⚠️ registrar no domingo | — |
-| Melhor conteúdo Reddit | 37 upvotes / 1158 views (Good Cause) | 2026-06-17 |
-> Fonte: tabela `funnel_events` (first-touch UTM). Avaliar vídeo vs Reddit após 2 semanas.
+| Melhor conteúdo Reddit | 25K views / 32 upvotes / 16 comments, mas thread travada por mod | 2026-07-22 |
+> Fonte de negócio: tabela `funnel_events` (first-touch UTM). A captura do TikTok em 2026-09-01 serve apenas como evidência criativa visível.
 
 ## Riscos ativos
-- Kill metric vence 2026-09-14 — cada semana sem distribuição consome o prazo.
+- Kill metric vence 2026-09-14; faltam menos de duas semanas e os números atuais ainda precisam ser lidos.
 - Se o scraper falhar >10 dias, o DB drena e o site cai nos mocks (watchdog Sentry existe).
 - Rotacionar a chave ScraperAPI vazada (baixo risco, aposentada).
 

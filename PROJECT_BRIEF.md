@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 31
-**Last updated:** 2026-08-26 (new "Steady Take" news-reaction video format created and Ep 1 POSTED to TikTok; scripts in `marketing/video-scripts-news-format-2026-08-20.md`; raw video sources now gitignored.)
+**Revision:** 32
+**Last updated:** 2026-09-01 (drafted the first story-led TikTok photo-carousel pilot after the recent feed underperformed; five generated portrait images, native-overlay copy and measurement plan are in `marketing/creative/2026-09-01-opposite-right-answers/`. Pending founder approval, not a locked channel decision.)
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---
@@ -127,6 +127,7 @@ Apply on every UI change without being asked.
   - **Video 1 (record Manhattan rent, Time Out NY 2026-08-13) POSTED to TikTok 2026-08-26.** Cut via video-use skill: 4 takes into a 43.9s single-take assembly (that take is the only one saying the correct "seventeen percent"; the other three say "seventy"), 1080x1920 @30, audio denoised and normalized to -14 LUFS. Sources and `edit/` live in `C:\Users\Luhci\Videos\TSO-video1\` (outside the repo).
   - Videos 2 (FARE year one), 3 (rent freeze, must air before Oct 1) and 4 (inventory / anti-FOMO, the only one carrying the CTA) are scripted, not recorded.
   - **Framing lesson for the next shoots:** founder filled the whole frame, leaving no room for the headline in the top third. Sit further back and lower.
+- [~] **TikTok story-led photo-carousel pilot (DRAFT 2026-09-01, pending founder approval):** the profile screenshot showed the strongest pinned posts at 1,318 to 5,030 views, while the visible recent posts were mostly at 28 to 296. The working diagnosis is angle, not faceless versus face: the winners expose a specific confusing risk (`no fee`, guarantor, hidden costs), while recent low-view posts often state broad truths without a concrete scene or open loop. Pilot 1 shows two renters reaching opposite correct decisions about the same apartment, using verbatim customer language about natural light and space. Five clean 9:16 images, overlays, caption and test plan: `marketing/creative/2026-09-01-opposite-right-answers/`. Proposed evaluation is three story-led carousel pilots across two weeks, holding CTA and UTM constant; primary outcome remains TikTok UTM visits and captured emails. Do not mark this as the new channel strategy until the founder approves the direction and the group test runs.
 - [ ] **Rotate the leaked ScraperAPI key** (`30e0384...`) if not already revoked. RentHop/ScraperAPI are retired so it is likely unused, but revoke it anyway.
 
 ### Done since revision 4
