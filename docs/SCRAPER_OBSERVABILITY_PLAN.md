@@ -1,7 +1,7 @@
 # Scraper observability — plan
 
 **Status:** planned, not built. Approved by the founder 2026-09-01.
-**Do NOT start before the 2026-09-04 verification** (see *Sequencing* at the bottom).
+**UNBLOCKED 2026-09-04** — the PR #49 fix is confirmed working (three silent watchdog days, the last being the first fully automatic cron cycle). The baseline this plan was waiting on now exists, so implementation can start.
 **Owner doc:** `PROJECT_BRIEF.md` (canonical) — update it when this ships.
 
 ---
@@ -95,7 +95,7 @@ Until then, the explicit stamp shipped in PR #49 (both upsert paths set `updated
 
 ## Sequencing
 
-**Do not start before the 2026-09-04 check-in confirms PR #49 worked.** Changing the watchdog now would destroy the clean baseline needed to tell whether the catalog actually recovered. Verify first, then build.
+**Blocker cleared 2026-09-04.** The check-in confirmed PR #49 works unattended: three consecutive silent watchdog days, the last of them the first fully automatic cron cycle. The clean baseline this was waiting on now exists.
 
 Order once unblocked:
 
