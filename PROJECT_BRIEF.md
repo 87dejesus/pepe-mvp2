@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 30
-**Last updated:** 2026-09-02 (watchdog stall alert traced to THREE stacked failures — `updated_at` never refreshed on re-scrape, `maxItems` silently capping the run at 40 items, and hour-long runs whose results `collect` never came back for. All fixed in PR #49, merged and exercised live the same night.)
+**Revision:** 31
+**Last updated:** 2026-09-29 — ⛔ **PROJECT CLOSED (DECISIONS.md D-008).** Kill metric missed: ≤102 UTM-tagged funnel events (ceiling on visits) vs 300, and 12 `access_granted` vs 30, through 2026-09-14. Everything below is the final state, kept as history. Pending shutdown: Apify scraper + Vercel crons, domain renewal decision.
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---

@@ -7,6 +7,14 @@ Status: 🔒 TRAVADA (com gatilho de revisão) | ⏳ PENDENTE | ↩️ REVISADA 
 
 ---
 
+## D-008 — PROJETO ENCERRADO (kill metric não batida)
+- Data: 2026-09-29
+- Status: 🔒 TRAVADA (encerra a D-006; revisa D-004 e D-007)
+- Resultado da D-006 (Supabase `funnel_events`, até 2026-09-14): **102 eventos com UTM** (teto de visitas; uma visita gera 3-4 eventos) e **12 `access_granted`** (inclui testes do fundador). Metas: 300 / 30. Miss claro. Último evento: 2026-09-12.
+- Por quê: distribuição nunca pegou — Reddit queimado (ban r/NYCapartments 17/07, avisos de mod, thread trancado 21/07), vídeo parou no ep. 1-2, tempo do fundador foi pra outros projetos. Decisão tomada numa revisão do portfólio inteiro: foco em um projeto só.
+- Decisão: encerrar, não pausar. Código, conteúdo e aprendizado ficam no repo. Custos recorrentes (Apify, crons) a desligar; domínio a decidir na renovação.
+- Alternativa rejeitada: pausar com data de retomada (mantém o projeto ocupando atenção sem plano novo).
+
 ## D-007 — Teste de vídeo com rosto (supera o lock "faceless")
 - Data: 2026-07-03
 - Status: 🔒 TRAVADA como TESTE (gatilho de avaliação: 2 semanas após postar, comparar com tráfego Reddit em funnel_events; vídeo só ganha slot de rotina se superar)

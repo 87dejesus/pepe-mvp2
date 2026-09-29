@@ -1,4 +1,7 @@
 # The Steady One — STATUS (cockpit)
+
+> ⛔ **ENCERRADO em 2026-09-29 (D-008).** Kill metric não batida: ≤102/300 visitas UTM, ≤12/30 emails. O resto deste arquivo é o último estado antes do encerramento — histórico, não plano.
+
 Atualizado: 2026-07-05 | Verdade profunda: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) (canônico, rev 10) | Decisões: [DECISIONS.md](DECISIONS.md)
 
 ## O que é

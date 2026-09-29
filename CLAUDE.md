@@ -2,6 +2,7 @@
 
 ## Identity
 - Product: The Steady One — apartment curation platform for NYC renters
+- ⛔ **CLOSED 2026-09-29 (DECISIONS.md D-008).** No new work; only shutdown tasks.
 - Mascot: Heed, the crocodile 🐊 (NEVER say "Pepe")
 - Domain: thesteadyone.com
 - Repo: github.com/87dejesus/pepe-mvp2
