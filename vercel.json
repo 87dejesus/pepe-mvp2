@@ -4,22 +4,6 @@
     {
       "path": "/api/cron/cleanup",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/apify/sync",
-      "schedule": "0 6 */3 * *"
-    },
-    {
-      "path": "/api/apify/collect",
-      "schedule": "25 6 */3 * *"
-    },
-    {
-      "path": "/api/apify/collect",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/watchdog",
-      "schedule": "0 7 * * *"
     }
   ],
   "redirects": [

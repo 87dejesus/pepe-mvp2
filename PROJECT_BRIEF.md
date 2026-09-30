@@ -1,7 +1,7 @@
 # PROJECT_BRIEF.md — The Steady One
 
-**Revision:** 31
-**Last updated:** 2026-09-29 — ⛔ **PROJECT CLOSED (DECISIONS.md D-008).** Kill metric missed: ≤102 UTM-tagged funnel events (ceiling on visits) vs 300, and 12 `access_granted` vs 30, through 2026-09-14. Everything below is the final state, kept as history. Pending shutdown: Apify scraper + Vercel crons, domain renewal decision.
+**Revision:** 32
+**Last updated:** 2026-09-29 — ⛔ **PROJECT CLOSED (DECISIONS.md D-008).** Kill metric missed: ≤102 UTM-tagged funnel events (ceiling on visits) vs 300, and 12 `access_granted` vs 30, through 2026-09-14. Everything below is the final state, kept as history. Shutdown 2026-09-29: Apify sync/collect crons and the watchdog removed from `vercel.json` (founder cancelling the Apify plan); only the daily `cleanup` cron remains, so listings expire into the honest empty state. Pending: domain renewal decision.
 **Canonical record:** Update this on every meaningful change. Bump the revision number.
 
 ---

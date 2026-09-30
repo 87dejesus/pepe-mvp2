@@ -26,7 +26,7 @@
 ## Database
 - Provider: Supabase (project "Projeto Pepe")
 - Main table: `listings`
-- Sync: Apify cron 6:00 UTC (sync) + 6:25 UTC (collect), every 3 days; daily 12:00 UTC collect retry
+- Sync: Apify crons and the watchdog REMOVED 2026-09-29 (project closed, Apify plan cancelled). Only `/api/cron/cleanup` still runs, so the catalog drains to the honest empty state.
 
 ## Scraper Rules
 - Production provider: `epctex~apartments-scraper-api`
